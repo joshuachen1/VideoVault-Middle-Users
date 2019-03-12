@@ -21,8 +21,8 @@ port = int(os.environ.get('PORT', 33507))
 
 # Import Models
 from user_models import User, Friends
-from user_models import UserRatedMovieRel
-from user_media_models import Movie, UserRatedMovie
+from user_models import UserRatedMovieRel, UserRatedTVShowRel
+from user_media_models import Movie, TVShows, UserRatedMedia
 
 # Force pymysql to be used as replacement for MySQLdb
 pymysql.install_as_MySQLdb()
@@ -97,10 +97,39 @@ def get_user_movie_list(user_id=None, page=1):
                 movie = Movie.query.filter_by(id=rm.movie_id).first()
                 title = movie.title
                 rating = rm.user_rating
-                urm = UserRatedMovie(title, rating)
+                urm = UserRatedMedia(title, rating)
                 user_rated_movies.append(urm)
 
         return paginated_json('movie_list', user_rated_movies, page)
+
+    except Exception as e:
+        return str(e)
+
+
+# [url]/users=[user_id]/tv_show_list/page=[page]
+# [url]/users=[user_id]/tv_show_list
+@app.route('/user=<int:user_id>/tv_show_list/page=<int:page>')
+@app.route('/user=<int:user_id>/tv_show_list/page=')
+@app.route('/user=<int:user_id>/tv_show_list')
+def get_user_tv_show_list(user_id=None, page=1):
+    try:
+        user_rated_tv_shows = list()
+
+        # Ensure Valid User ID
+        user = User.query.filter_by(id=user_id).first()
+        if user is not None:
+            # Get list of all entries with the User's ID
+            rated_tv_shows = UserRatedTVShowRel.query.filter_by(user_id=user_id)
+
+            # Append the User Rated Movies
+            for rts in rated_tv_shows:
+                tv_show = TVShows.query.filter_by(id=rts.tv_show_id).first()
+                title = tv_show.title
+                rating = rts.user_rating
+                urm = UserRatedMedia(title, rating)
+                user_rated_tv_shows.append(urm)
+
+        return paginated_json('tv_show_list', user_rated_tv_shows, page)
 
     except Exception as e:
         return str(e)
