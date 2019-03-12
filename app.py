@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import pymysql
+import math
 import os
 
 # Setup App
@@ -31,13 +32,13 @@ def hello_world():
     return 'Home Page'
 
 
+@app.route('/users/page=<int:page>')
+@app.route('/users/page=')
 @app.route('/users')
-def get_users():
+def get_users(page=1):
     try:
         users = User.query.order_by().all()
-
-        return jsonify({'Users': [user.serialize() for user in users]})
-
+        return paginated_json('users', users, page)
     except Exception as e:
         return str(e)
 
@@ -71,8 +72,6 @@ def paginated_json(json_name: str, queried_results: [], page: int):
 # Return max pages for specified query
 def max_pages(queried_list: []):
     return int(math.ceil(len(queried_list) / app.config['POSTS_PER_PAGE']))
-
-
 
 
 if __name__ == '__main__':
