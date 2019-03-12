@@ -1,3 +1,4 @@
+from cryptography.fernet import Fernet
 from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -20,6 +21,7 @@ db = SQLAlchemy(app)
 port = int(os.environ.get('PORT', 33507))
 
 # Import Models
+from crypto_models import Key
 from user_models import User, Friends
 from user_models import UserRatedMovieRel, UserRatedTVShowRel
 from user_media_models import Movie, TVShows, UserRatedMedia
@@ -32,6 +34,32 @@ pymysql.install_as_MySQLdb()
 @app.route('/')
 def hello_world():
     return 'Home Page'
+
+
+@app.route('/login/email=<email>/password=<attempted_pwd>')
+@app.route('/login/email=/password=<attempted_pwd>')
+@app.route('/login/email=<email>/password=')
+@app.route('/login/email=/password=')
+def login(email=None, attempted_pwd=None):
+    try:
+        # Get Key
+        key = Key.query.filter_by(id=1).first().key
+        key = key.encode('utf-8')
+        cipher = Fernet(key)
+
+        # Get Decrypted User Password
+        user_info = User.query.filter_by(email=email).first()
+        saved_pwd = user_info.password
+        saved_pwd = saved_pwd.encode('utf-8')
+        decrypted_saved_pwd = cipher.decrypt(saved_pwd)
+        decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
+
+        if decrypted_saved_pwd == attempted_pwd:
+            return 'Access Granted'
+        else:
+            return 'Access Denied'
+    except Exception as e:
+        str(e)
 
 
 # [url]/users/page=[page]
