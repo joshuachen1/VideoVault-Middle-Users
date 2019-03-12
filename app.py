@@ -21,8 +21,8 @@ port = int(os.environ.get('PORT', 33507))
 
 # Import Models
 from user_models import User, Friends
-from user_models import RatedMovies
-from user_media_models import Movie
+from user_models import UserRatedMovieRel
+from user_media_models import Movie, UserRatedMovie
 
 # Force pymysql to be used as replacement for MySQLdb
 pymysql.install_as_MySQLdb()
@@ -84,24 +84,23 @@ def get_user_friend_list(user_id=None, page=1):
 @app.route('/user=<int:user_id>/movie_list')
 def get_user_movie_list(user_id=None, page=1):
     try:
-        movie_list = list()
+        user_rated_movies = list()
 
         # Ensure Valid User ID
         user = User.query.filter_by(id=user_id).first()
         if user is not None:
             # Get list of all entries with the User's ID
-            rated_movies = RatedMovies.query.filter_by(user_id=user_id)
+            rated_movies = UserRatedMovieRel.query.filter_by(user_id=user_id)
 
-            # Create list of the user's rated movie's IDs
-            movie_ids = list()
-            for movie in rated_movies:
-                movie_ids.append(movie.movie_id)
+            # Append the User Rated Movies
+            for rm in rated_movies:
+                movie = Movie.query.filter_by(id=rm.movie_id).first()
+                title = movie.title
+                rating = rm.user_rating
+                urm = UserRatedMovie(title, rating)
+                user_rated_movies.append(urm)
 
-            # Append the Movies that match the Movie IDs
-            for movie_id in movie_ids:
-                movie_list.append(Movie.query.filter_by(id=movie_id).first())
-
-        return paginated_json('movie_list', movie_list, page)
+        return paginated_json('movie_list', user_rated_movies, page)
 
     except Exception as e:
         return str(e)
