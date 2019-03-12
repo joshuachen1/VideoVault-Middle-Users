@@ -41,3 +41,26 @@ class Friends(db.Model):
             'user_id': self.user_id,
             'friend_id': self.friend_id,
         }
+
+
+class RatedMovies(db.Model):
+    __tablename__ = 'user_rated_movies'
+
+    user_id = db.Column(db.Integer, primary_key=True)
+    movie_id = db.Column(db.Integer, primary_key=True)
+    user_rating = db.Column(db.Integer)
+
+    def __init__(self, user_id, movie_id, user_rating):
+        self.user_id = user_id
+        self.movie_id = movie_id
+        self.user_rating = user_rating
+
+    def __repr__(self):
+        return '<user_id {} movie_id {} user_rating {}'.format(self.user_id, self.movie_id, self.user_rating)
+
+    def serialize(self):
+        return {
+            'user_id': self.user_id,
+            'movie_id': self.movie_id,
+            'rating': self.user_rating,
+        }
