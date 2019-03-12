@@ -65,3 +65,26 @@ class UserRatedMovieRel(db.Model):
             'rating': self.user_rating,
         }
 
+
+class UserRatedTVShowRel(db.Model):
+    __tablename__ = 'user_rated_tv_shows'
+
+    user_id = db.Column(db.Integer, primary_key=True)
+    tv_show_id = db.Column(db.Integer, primary_key=True)
+    user_rating = db.Column(db.Integer)
+
+    def __init__(self, user_id, tv_show_id, user_rating):
+        self.user_id = user_id
+        self.tv_show_id = tv_show_id
+        self.user_rating = user_rating
+
+    def __repr__(self):
+        return '<user_id {} tv_show_id {} user_rating {}'.format(self.user_id, self.tv_show_id, self.user_rating)
+
+    def serialize(self):
+        return {
+            'user_id': self.user_id,
+            'tv_show_id': self.tv_show_id,
+            'rating': self.user_rating,
+        }
+
