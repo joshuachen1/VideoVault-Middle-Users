@@ -19,5 +19,25 @@ class User(db.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'email': self.email
+            'email': self.email,
+        }
+
+
+class Friends(db.Model):
+    __tablename__ = 'user_friends'
+
+    user_id = db.Column(db.Integer, primary_key=True)
+    friend_id = db.Column(db.Integer, primary_key=True)
+
+    def __init__(self, user_id, friend_id):
+        self.user_id = user_id
+        self.friend_id = friend_id
+
+    def __repr__(self):
+        return '<user_id {} friend_id {}>'.format(self.user_id, self.friend_id)
+
+    def serialize(self):
+        return {
+            'user_id': self.user_id,
+            'friend_id': self.friend_id,
         }
