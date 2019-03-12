@@ -64,3 +64,4 @@ class UserRatedMovieRel(db.Model):
             'movie_id': self.movie_id,
             'rating': self.user_rating,
         }
+
