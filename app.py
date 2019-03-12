@@ -43,7 +43,9 @@ def hello_world():
 @app.route('/login/email=/password=', methods=['GET'])
 def login(email=None, attempted_pwd=None):
     try:
-        if email is None:
+        user_info = User.query.filter_by(email=email).first()
+
+        if email is None or user_info is None:
             return 'Email is does not exist.\nWant to create a new account?'
 
         # Get Key
@@ -52,7 +54,6 @@ def login(email=None, attempted_pwd=None):
         cipher = Fernet(key)
 
         # Get Decrypted User Password
-        user_info = User.query.filter_by(email=email).first()
         saved_pwd = user_info.password
         saved_pwd = saved_pwd.encode('utf-8')
         decrypted_saved_pwd = cipher.decrypt(saved_pwd)
