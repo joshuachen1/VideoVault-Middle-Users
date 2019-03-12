@@ -1,5 +1,6 @@
 from app import db
 
+
 # Models Regarding the movies Database
 class Movie(db.Model):
     __tablename__ = 'movies'
@@ -35,4 +36,19 @@ class Movie(db.Model):
             'url': self.url,
             'date_added': self.date_added,
             'image_url': self.image_url,
+        }
+
+
+class UserRatedMovie:
+    def __init__(self, title, rating):
+        self.title = title
+        self.rating = rating
+
+    def __repr__(self):
+        return '<title {} rating {}>'.format(self.title, self.rating)
+
+    def serialize(self):
+        return {
+            'title': self.title,
+            'rating': self.rating,
         }
