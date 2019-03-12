@@ -24,7 +24,7 @@ class User(db.Model):
 
 
 class Friends(db.Model):
-    __tablename__ = 'user_friends'
+    __tablename__ = 'user_friend_list'
 
     user_id = db.Column(db.Integer, primary_key=True)
     friend_id = db.Column(db.Integer, primary_key=True)
