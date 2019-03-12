@@ -20,7 +20,7 @@ db = SQLAlchemy(app)
 port = int(os.environ.get('PORT', 33507))
 
 # Import Models
-from models import User
+from models import User, Friends
 
 # Force pymysql to be used as replacement for MySQLdb
 pymysql.install_as_MySQLdb()
@@ -32,6 +32,8 @@ def hello_world():
     return 'Home Page'
 
 
+# [url]/users/page=[page]
+# [url]/users
 @app.route('/users/page=<int:page>')
 @app.route('/users/page=')
 @app.route('/users')
@@ -39,6 +41,31 @@ def get_users(page=1):
     try:
         users = User.query.order_by().all()
         return paginated_json('users', users, page)
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/user=<int:user_id>/friends')
+def get_user_friends(user_id=None, page=1):
+    try:
+        friend_list = list()
+
+        # Determine User ID
+        user = User.query.filter_by(id=user_id).first()
+        if user is not None:
+            # Get list of all entries with the User's ID
+            friends = Friends.query.filter_by(user_id=user.id)
+            friend_ids = list()
+
+            # Create list of the user's friend's IDs
+            for friend in friends:
+                friend_ids.append(friend.friend_id)
+
+            # Append the Users that match the friend IDs
+            for friend_id in friend_ids:
+                friend_list.append(User.query.filter_by(id=friend_id).first())
+
+        return paginated_json('friends', friend_list, page)
     except Exception as e:
         return str(e)
 
