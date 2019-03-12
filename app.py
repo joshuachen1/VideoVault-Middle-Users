@@ -20,7 +20,9 @@ db = SQLAlchemy(app)
 port = int(os.environ.get('PORT', 33507))
 
 # Import Models
-from models import User, Friends
+from user_models import User, Friends
+from user_models import RatedMovies
+from user_media_models import Movie
 
 # Force pymysql to be used as replacement for MySQLdb
 pymysql.install_as_MySQLdb()
@@ -45,23 +47,23 @@ def get_users(page=1):
         return str(e)
 
 
-# [url//users=[user_id]/friends/page=[page]
-# [url//users=[user_id]/friends
+# [url]/users=[user_id]/friends/page=[page]
+# [url]/users=[user_id]/friends
 @app.route('/user=<int:user_id>/friends/page=<int:page>')
 @app.route('/user=<int:user_id>/friends/page=')
 @app.route('/user=<int:user_id>/friends')
-def get_user_friends(user_id=None, page=1):
+def get_user_friend_list(user_id=None, page=1):
     try:
         friend_list = list()
 
-        # Determine User ID
+        # Ensure Valid User ID
         user = User.query.filter_by(id=user_id).first()
         if user is not None:
             # Get list of all entries with the User's ID
-            friends = Friends.query.filter_by(user_id=user.id)
-            friend_ids = list()
+            friends = Friends.query.filter_by(user_id=user_id)
 
             # Create list of the user's friend's IDs
+            friend_ids = list()
             for friend in friends:
                 friend_ids.append(friend.friend_id)
 
@@ -70,6 +72,37 @@ def get_user_friends(user_id=None, page=1):
                 friend_list.append(User.query.filter_by(id=friend_id).first())
 
         return paginated_json('friends', friend_list, page)
+
+    except Exception as e:
+        return str(e)
+
+
+# [url]/users=[user_id]/movie_list/page=[page]
+# [url]/users=[user_id]/movie_list
+@app.route('/user=<int:user_id>/movie_list/page=<int:page>')
+@app.route('/user=<int:user_id>/movie_list/page=')
+@app.route('/user=<int:user_id>/movie_list')
+def get_user_movie_list(user_id=None, page=1):
+    try:
+        movie_list = list()
+
+        # Ensure Valid User ID
+        user = User.query.filter_by(id=user_id).first()
+        if user is not None:
+            # Get list of all entries with the User's ID
+            rated_movies = RatedMovies.query.filter_by(user_id=user_id)
+
+            # Create list of the user's rated movie's IDs
+            movie_ids = list()
+            for movie in rated_movies:
+                movie_ids.append(movie.movie_id)
+
+            # Append the Movies that match the Movie IDs
+            for movie_id in movie_ids:
+                movie_list.append(Movie.query.filter_by(id=movie_id).first())
+
+        return paginated_json('movie_list', movie_list, page)
+
     except Exception as e:
         return str(e)
 
