@@ -7,6 +7,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.VARCHAR)
     email = db.Column(db.VARCHAR)
+    password = db.Column(db.TEXT)
 
     def __init__(self, name, email):
         self.name = name

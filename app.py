@@ -1,3 +1,4 @@
+from cryptography.fernet import Fernet
 from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -20,6 +21,7 @@ db = SQLAlchemy(app)
 port = int(os.environ.get('PORT', 33507))
 
 # Import Models
+from crypto_models import Key
 from user_models import User, Friends
 from user_models import UserRatedMovieRel, UserRatedTVShowRel
 from user_media_models import Movie, TVShows, UserRatedMedia
@@ -34,11 +36,38 @@ def hello_world():
     return 'Home Page'
 
 
+# [url]/login/email=[email]/password=[password]
+@app.route('/login/email=<email>/password=<attempted_pwd>', methods=['GET'])
+@app.route('/login/email=/password=<attempted_pwd>', methods=['GET'])
+@app.route('/login/email=<email>/password=', methods=['GET'])
+@app.route('/login/email=/password=', methods=['GET'])
+def login(email=None, attempted_pwd=None):
+    try:
+        # Get Key
+        key = Key.query.filter_by(id=1).first().key
+        key = key.encode('utf-8')
+        cipher = Fernet(key)
+
+        # Get Decrypted User Password
+        user_info = User.query.filter_by(email=email).first()
+        saved_pwd = user_info.password
+        saved_pwd = saved_pwd.encode('utf-8')
+        decrypted_saved_pwd = cipher.decrypt(saved_pwd)
+        decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
+
+        if decrypted_saved_pwd == attempted_pwd:
+            return 'Access Granted'
+        else:
+            return 'Access Denied'
+    except Exception as e:
+        str(e)
+
+
 # [url]/users/page=[page]
 # [url]/users
-@app.route('/users/page=<int:page>')
-@app.route('/users/page=')
-@app.route('/users')
+@app.route('/users/page=<int:page>', methods=['GET'])
+@app.route('/users/page=', methods=['GET'])
+@app.route('/users', methods=['GET'])
 def get_users(page=1):
     try:
         users = User.query.order_by().all()
@@ -49,9 +78,9 @@ def get_users(page=1):
 
 # [url]/users=[user_id]/friends/page=[page]
 # [url]/users=[user_id]/friends
-@app.route('/user=<int:user_id>/friends/page=<int:page>')
-@app.route('/user=<int:user_id>/friends/page=')
-@app.route('/user=<int:user_id>/friends')
+@app.route('/user=<int:user_id>/friends/page=<int:page>', methods=['GET'])
+@app.route('/user=<int:user_id>/friends/page=', methods=['GET'])
+@app.route('/user=<int:user_id>/friends', methods=['GET'])
 def get_user_friend_list(user_id=None, page=1):
     try:
         friend_list = list()
@@ -79,9 +108,9 @@ def get_user_friend_list(user_id=None, page=1):
 
 # [url]/users=[user_id]/movie_list/page=[page]
 # [url]/users=[user_id]/movie_list
-@app.route('/user=<int:user_id>/movie_list/page=<int:page>')
-@app.route('/user=<int:user_id>/movie_list/page=')
-@app.route('/user=<int:user_id>/movie_list')
+@app.route('/user=<int:user_id>/movie_list/page=<int:page>', methods=['GET'])
+@app.route('/user=<int:user_id>/movie_list/page=', methods=['GET'])
+@app.route('/user=<int:user_id>/movie_list', methods=['GET'])
 def get_user_movie_list(user_id=None, page=1):
     try:
         user_rated_movies = list()
@@ -108,9 +137,9 @@ def get_user_movie_list(user_id=None, page=1):
 
 # [url]/users=[user_id]/tv_show_list/page=[page]
 # [url]/users=[user_id]/tv_show_list
-@app.route('/user=<int:user_id>/tv_show_list/page=<int:page>')
-@app.route('/user=<int:user_id>/tv_show_list/page=')
-@app.route('/user=<int:user_id>/tv_show_list')
+@app.route('/user=<int:user_id>/tv_show_list/page=<int:page>', methods=['GET'])
+@app.route('/user=<int:user_id>/tv_show_list/page=', methods=['GET'])
+@app.route('/user=<int:user_id>/tv_show_list', methods=['GET'])
 def get_user_tv_show_list(user_id=None, page=1):
     try:
         user_rated_tv_shows = list()
