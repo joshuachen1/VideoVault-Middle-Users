@@ -19,6 +19,7 @@ db = SQLAlchemy(app)
 port = int(os.environ.get('PORT', 33507))
 
 # Import Models
+from models import User
 
 # Force pymysql to be used as replacement for MySQLdb
 pymysql.install_as_MySQLdb()
@@ -28,6 +29,17 @@ pymysql.install_as_MySQLdb()
 @app.route('/')
 def hello_world():
     return 'Home Page'
+
+
+@app.route('/users')
+def get_users():
+    try:
+        users = User.query.order_by().all()
+
+        return jsonify({'Users': [user.serialize() for user in users]})
+
+    except Exception as e:
+        return str(e)
 
 
 if __name__ == '__main__':
