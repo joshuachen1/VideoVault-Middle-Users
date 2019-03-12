@@ -39,7 +39,7 @@ class Movie(db.Model):
         }
 
 
-class UserRatedMovie:
+class UserRatedMedia:
     def __init__(self, title, rating):
         self.title = title
         self.rating = rating
