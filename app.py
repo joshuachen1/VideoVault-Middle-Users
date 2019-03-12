@@ -36,6 +36,7 @@ def hello_world():
     return 'Home Page'
 
 
+# [url]/login/email=[email]/password=[password]
 @app.route('/login/email=<email>/password=<attempted_pwd>')
 @app.route('/login/email=/password=<attempted_pwd>')
 @app.route('/login/email=<email>/password=')
