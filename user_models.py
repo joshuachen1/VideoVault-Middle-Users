@@ -43,7 +43,7 @@ class Friends(db.Model):
         }
 
 
-class RatedMovies(db.Model):
+class UserRatedMovieRel(db.Model):
     __tablename__ = 'user_rated_movies'
 
     user_id = db.Column(db.Integer, primary_key=True)
