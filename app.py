@@ -45,6 +45,10 @@ def get_users(page=1):
         return str(e)
 
 
+# [url//users=[user_id]/friends/page=[page]
+# [url//users=[user_id]/friends
+@app.route('/user=<int:user_id>/friends/page=<int:page>')
+@app.route('/user=<int:user_id>/friends/page=')
 @app.route('/user=<int:user_id>/friends')
 def get_user_friends(user_id=None, page=1):
     try:
