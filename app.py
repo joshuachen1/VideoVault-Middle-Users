@@ -43,22 +43,26 @@ def hello_world():
 @app.route('/login/email=/password=', methods=['GET'])
 def login(email=None, attempted_pwd=None):
     try:
+        user_info = User.query.filter_by(email=email).first()
+
+        if email is None or user_info is None:
+            return 'Email is does not exist.\nWant to create a new account?'
+
         # Get Key
         key = Key.query.filter_by(id=1).first().key
         key = key.encode('utf-8')
         cipher = Fernet(key)
 
         # Get Decrypted User Password
-        user_info = User.query.filter_by(email=email).first()
         saved_pwd = user_info.password
         saved_pwd = saved_pwd.encode('utf-8')
         decrypted_saved_pwd = cipher.decrypt(saved_pwd)
         decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
 
         if decrypted_saved_pwd == attempted_pwd:
-            return 'Access Granted'
+            return 'Welcome back!'
         else:
-            return 'Access Denied'
+            return 'That password was incorrect. Please try again.'
     except Exception as e:
         str(e)
 
