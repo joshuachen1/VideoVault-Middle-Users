@@ -9,6 +9,7 @@ class Config(object):
     CSRF_ENABLED = True
     SECRET_KEY = 'key'
     SQLALCHEMY_DATABASE_URI = os.environ['AWS_RDS_URL']
+    POSTS_PER_PAGE = 5  # How many items to display per page (for pagination)
 
 
 class ProductionConfig(Config):
