@@ -43,6 +43,9 @@ def hello_world():
 @app.route('/login/email=/password=', methods=['GET'])
 def login(email=None, attempted_pwd=None):
     try:
+        if email is None:
+            return 'Email is does not exist.\nWant to create a new account?'
+
         # Get Key
         key = Key.query.filter_by(id=1).first().key
         key = key.encode('utf-8')
@@ -56,9 +59,9 @@ def login(email=None, attempted_pwd=None):
         decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
 
         if decrypted_saved_pwd == attempted_pwd:
-            return 'Access Granted'
+            return 'Welcome back!'
         else:
-            return 'Access Denied'
+            return 'That password was incorrect. Please try again.'
     except Exception as e:
         str(e)
 
