@@ -121,7 +121,7 @@ def get_user_tv_show_list(user_id=None, page=1):
             # Get list of all entries with the User's ID
             rated_tv_shows = UserRatedTVShowRel.query.filter_by(user_id=user_id)
 
-            # Append the User Rated Movies
+            # Append the User Rated TV Shows
             for rts in rated_tv_shows:
                 tv_show = TVShows.query.filter_by(id=rts.tv_show_id).first()
                 title = tv_show.title

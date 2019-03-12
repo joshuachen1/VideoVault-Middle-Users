@@ -87,4 +87,3 @@ class UserRatedTVShowRel(db.Model):
             'tv_show_id': self.tv_show_id,
             'rating': self.user_rating,
         }
-
