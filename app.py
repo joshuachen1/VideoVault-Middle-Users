@@ -38,8 +38,8 @@ def hello_world():
 
 # [url]/login/email=[email]/password=[password]
 @app.route('/login/email=<email>/password=<attempted_pwd>', methods=['GET'])
-@app.route('/login/email=/password=<attempted_pwd>', methods=['GET'])
 @app.route('/login/email=<email>/password=', methods=['GET'])
+@app.route('/login/email=/password=<attempted_pwd>', methods=['GET'])
 @app.route('/login/email=/password=', methods=['GET'])
 def login(email=None, attempted_pwd=None):
     try:
@@ -64,7 +64,7 @@ def login(email=None, attempted_pwd=None):
         else:
             return 'That password was incorrect. Please try again.'
     except Exception as e:
-        str(e)
+        return str(e)
 
 
 # [url]/users/page=[page]
@@ -85,6 +85,9 @@ def get_users(page=1):
 @app.route('/user=<int:user_id>/friends/page=<int:page>', methods=['GET'])
 @app.route('/user=<int:user_id>/friends/page=', methods=['GET'])
 @app.route('/user=<int:user_id>/friends', methods=['GET'])
+@app.route('/user=/friends/page=<int:page>', methods=['GET'])
+@app.route('/user=/friends/page=', methods=['GET'])
+@app.route('/user=/friends', methods=['GET'])
 def get_user_friend_list(user_id=None, page=1):
     try:
         friend_list = list()
@@ -115,6 +118,9 @@ def get_user_friend_list(user_id=None, page=1):
 @app.route('/user=<int:user_id>/movie_list/page=<int:page>', methods=['GET'])
 @app.route('/user=<int:user_id>/movie_list/page=', methods=['GET'])
 @app.route('/user=<int:user_id>/movie_list', methods=['GET'])
+@app.route('/user=/movie_list/page=<int:page>', methods=['GET'])
+@app.route('/user=/movie_list/page=', methods=['GET'])
+@app.route('/user=/movie_list', methods=['GET'])
 def get_user_movie_list(user_id=None, page=1):
     try:
         user_rated_movies = list()
@@ -144,6 +150,9 @@ def get_user_movie_list(user_id=None, page=1):
 @app.route('/user=<int:user_id>/tv_show_list/page=<int:page>', methods=['GET'])
 @app.route('/user=<int:user_id>/tv_show_list/page=', methods=['GET'])
 @app.route('/user=<int:user_id>/tv_show_list', methods=['GET'])
+@app.route('/user=/tv_show_list/page=<int:page>', methods=['GET'])
+@app.route('/user=/tv_show_list/page=', methods=['GET'])
+@app.route('/user=/tv_show_list', methods=['GET'])
 def get_user_tv_show_list(user_id=None, page=1):
     try:
         user_rated_tv_shows = list()

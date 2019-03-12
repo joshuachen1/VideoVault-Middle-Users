@@ -8,4 +8,4 @@ class Key(db.Model):
     key = db.Column(db.TEXT)
 
     def __init__(self):
-        temp = None
+        pass
