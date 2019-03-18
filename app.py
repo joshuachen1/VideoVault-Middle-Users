@@ -2,6 +2,7 @@ from cryptography.fernet import Fernet
 from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from datetime import date
 import pymysql
 import math
 import os
@@ -78,6 +79,7 @@ def signup():
         email = str(data['email'])
         password = str(data['password'])
         card_num = str(data['card_num'])
+        sub_date = date.today()
 
         # Check if email exists
         check_unique = User.query.filter_by(email=email).first()
@@ -110,6 +112,7 @@ def signup():
                 password=encrypted_pwd,
                 card_num=encrypted_cn,
                 num_slots=10,
+                sub_date=sub_date,
             )
             db.session.add(user)
 
