@@ -11,7 +11,7 @@ class Movie(db.Model):
     service = db.Column(db.VARCHAR)
     tag = db.Column(db.VARCHAR)
     url = db.Column(db.VARCHAR)
-    date_added = db.Column(db.Date)
+    date_added = db.Column(db.DATE)
     image_url = db.Column(db.VARCHAR)
 
     def __init__(self, title, year, service, tag, url, date_added, image_url):
@@ -50,7 +50,7 @@ class TVShows(db.Model):
     service = db.Column(db.VARCHAR)
     tag = db.Column(db.VARCHAR)
     url = db.Column(db.VARCHAR)
-    date_added = db.Column(db.Date)
+    date_added = db.Column(db.DATE)
     image_url = db.Column(db.VARCHAR)
 
     def __init__(self, title, year, num_seasons, num_episodes, service, tag, url, date_added, image_url):

@@ -11,14 +11,16 @@ class User(db.Model):
     password = db.Column(db.TEXT)
     card_num = db.Column(db.VARCHAR, unique=True)
     num_slots = db.Column(db.Integer)
+    sub_date = db.Column(db.Date)
 
-    def __init__(self, name, username, email, password, card_num, num_slots):
+    def __init__(self, name, username, email, password, card_num, num_slots, sub_date):
         self.name = name
         self.username = username
         self.email = email
         self.password = password
         self.card_num = card_num
         self.num_slots = num_slots
+        self.sub_date = sub_date
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
@@ -30,6 +32,7 @@ class User(db.Model):
             'username': self.username,
             'email': self.email,
             'num_slots': self.num_slots,
+            'sub_date': self.sub_date,
         }
 
 
