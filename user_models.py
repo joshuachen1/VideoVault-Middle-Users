@@ -99,6 +99,7 @@ class UserRatedTVShowRel(db.Model):
         }
 
 
+
 class UserSlots(db.Model):
     __tablename__ = 'user_slots'
 
@@ -132,3 +133,4 @@ class Slot:
             'slot_num': self.slot_num,
             'tv_show_title': self.tv_show_title,
         }
+
