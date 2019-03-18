@@ -110,3 +110,25 @@ class UserSlots(db.Model):
         self.user_id = user_id
         self.slot_num = slot_num
         self.tv_show_id = tv_show_id
+
+
+class DisplayUserSlots:
+    def __init__(self, slots):
+        self.slots = slots
+
+    def serialize(self):
+        return {
+            'slots': [slot.serialize() for slot in self.slots]
+        }
+
+
+class Slot:
+    def __init__(self, slot_num, tv_show_title):
+        self.slot_num = slot_num
+        self.tv_show_title = tv_show_title
+
+    def serialize(self):
+        return {
+            'slot_num': self.slot_num,
+            'tv_show_title': self.tv_show_title,
+        }
