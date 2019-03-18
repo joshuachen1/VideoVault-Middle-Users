@@ -80,7 +80,7 @@ def signup():
         password = str(data['password'])
         card_num = str(data['card_num'])
         num_slots = 10
-        sub_date = date.today()
+        sub_date = str(date.today())
 
         # Check if email exists
         check_unique = User.query.filter_by(email=email).first()
@@ -113,7 +113,7 @@ def signup():
                 password=encrypted_pwd,
                 card_num=encrypted_cn,
                 num_slots=num_slots,
-                sub_date=sub_date,
+                sub_date=sub_date
             )
             db.session.add(user)
 
