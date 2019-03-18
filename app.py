@@ -67,6 +67,58 @@ def login(email=None, attempted_pwd=None):
         return str(e)
 
 
+# [url]/signup
+@app.route('/signup', methods=['POST'])
+def signup():
+    try:
+        data = request.get_json()
+        name = str(data['name'])
+        username = str(data['username'])
+        email = str(data['email'])
+        password = str(data['password'])
+        card_num = str(data['card_num'])
+
+        # Check if email exists
+        check_unique = User.query.filter_by(email=email).first()
+        if check_unique is not None:
+            return 'email already exists.'
+
+        # Check if username exists
+        check_unique = User.query.filter_by(username=username).first()
+        if check_unique is not None:
+            return 'username already exists.'
+
+        # Get Key
+        key = Key.query.filter_by(id=1).first().key
+        key = key.encode('utf-8')
+        cipher = Fernet(key)
+
+        # Encrypt User Password
+        password = password.encode('utf-8')
+        encrypted_pwd = cipher.encrypt(password)
+
+        # Encrypt User Credit Card Number
+        card_num = card_num.encode('utf-8')
+        encrypted_cn = cipher.encrypt(card_num)
+
+        try:
+            user = User(
+                name=name,
+                username=username,
+                email=email,
+                password=encrypted_pwd,
+                card_num=encrypted_cn
+            )
+            db.session.add(user)
+            db.session.commit()
+
+            return 'user added.'
+        except Exception as e:
+            return str(e)
+    except Exception as e:
+        return str(e)
+
+
 # [url]/users/page=[page]
 # [url]/users
 @app.route('/users/page=<int:page>', methods=['GET'])
@@ -85,9 +137,6 @@ def get_users(page=1):
 @app.route('/user=<int:user_id>/friends/page=<int:page>', methods=['GET'])
 @app.route('/user=<int:user_id>/friends/page=', methods=['GET'])
 @app.route('/user=<int:user_id>/friends', methods=['GET'])
-@app.route('/user=/friends/page=<int:page>', methods=['GET'])
-@app.route('/user=/friends/page=', methods=['GET'])
-@app.route('/user=/friends', methods=['GET'])
 def get_user_friend_list(user_id=None, page=1):
     try:
         friend_list = list()
@@ -118,9 +167,6 @@ def get_user_friend_list(user_id=None, page=1):
 @app.route('/user=<int:user_id>/movie_list/page=<int:page>', methods=['GET'])
 @app.route('/user=<int:user_id>/movie_list/page=', methods=['GET'])
 @app.route('/user=<int:user_id>/movie_list', methods=['GET'])
-@app.route('/user=/movie_list/page=<int:page>', methods=['GET'])
-@app.route('/user=/movie_list/page=', methods=['GET'])
-@app.route('/user=/movie_list', methods=['GET'])
 def get_user_movie_list(user_id=None, page=1):
     try:
         user_rated_movies = list()
@@ -150,9 +196,6 @@ def get_user_movie_list(user_id=None, page=1):
 @app.route('/user=<int:user_id>/tv_show_list/page=<int:page>', methods=['GET'])
 @app.route('/user=<int:user_id>/tv_show_list/page=', methods=['GET'])
 @app.route('/user=<int:user_id>/tv_show_list', methods=['GET'])
-@app.route('/user=/tv_show_list/page=<int:page>', methods=['GET'])
-@app.route('/user=/tv_show_list/page=', methods=['GET'])
-@app.route('/user=/tv_show_list', methods=['GET'])
 def get_user_tv_show_list(user_id=None, page=1):
     try:
         user_rated_tv_shows = list()
