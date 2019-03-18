@@ -6,12 +6,17 @@ class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.VARCHAR)
+    username = db.Column(db.VARCHAR, unique=True)
     email = db.Column(db.VARCHAR)
     password = db.Column(db.TEXT)
+    card_num = db.Column(db.VARCHAR, unique=True)
 
-    def __init__(self, name, email):
+    def __init__(self, name, username, email, password, card_num):
         self.name = name
+        self.username = username
         self.email = email
+        self.password = password
+        self.card_num = card_num
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
@@ -20,6 +25,7 @@ class User(db.Model):
         return {
             'id': self.id,
             'name': self.name,
+            'username': self.username,
             'email': self.email,
         }
 
