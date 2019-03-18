@@ -22,7 +22,8 @@ port = int(os.environ.get('PORT', 33507))
 
 # Import Models
 from crypto_models import Key
-from user_models import User, UserSlots, Friends
+from user_models import User, Friends
+from user_models import Slot, UserSlots, DisplayUserSlots
 from user_models import UserRatedMovieRel, UserRatedTVShowRel
 from user_media_models import Movie, TVShows, UserRatedMedia
 
@@ -168,6 +169,33 @@ def get_user_friend_list(user_id=None, page=1):
                 friend_list.append(User.query.filter_by(id=friend_id).first())
 
         return paginated_json('friends', friend_list, page)
+
+    except Exception as e:
+        return str(e)
+
+
+# Display user's slots
+# [url]/user=[user_id]/slots
+@app.route('/user=<int:user_id>/slots', methods=['GET'])
+def get_user_slots(user_id=None):
+    try:
+        # Ensure Valid User ID
+        user = User.query.filter_by(id=user_id).first()
+        if user is not None:
+            # Get list of all entries with the User's ID
+            user_slots = UserSlots.query.filter_by(user_id=user_id)
+
+            slot_info = list()
+            for user_slot in user_slots:
+                if user_slot.tv_show_id is None:
+                    slot = Slot(user_slot.slot_num, None)
+                else:
+                    tv_show = TVShows.query.filter_by(id=user_slot.tv_show_id).first()
+                    slot = Slot(user_slot.slot_num, tv_show.title)
+                slot_info.append(slot)
+
+            result = DisplayUserSlots(slot_info)
+            return jsonify({'user_slots': result.serialize()})
 
     except Exception as e:
         return str(e)
