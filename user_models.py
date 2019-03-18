@@ -10,13 +10,15 @@ class User(db.Model):
     email = db.Column(db.VARCHAR)
     password = db.Column(db.TEXT)
     card_num = db.Column(db.VARCHAR, unique=True)
+    num_slots = db.Column(db.Integer)
 
-    def __init__(self, name, username, email, password, card_num):
+    def __init__(self, name, username, email, password, card_num, num_slots):
         self.name = name
         self.username = username
         self.email = email
         self.password = password
         self.card_num = card_num
+        self.num_slots = num_slots
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
@@ -27,6 +29,7 @@ class User(db.Model):
             'name': self.name,
             'username': self.username,
             'email': self.email,
+            'num_slots': self.num_slots,
         }
 
 
@@ -95,3 +98,15 @@ class UserRatedTVShowRel(db.Model):
             'rating': self.user_rating,
         }
 
+
+class UserSlots(db.Model):
+    __tablename__ = 'user_slots'
+
+    user_id = db.Column(db.Integer, primary_key=True)
+    slot_num = db.Column(db.Integer, primary_key=True)
+    tv_show_id = db.Column(db.Integer)
+
+    def __init__(self, user_id, slot_num, tv_show_id):
+        self.user_id = user_id
+        self.slot_num = slot_num
+        self.tv_show_id = tv_show_id
