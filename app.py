@@ -141,6 +141,73 @@ def signup():
         return str(e)
 
 
+@app.route('/add_slot', methods=['PUT'])
+def add_slot():
+    data = request.get_json()
+    newId = data['id']
+    name = str(data['name'])
+    username = str(data['username'])
+    email = str(data['email'])
+    password = str(data['password'])
+    card_num = str(data['card_num'])
+    num_slots = data['num_slots']
+    sub_date = data['sub_date']
+    try:
+        user = User.query.filter_by(id=newId).first()
+        if newId is not None:
+            user.id = newId
+        user.name = name
+        user.username = username
+        user.email = email
+        user.password = password
+        user.card_num = card_num
+        user.num_slots = num_slots
+        user.sub_date = sub_date
+        db.session.commit()
+
+        add_empty_slot(newId, num_slots)
+
+        return "1 slot added"
+    except Exception as e:
+        return str(e)
+
+
+def add_empty_slot(id, slot_num):
+    user_slots = UserSlots(
+        user_id = id,
+        slot_num = slot_num,
+        tv_show_id = None
+    )
+    db.session.add(user_slots)
+    db.session.commit()
+    return "user_slots added"
+
+
+# Json input: user_id, slot_num, tv_show_title
+@app.route('/add_tv_show', methods=['PUT'])
+def add_tv_show():
+    data = request.get_json()
+    user_id = data['user_id']
+    slot_num = data['slot_num']
+    tv_show_title = str(data['tv_show_title'])
+    tv_show_id = tv_show_to_id(tv_show_title)
+    try:
+        user=UserSlots.query.filter_by(slot_num=slot_num).filter_by(user_id=user_id).first()
+        user.user_id = user_id
+        user.slot_num = slot_num
+        user.tv_show_id = tv_show_id
+
+        db.session.commit()
+        return "tv show added"
+    except Exception as e:
+        return str(e)
+
+
+def tv_show_to_id(title):
+    tv_show = TVShows.query.filter_by(title=title).first()
+    return tv_show.id
+
+
 # [url]/users/page=[page]
 # [url]/users
 @app.route('/users/page=<int:page>', methods=['GET'])
