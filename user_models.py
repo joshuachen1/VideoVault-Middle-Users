@@ -107,6 +107,34 @@ class UserRatedMovieRel(db.Model):
         }
 
 
+class DisplayRatedMovie:
+    def __init__(self, user_id, rated_movies):
+        self.user_id = user_id
+        self.rated_movies = rated_movies
+
+    def serialize(self):
+        return {
+            'user_id': self.user_id,
+            'rated_movies': [rm.serialize() for rm in self.rated_movies]
+        }
+
+
+class RatedMovie:
+    def __init__(self, movie_id, movie_title, image_url, user_rating):
+        self.movie_id = movie_id
+        self.movie_title = movie_title
+        self.image_url = image_url
+        self.user_rating = user_rating
+
+    def serialize(self):
+        return {
+            'movie_id': self.movie_id,
+            'movie_title': self.movie_title,
+            'image_url': self.image_url,
+            'rating': self.user_rating,
+        }
+
+
 class UserRatedTVShowRel(db.Model):
     __tablename__ = 'user_rated_tv_shows'
 
