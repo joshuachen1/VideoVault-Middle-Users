@@ -2,6 +2,7 @@ from cryptography.fernet import Fernet
 from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from datetime import date
 import pymysql
 import math
 import os
@@ -22,6 +23,7 @@ port = int(os.environ.get('PORT', 33507))
 
 # Import Models
 from crypto_models import Key
+from user_models import Signup, Login
 from user_models import User, Friends
 from user_models import Slot, UserSlots, DisplayUserSlots
 from user_models import UserRatedMovieRel, UserRatedTVShowRel
@@ -47,7 +49,8 @@ def login(email=None, attempted_pwd=None):
         user_info = User.query.filter_by(email=email).first()
 
         if email is None or user_info is None:
-            return 'Email is does not exist.\nWant to create a new account?'
+            result = Login(True, False, False)
+            return jsonify(result.serialize())
 
         # Get Key
         key = Key.query.filter_by(id=1).first().key
@@ -61,9 +64,11 @@ def login(email=None, attempted_pwd=None):
         decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
 
         if decrypted_saved_pwd == attempted_pwd:
-            return 'Welcome back!'
+            result = Login(False, False, True)
+            return jsonify(result.serialize())
         else:
-            return 'That password was incorrect. Please try again.'
+            result = Login(False, True, False)
+            return jsonify(result.serialize())
     except Exception as e:
         return str(e)
 
@@ -78,16 +83,20 @@ def signup():
         email = str(data['email'])
         password = str(data['password'])
         card_num = str(data['card_num'])
+        num_slots = 10
+        sub_date = str(date.today())
 
         # Check if email exists
         check_unique = User.query.filter_by(email=email).first()
         if check_unique is not None:
-            return 'email already exists.'
+            result = Signup(True, False, False)
+            return jsonify(result.serialize())
 
         # Check if username exists
         check_unique = User.query.filter_by(username=username).first()
         if check_unique is not None:
-            return 'username already exists.'
+            result = Signup(False, True, False)
+            return jsonify(result.serialize())
 
         # Get Key
         key = Key.query.filter_by(id=1).first().key
@@ -109,11 +118,11 @@ def signup():
                 email=email,
                 password=encrypted_pwd,
                 card_num=encrypted_cn,
-                num_slots=10,
+                num_slots=num_slots,
+                sub_date=sub_date
             )
             db.session.add(user)
 
-            num_slots = User.query.filter_by(username=username).first().num_slots
             for i in range(num_slots):
                 slot = UserSlots(
                     user_id=User.query.filter_by(username=username).first().id,
@@ -124,7 +133,8 @@ def signup():
 
             db.session.commit()
 
-            return 'user added.'
+            result = Signup(False, False, True)
+            return jsonify(result.serialize())
         except Exception as e:
             return str(e)
     except Exception as e:

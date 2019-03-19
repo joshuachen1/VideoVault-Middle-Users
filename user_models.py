@@ -1,6 +1,36 @@
 from app import db
 
 
+class Signup:
+    def __init__(self, email_taken: bool, username_taken: bool, signup_successful: bool):
+        self.email_taken = email_taken
+        self.username_taken = username_taken
+        self.signup_successful = signup_successful
+
+    def serialize(self):
+        return {
+            'email_taken': self.email_taken,
+            'username_taken': self.username_taken,
+            'signup_successful': self.signup_successful,
+        }
+
+
+class Login:
+    def __init__(self, invalid_email: bool, invalid_password: bool, login_successful: bool):
+        self.invalid_email = invalid_email
+        # self.invalid_username = invalid_username
+        self.invalid_password = invalid_password
+        self.login_successful = login_successful
+
+    def serialize(self):
+        return {
+            'invalid_email': self.invalid_email,
+            # 'invalid_username': self.invalid_username,
+            'invalid_password': self.invalid_password,
+            'login_successful': self.login_successful,
+        }
+
+
 class User(db.Model):
     __tablename__ = 'users'
 
@@ -11,14 +41,16 @@ class User(db.Model):
     password = db.Column(db.TEXT)
     card_num = db.Column(db.VARCHAR, unique=True)
     num_slots = db.Column(db.Integer)
+    sub_date = db.Column(db.Date)
 
-    def __init__(self, name, username, email, password, card_num, num_slots):
+    def __init__(self, name, username, email, password, card_num, num_slots, sub_date):
         self.name = name
         self.username = username
         self.email = email
         self.password = password
         self.card_num = card_num
         self.num_slots = num_slots
+        self.sub_date = sub_date
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
@@ -30,6 +62,7 @@ class User(db.Model):
             'username': self.username,
             'email': self.email,
             'num_slots': self.num_slots,
+            'sub_date': self.sub_date,
         }
 
 
@@ -97,7 +130,6 @@ class UserRatedTVShowRel(db.Model):
             'tv_show_id': self.tv_show_id,
             'rating': self.user_rating,
         }
-
 
 
 class UserSlots(db.Model):
