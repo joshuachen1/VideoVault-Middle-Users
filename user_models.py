@@ -18,14 +18,12 @@ class Signup:
 class Login:
     def __init__(self, invalid_email: bool, invalid_password: bool, login_successful: bool):
         self.invalid_email = invalid_email
-        # self.invalid_username = invalid_username
         self.invalid_password = invalid_password
         self.login_successful = login_successful
 
     def serialize(self):
         return {
             'invalid_email': self.invalid_email,
-            # 'invalid_username': self.invalid_username,
             'invalid_password': self.invalid_password,
             'login_successful': self.login_successful,
         }
@@ -156,13 +154,15 @@ class DisplayUserSlots:
 
 
 class Slot:
-    def __init__(self, slot_num, tv_show_title):
+    def __init__(self, slot_num, tv_show_title, image_url):
         self.slot_num = slot_num
         self.tv_show_title = tv_show_title
+        self.image_url = image_url
 
     def serialize(self):
         return {
             'slot_num': self.slot_num,
             'tv_show_title': self.tv_show_title,
+            'image_url': self.image_url,
         }
 
