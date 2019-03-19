@@ -26,7 +26,8 @@ from crypto_models import Key
 from user_models import Signup, Login
 from user_models import User, Friends
 from user_models import Slot, UserSlots, DisplayUserSlots
-from user_models import UserRatedMovieRel, UserRatedTVShowRel
+from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
+from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
 from user_media_models import Movie, TVShows, UserRatedMedia
 
 # Force pymysql to be used as replacement for MySQLdb
@@ -200,7 +201,7 @@ def get_user_slots(user_id=None):
                     slot = Slot(user_slot.slot_num, None)
                 else:
                     tv_show = TVShows.query.filter_by(id=user_slot.tv_show_id).first()
-                    slot = Slot(user_slot.slot_num, tv_show.title)
+                    slot = Slot(user_slot.slot_num, tv_show.title, tv_show.image_url)
                 slot_info.append(slot)
 
             result = DisplayUserSlots(slot_info)
@@ -210,59 +211,67 @@ def get_user_slots(user_id=None):
         return str(e)
 
 
-# [url]/users=[user_id]/movie_list/page=[page]
 # [url]/users=[user_id]/movie_list
-@app.route('/user=<int:user_id>/movie_list/page=<int:page>', methods=['GET'])
-@app.route('/user=<int:user_id>/movie_list/page=', methods=['GET'])
 @app.route('/user=<int:user_id>/movie_list', methods=['GET'])
-def get_user_movie_list(user_id=None, page=1):
+def get_user_movie_list(user_id=None):
     try:
         user_rated_movies = list()
 
         # Ensure Valid User ID
         user = User.query.filter_by(id=user_id).first()
         if user is not None:
+            rated_movies = list()
+
             # Get list of all entries with the User's ID
-            rated_movies = UserRatedMovieRel.query.filter_by(user_id=user_id)
+            rated_movie_entry = UserRatedMovieRel.query.filter_by(user_id=user_id)
 
             # Append the User Rated Movies
-            for rm in rated_movies:
-                movie = Movie.query.filter_by(id=rm.movie_id).first()
+            for rm_entry in rated_movie_entry:
+                movie = Movie.query.filter_by(id=rm_entry.movie_id).first()
+                movie_id = movie.id
                 title = movie.title
-                rating = rm.user_rating
-                urm = UserRatedMedia(title, rating)
-                user_rated_movies.append(urm)
+                image_url = movie.image_url
+                rating = rm_entry.user_rating
 
-        return paginated_json('movie_list', user_rated_movies, page)
+                rm = RatedMovie(movie_id, title, image_url, rating)
+                rated_movies.append(rm)
+
+            user_rated_movies = DisplayRatedMovie(user.id, rated_movies)
+
+        return jsonify({'movie_list': user_rated_movies.serialize()})
 
     except Exception as e:
         return str(e)
 
 
-# [url]/users=[user_id]/tv_show_list/page=[page]
 # [url]/users=[user_id]/tv_show_list
-@app.route('/user=<int:user_id>/tv_show_list/page=<int:page>', methods=['GET'])
-@app.route('/user=<int:user_id>/tv_show_list/page=', methods=['GET'])
 @app.route('/user=<int:user_id>/tv_show_list', methods=['GET'])
-def get_user_tv_show_list(user_id=None, page=1):
+def get_user_tv_show_list(user_id=None):
     try:
         user_rated_tv_shows = list()
 
         # Ensure Valid User ID
         user = User.query.filter_by(id=user_id).first()
         if user is not None:
+            rated_tv_shows = list()
+
             # Get list of all entries with the User's ID
-            rated_tv_shows = UserRatedTVShowRel.query.filter_by(user_id=user_id)
+            rated_tv_show_entry = UserRatedTVShowRel.query.filter_by(user_id=user_id)
 
             # Append the User Rated TV Shows
-            for rts in rated_tv_shows:
-                tv_show = TVShows.query.filter_by(id=rts.tv_show_id).first()
+            for rts_entry in rated_tv_show_entry:
+                tv_show = TVShows.query.filter_by(id=rts_entry.tv_show_id).first()
+                tv_id = tv_show.id
                 title = tv_show.title
-                rating = rts.user_rating
-                urm = UserRatedMedia(title, rating)
-                user_rated_tv_shows.append(urm)
+                image_url = tv_show.image_url
+                rating = rts_entry.user_rating
 
-        return paginated_json('tv_show_list', user_rated_tv_shows, page)
+                rts = RatedTVShow(tv_id, title, image_url, rating)
+                rated_tv_shows.append(rts)
+
+            user_rated_tv_shows = DisplayRatedTVShow(user.id, rated_tv_shows)
+
+        return jsonify({'tv_show_list': user_rated_tv_shows.serialize()})
 
     except Exception as e:
         return str(e)

@@ -18,14 +18,12 @@ class Signup:
 class Login:
     def __init__(self, invalid_email: bool, invalid_password: bool, login_successful: bool):
         self.invalid_email = invalid_email
-        # self.invalid_username = invalid_username
         self.invalid_password = invalid_password
         self.login_successful = login_successful
 
     def serialize(self):
         return {
             'invalid_email': self.invalid_email,
-            # 'invalid_username': self.invalid_username,
             'invalid_password': self.invalid_password,
             'login_successful': self.login_successful,
         }
@@ -109,6 +107,34 @@ class UserRatedMovieRel(db.Model):
         }
 
 
+class DisplayRatedMovie:
+    def __init__(self, user_id, rated_movies):
+        self.user_id = user_id
+        self.rated_movies = rated_movies
+
+    def serialize(self):
+        return {
+            'user_id': self.user_id,
+            'rated_movies': [rm.serialize() for rm in self.rated_movies]
+        }
+
+
+class RatedMovie:
+    def __init__(self, movie_id, movie_title, image_url, user_rating):
+        self.movie_id = movie_id
+        self.movie_title = movie_title
+        self.image_url = image_url
+        self.user_rating = user_rating
+
+    def serialize(self):
+        return {
+            'movie_id': self.movie_id,
+            'movie_title': self.movie_title,
+            'image_url': self.image_url,
+            'rating': self.user_rating,
+        }
+
+
 class UserRatedTVShowRel(db.Model):
     __tablename__ = 'user_rated_tv_shows'
 
@@ -124,10 +150,31 @@ class UserRatedTVShowRel(db.Model):
     def __repr__(self):
         return '<user_id {} tv_show_id {} user_rating {}'.format(self.user_id, self.tv_show_id, self.user_rating)
 
+
+class DisplayRatedTVShow:
+    def __init__(self, user_id, rated_tv_shows):
+        self.user_id = user_id
+        self.rated_tv_shows = rated_tv_shows
+
     def serialize(self):
         return {
             'user_id': self.user_id,
+            'rated_tv_shows': [rts.serialize() for rts in self.rated_tv_shows]
+        }
+
+
+class RatedTVShow:
+    def __init__(self, tv_show_id, tv_show_title, image_url, user_rating):
+        self.tv_show_id = tv_show_id
+        self.tv_show_title = tv_show_title
+        self.image_url = image_url
+        self.user_rating = user_rating
+
+    def serialize(self):
+        return {
             'tv_show_id': self.tv_show_id,
+            'tv_show_title': self.tv_show_title,
+            'image_url': self.image_url,
             'rating': self.user_rating,
         }
 
@@ -156,13 +203,15 @@ class DisplayUserSlots:
 
 
 class Slot:
-    def __init__(self, slot_num, tv_show_title):
+    def __init__(self, slot_num, tv_show_title, image_url):
         self.slot_num = slot_num
         self.tv_show_title = tv_show_title
+        self.image_url = image_url
 
     def serialize(self):
         return {
             'slot_num': self.slot_num,
             'tv_show_title': self.tv_show_title,
+            'image_url': self.image_url,
         }
 
