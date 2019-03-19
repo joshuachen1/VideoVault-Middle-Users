@@ -64,8 +64,7 @@ def login(email=None, attempted_pwd=None):
         decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
 
         if decrypted_saved_pwd == attempted_pwd:
-            result = Login(False, False, True)
-            return jsonify(result.serialize())
+            return jsonify(user_info.serialize())
         else:
             result = Login(False, True, False)
             return jsonify(result.serialize())
@@ -123,9 +122,10 @@ def signup():
             )
             db.session.add(user)
 
+            new_user = User.query.filter_by(username=username).first()
             for i in range(num_slots):
                 slot = UserSlots(
-                    user_id=User.query.filter_by(username=username).first().id,
+                    user_id=new_user.id,
                     slot_num=i,
                     tv_show_id=None,
                 )
@@ -133,8 +133,7 @@ def signup():
 
             db.session.commit()
 
-            result = Signup(False, False, True)
-            return jsonify(result.serialize())
+            return jsonify(new_user.serialize())
         except Exception as e:
             return str(e)
     except Exception as e:
