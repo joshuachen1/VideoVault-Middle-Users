@@ -122,10 +122,31 @@ class UserRatedTVShowRel(db.Model):
     def __repr__(self):
         return '<user_id {} tv_show_id {} user_rating {}'.format(self.user_id, self.tv_show_id, self.user_rating)
 
+
+class DisplayRatedTVShow:
+    def __init__(self, user_id, rated_tv_shows):
+        self.user_id = user_id
+        self.rated_tv_shows = rated_tv_shows
+
     def serialize(self):
         return {
             'user_id': self.user_id,
+            'rated_tv_shows': [rts.serialize() for rts in self.rated_tv_shows]
+        }
+
+
+class RatedTVShow:
+    def __init__(self, tv_show_id, tv_show_title, image_url, user_rating):
+        self.tv_show_id = tv_show_id
+        self.tv_show_title = tv_show_title
+        self.image_url = image_url
+        self.user_rating = user_rating
+
+    def serialize(self):
+        return {
             'tv_show_id': self.tv_show_id,
+            'tv_show_title': self.tv_show_title,
+            'image_url': self.image_url,
             'rating': self.user_rating,
         }
 
