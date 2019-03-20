@@ -2,7 +2,7 @@ from cryptography.fernet import Fernet
 from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from datetime import date
+from datetime import date, datetime
 import pymysql
 import math
 import os
@@ -25,7 +25,7 @@ port = int(os.environ.get('PORT', 33507))
 from crypto_models import Key
 from user_models import Signup, Login
 from user_models import User, Friends
-from user_models import Slot, UserSlots, DisplayUserSlots
+from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
 from user_media_models import Movie, TVShows, UserRatedMedia
@@ -346,6 +346,40 @@ def get_user_tv_show_list(user_id=None):
 
         return jsonify({'tv_show_list': user_rated_tv_shows.serialize()})
 
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/user=<int:user_id>/rented_movies', methods=['GET'])
+def get_user_rented_movies(user_id = None):
+    try:
+        movies = list()
+        user_movie_rel = UserRentedMovies.query.filter_by(user_id = user_id).all()
+        for user_movie in user_movie_rel:
+            movies.append(Movie.query.filter_by(id = user_movie.movie_id).first())
+
+        return jsonify({'user_rented_movies': [movie.serialize() for movie in movies]})
+
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/rent_movie', methods=['POST'])
+def rent_movie():
+    data = request.get_json()
+    user_id = data['user_id']
+    movie_id = data['movie_id']
+    rent_datetime = datetime.now()
+
+    try:
+        user_rented_movies = UserRentedMovies(
+            user_id = user_id,
+            movie_id = movie_id,
+            rent_datetime = rent_datetime
+        )
+        db.session.add(user_rented_movies)
+        db.session.commit()
+        return 'movie rental success'
     except Exception as e:
         return str(e)
 

@@ -215,3 +215,20 @@ class Slot:
             'image_url': self.image_url,
         }
 
+
+class UserRentedMovies(db.Model):
+    user_id = db.Column(db.Integer, primary_key=True)
+    movie_id = db.Column(db.Integer, primary_key=True)
+    rent_datetime = db.Column(db.Integer)
+
+    def __init__(self, user_id, movie_id, rent_datetime):
+        self.user_id = user_id
+        self.movie_id = movie_id
+        self.rent_datetime = rent_datetime
+
+    def serialize(self):
+        return {
+            'user_id': self.user_id,
+            'movie_id': self.movie_id,
+            'rent_datetime': self.rent_datetime
+        }
