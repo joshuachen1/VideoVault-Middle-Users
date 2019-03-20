@@ -2,7 +2,7 @@ from cryptography.fernet import Fernet
 from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from datetime import date
+from datetime import date, datetime
 import pymysql
 import math
 import os
@@ -362,6 +362,27 @@ def get_user_rented_movies(user_id = None):
 
     except Exception as e:
         return str(e)
+
+
+@app.route('/rent_movie', methods=['POST'])
+def rent_movie():
+    data = request.get_json()
+    user_id = data['user_id']
+    movie_id = data['movie_id']
+    rent_datetime = datetime.now()
+
+    try:
+        user_rented_movies = UserRentedMovies(
+            user_id = user_id,
+            movie_id = movie_id,
+            rent_datetime = rent_datetime
+        )
+        db.session.add(user_rented_movies)
+        db.session.commit()
+        return 'movie rental success'
+    except Exception as e:
+        return str(e)
+
 
 def add_empty_slot(user_id, slot_num):
     user_slots = UserSlots(
