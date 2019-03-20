@@ -127,7 +127,7 @@ def signup():
             for i in range(num_slots):
                 slot = UserSlots(
                     user_id=new_user.id,
-                    slot_num=i,
+                    slot_num=(i + 1),
                     tv_show_id=None,
                 )
                 db.session.add(slot)
@@ -172,25 +172,31 @@ def add_slot():
         return str(e)
 
 
-def add_empty_slot(id, slot_num):
-    user_slots = UserSlots(
-        user_id = id,
-        slot_num = slot_num,
-        tv_show_id = None
-    )
-    db.session.add(user_slots)
-    db.session.commit()
-    return "user_slots added"
+@app.route('/resub', methods=['PUT'])
+def resub():
+    data = request.get_json()
+    user_id = data['user_id']
+    tv_show_id = str(data['tv_show_id'])
+
+    tv_show_ids = [id.strip() for id in tv_show_id.split(',')]
+
+    i = 1
+    for tv_show_id in tv_show_ids:
+        slot_num = i
+        add_tv_show(True, slot_num, tv_show_id, user_id)
+        i = i + 1
+    return 'success'
 
 
 # Json input: user_id, slot_num, tv_show_title
 @app.route('/add_tv_show', methods=['PUT'])
-def add_tv_show():
-    data = request.get_json()
-    user_id = data['user_id']
-    slot_num = data['slot_num']
-    tv_show_title = str(data['tv_show_title'])
-    tv_show_id = tv_show_to_id(tv_show_title)
+def add_tv_show(resub=False, slot_num=None, tv_show_id=None, user_id=None):
+    if resub is False:
+        data = request.get_json()
+        user_id = data['user_id']
+        slot_num = data['slot_num']
+        tv_show_id = data['tv_show_id']
+
     try:
         user=UserSlots.query.filter_by(slot_num=slot_num).filter_by(user_id=user_id).first()
         user.user_id = user_id
@@ -342,6 +348,17 @@ def get_user_tv_show_list(user_id=None):
 
     except Exception as e:
         return str(e)
+
+
+def add_empty_slot(user_id, slot_num):
+    user_slots = UserSlots(
+        user_id=user_id,
+        slot_num=slot_num,
+        tv_show_id=None
+    )
+    db.session.add(user_slots)
+    db.session.commit()
+    return "user_slots added"
 
 
 # Pseudo Pagination
