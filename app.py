@@ -172,17 +172,6 @@ def add_slot():
         return str(e)
 
 
-def add_empty_slot(id, slot_num):
-    user_slots = UserSlots(
-        user_id = id,
-        slot_num = slot_num,
-        tv_show_id = None
-    )
-    db.session.add(user_slots)
-    db.session.commit()
-    return "user_slots added"
-
-
 @app.route('/resub', methods=['PUT'])
 def resub():
     data = request.get_json()
@@ -359,6 +348,17 @@ def get_user_tv_show_list(user_id=None):
 
     except Exception as e:
         return str(e)
+
+
+def add_empty_slot(user_id, slot_num):
+    user_slots = UserSlots(
+        user_id=user_id,
+        slot_num=slot_num,
+        tv_show_id=None
+    )
+    db.session.add(user_slots)
+    db.session.commit()
+    return "user_slots added"
 
 
 # Pseudo Pagination
