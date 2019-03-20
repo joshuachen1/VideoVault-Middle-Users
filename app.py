@@ -127,7 +127,7 @@ def signup():
             for i in range(num_slots):
                 slot = UserSlots(
                     user_id=new_user.id,
-                    slot_num=i,
+                    slot_num=(i + 1),
                     tv_show_id=None,
                 )
                 db.session.add(slot)
