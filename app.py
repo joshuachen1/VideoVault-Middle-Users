@@ -25,7 +25,7 @@ port = int(os.environ.get('PORT', 33507))
 from crypto_models import Key
 from user_models import Signup, Login
 from user_models import User, Friends
-from user_models import Slot, UserSlots, DisplayUserSlots
+from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
 from user_media_models import Movie, TVShows, UserRatedMedia
@@ -349,6 +349,19 @@ def get_user_tv_show_list(user_id=None):
     except Exception as e:
         return str(e)
 
+
+@app.route('/user=<int:user_id>/rented_movies', methods=['GET'])
+def get_user_rented_movies(user_id = None):
+    try:
+        movies = list()
+        user_movie_rel = UserRentedMovies.query.filter_by(user_id = user_id).all()
+        for user_movie in user_movie_rel:
+            movies.append(Movie.query.filter_by(id = user_movie.movie_id).first())
+
+        return jsonify({'user_rented_movies': [movie.serialize() for movie in movies]})
+
+    except Exception as e:
+        return str(e)
 
 def add_empty_slot(user_id, slot_num):
     user_slots = UserSlots(
