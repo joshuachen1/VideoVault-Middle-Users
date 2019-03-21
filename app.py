@@ -28,7 +28,7 @@ from user_models import User, Friends
 from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
-from user_media_models import Movie, TVShows, UserRatedMedia
+from user_media_models import Movie, TVShows
 
 # Force pymysql to be used as replacement for MySQLdb
 pymysql.install_as_MySQLdb()
