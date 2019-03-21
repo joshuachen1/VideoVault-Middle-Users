@@ -357,6 +357,49 @@ def get_user_movie_list(user_id=None):
         return str(e)
 
 
+# { user_id: [user_id], movie_id: [movie_id], rating: [1-5] }
+# [url]/rate/movie
+@app.route('/user/movie/rating', methods=['POST'])
+def rate_movie():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        movie_id = data['movie_id']
+        rating = data['rating']
+
+        user = User.query.filter_by(id=user_id).first()
+        movie = Movie.query.filter_by(id=movie_id).first()
+        user_rated_movie = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+
+        if user is None and movie is None:
+            return jsonify({'valid_user': False, 'valid_movie': False, 'success': False})
+        elif user is None:
+            return jsonify({'valid_user': False, 'valid_movie': True, 'success': False})
+        elif movie is None:
+            return jsonify({'valid_user': True, 'valid_movie': False, 'success': False})
+
+        # First Time Rating Movie
+        elif user_rated_movie is None:
+            new_rated_movie = UserRatedMovieRel(
+                user_id=user_id,
+                movie_id=movie_id,
+                user_rating=rating,
+            )
+            db.session.add(new_rated_movie)
+            db.session.commit()
+            update_average_rating(False, movie_id)
+            return jsonify({'valid_user': True, 'valid_movie': True, 'success': True})
+
+        # Updating Their current Rating
+        else:
+            user_rated_movie.user_rating = rating
+            db.session.commit()
+            update_average_rating(False, movie_id)
+            return jsonify({'valid_user': True, 'valid_movie': True, 'success': True})
+    except Exception as e:
+        return str(e)
+
+
 # [url]/users=[user_id]/tv_show_list
 @app.route('/user=<int:user_id>/tv_show_list', methods=['GET'])
 def get_user_tv_show_list(user_id=None):
@@ -420,6 +463,52 @@ def rent_movie():
         db.session.add(user_rented_movies)
         db.session.commit()
         return 'movie rental success'
+    except Exception as e:
+        return str(e)
+
+
+def update_average_rating(is_tv_show: bool, media_id: int):
+    try:
+        if is_tv_show:
+            average = get_average_rating(True, media_id)
+            tv_show = TVShows.query.filter_by(id=media_id).first()
+            tv_show.avg_rating = average
+            db.session.commit()
+
+        else:
+            average = get_average_rating(False, media_id)
+            movie = Movie.query.filter_by(id=media_id).first()
+            movie.avg_rating = average
+            db.session.commit()
+
+    except Exception as e:
+        return str(e)
+
+
+def get_average_rating(is_tv_show: bool, media_id: int):
+    try:
+        if is_tv_show:
+            tv_show_ratings = UserRatedTVShowRel.query.filter_by(tv_show_id=media_id)
+            total = 0
+            num_ratings = 0
+
+            for tsr in tv_show_ratings:
+                total += tsr.user_rating
+                num_ratings += 1
+
+            return total / num_ratings
+
+        else:
+            movie_ratings = UserRatedMovieRel.query.filter_by(movie_id=media_id)
+            total = 0
+            num_ratings = 0
+
+            for mr in movie_ratings:
+                total += mr.user_rating
+                num_ratings += 1
+
+            return total / num_ratings
+
     except Exception as e:
         return str(e)
 
