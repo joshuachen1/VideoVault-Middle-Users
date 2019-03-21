@@ -180,6 +180,7 @@ def resub():
 
     tv_show_ids = [id.strip() for id in tv_show_id.split(',')]
     user_check = User.query.filter_by(id=user_id).first()
+    tv_show_len = len(set(tv_show_id))
 
     # add each entry to the user_slots table
     i = 1
@@ -187,7 +188,7 @@ def resub():
         tv_show_check = TVShows.query.filter_by(id=tv_show_id).first()
 
         # return boolean for invalid inputs
-        if user_check is None and (tv_show_check is None or len(tv_show_ids) is not 10):
+        if user_check is None and (tv_show_check is None or tv_show_len is not 10):
             return jsonify({'success:': False,
                             'valid_user': False,
                             'valid_tv_shows': False})
@@ -195,7 +196,7 @@ def resub():
             return jsonify({'success:': False,
                             'valid_user': False,
                             'valid_tv_shows': True})
-        elif tv_show_check is None or len(tv_show_ids) is not 10:
+        elif tv_show_check is None or tv_show_len is not 10:
             return jsonify({'success': False,
                             'valid_user': True,
                             'valid_tv_shows': False})
