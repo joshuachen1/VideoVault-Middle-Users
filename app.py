@@ -28,7 +28,7 @@ from user_models import User, Friends
 from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
-from user_media_models import Movie, TVShows, UserRatedMedia
+from user_media_models import Movie, TVShows
 
 # Force pymysql to be used as replacement for MySQLdb
 pymysql.install_as_MySQLdb()
@@ -244,6 +244,20 @@ def get_users(page=1):
         return str(e)
 
 
+# Check Friendship
+# [url]/user1=[user1_id]/user2=[user2_id]
+@app.route('/user1=<int:user1_id>/user2=<int:user2_id>')
+def is_friend(user1_id=None, user2_id=None):
+    try:
+        friendship = Friends.query.filter_by(user_id=user1_id).filter_by(friend_id=user2_id).first()
+        if friendship is not None:
+            return jsonify({'is_friend': True})
+        else:
+            return jsonify({'is_friend': False})
+    except Exception as e:
+        return str(e)
+
+
 # Display user friends
 # [url]/users=[user_id]/friends/page=[page]
 # [url]/users=[user_id]/friends
@@ -357,6 +371,93 @@ def get_user_movie_list(user_id=None):
         return str(e)
 
 
+# { user_id: [user_id], movie_id: [movie_id], rating: [1-5] }
+# [url]/rate/movie
+@app.route('/user/movie/rating', methods=['POST'])
+def rate_movie():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        movie_id = data['movie_id']
+        rating = data['rating']
+
+        user = User.query.filter_by(id=user_id).first()
+        movie = Movie.query.filter_by(id=movie_id).first()
+        user_rated_movie = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+
+        if user is None and movie is None:
+            return jsonify({'valid_user': False, 'valid_movie': False, 'success': False})
+        elif user is None:
+            return jsonify({'valid_user': False, 'valid_movie': True, 'success': False})
+        elif movie is None:
+            return jsonify({'valid_user': True, 'valid_movie': False, 'success': False})
+
+        # First Time Rating Movie
+        elif user_rated_movie is None:
+            new_rated_movie = UserRatedMovieRel(
+                user_id=user_id,
+                movie_id=movie_id,
+                user_rating=rating,
+            )
+            db.session.add(new_rated_movie)
+            db.session.commit()
+            update_average_rating(False, movie_id)
+            return jsonify({'valid_user': True, 'valid_movie': True, 'success': True})
+
+        # Updating Their current Rating
+        else:
+            user_rated_movie.user_rating = rating
+            db.session.commit()
+            update_average_rating(False, movie_id)
+            return jsonify({'valid_user': True, 'valid_movie': True, 'success': True})
+    except Exception as e:
+        return str(e)
+
+
+# { user_id: [user_id], tv_show_id: [tv_show_id], rating: [1-5] }
+# [url]/tv_show/rating
+@app.route('/user/tv_show/rating', methods=['POST'])
+def rate_tv_show():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        tv_show_id = data['tv_show_id']
+        rating = data['rating']
+
+        user = User.query.filter_by(id=user_id).first()
+        tv_show = TVShows.query.filter_by(id=tv_show_id).first()
+        user_rated_tv_show = UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(
+            tv_show_id=tv_show_id).first()
+
+        if user is None and tv_show is None:
+            return jsonify({'valid_user': False, 'valid_tv_show': False, 'success': False})
+        elif user is None:
+            return jsonify({'valid_user': False, 'valid_tv_show': True, 'success': False})
+        elif tv_show is None:
+            return jsonify({'valid_user': True, 'valid_tv_show': False, 'success': False})
+
+        # First Time Rating TV Show
+        elif user_rated_tv_show is None:
+            new_rated_tv_show = UserRatedTVShowRel(
+                user_id=user_id,
+                tv_show_id=tv_show_id,
+                user_rating=rating,
+            )
+            db.session.add(new_rated_tv_show)
+            db.session.commit()
+            update_average_rating(True, tv_show_id)
+            return jsonify({'valid_user': True, 'valid_tv_show': True, 'success': True})
+
+        # Updating Their current Rating
+        else:
+            user_rated_tv_show.user_rating = rating
+            db.session.commit()
+            update_average_rating(True, tv_show_id)
+            return jsonify({'valid_user': True, 'valid_tv_show': True, 'success': True})
+    except Exception as e:
+        return str(e)
+
+
 # [url]/users=[user_id]/tv_show_list
 @app.route('/user=<int:user_id>/tv_show_list', methods=['GET'])
 def get_user_tv_show_list(user_id=None):
@@ -420,6 +521,52 @@ def rent_movie():
         db.session.add(user_rented_movies)
         db.session.commit()
         return 'movie rental success'
+    except Exception as e:
+        return str(e)
+
+
+def update_average_rating(is_tv_show: bool, media_id: int):
+    try:
+        if is_tv_show:
+            average = get_average_rating(True, media_id)
+            tv_show = TVShows.query.filter_by(id=media_id).first()
+            tv_show.avg_rating = average
+            db.session.commit()
+
+        else:
+            average = get_average_rating(False, media_id)
+            movie = Movie.query.filter_by(id=media_id).first()
+            movie.avg_rating = average
+            db.session.commit()
+
+    except Exception as e:
+        return str(e)
+
+
+def get_average_rating(is_tv_show: bool, media_id: int):
+    try:
+        if is_tv_show:
+            tv_show_ratings = UserRatedTVShowRel.query.filter_by(tv_show_id=media_id)
+            total = 0
+            num_ratings = 0
+
+            for tsr in tv_show_ratings:
+                total += tsr.user_rating
+                num_ratings += 1
+
+            return total / num_ratings
+
+        else:
+            movie_ratings = UserRatedMovieRel.query.filter_by(movie_id=media_id)
+            total = 0
+            num_ratings = 0
+
+            for mr in movie_ratings:
+                total += mr.user_rating
+                num_ratings += 1
+
+            return total / num_ratings
+
     except Exception as e:
         return str(e)
 
