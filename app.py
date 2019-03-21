@@ -244,6 +244,7 @@ def get_users(page=1):
         return str(e)
 
 
+# Display user friends
 # [url]/users=[user_id]/friends/page=[page]
 # [url]/users=[user_id]/friends
 @app.route('/user=<int:user_id>/friends/page=<int:page>', methods=['GET'])
@@ -269,6 +270,28 @@ def get_user_friend_list(user_id=None, page=1):
                 friend_list.append(User.query.filter_by(id=friend_id).first())
 
         return paginated_json('friends', friend_list, page)
+
+    except Exception as e:
+        return str(e)
+
+
+# [url]/user=[user_id]/friends/remove=[friend_id]
+@app.route('/user=<int:user_id>/friends/remove=<int:friend_id>', methods=['DELETE'])
+def remove_friend(user_id=None, friend_id=None):
+    try:
+        friend = User.query.filter_by(id=friend_id).first()
+
+        if friend is None:
+            return jsonify({'user_exist': False, 'friend_exist': False, 'friend_deleted': False})
+        else:
+            relationship = Friends.query.filter_by(user_id=user_id).filter_by(friend_id=friend_id).first()
+
+            if relationship is None:
+                return jsonify({'user_exist': True, 'friend_exist': False, 'friend_deleted': False})
+            else:
+                Friends.query.filter_by(user_id=user_id).filter_by(friend_id=friend_id).delete()
+                db.session.commit()
+                return jsonify({'user_exist': True, 'friend_exist': True, 'friend_deleted': True})
 
     except Exception as e:
         return str(e)
