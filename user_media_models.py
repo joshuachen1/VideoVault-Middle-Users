@@ -101,3 +101,29 @@ class UserRatedMedia:
             'title': self.title,
             'rating': self.rating,
         }
+
+
+class MovieComment(db.Model):
+    __tablename__ = 'movie_comments'
+
+    user_id = db.Column(db.Integer)
+    movie_id = db.Column(db.Integer)
+    comment = db.Column(db.VARCHAR)
+    date_of_comment = db.Column(db.Date, primary_key=True)
+
+    def __init__(self, user_id, movie_id, comment, date_of_comment):
+        self.user_id = user_id
+        self.movie_id = movie_id
+        self.comment = comment
+        self.date_of_comment = date_of_comment
+
+    def __repr__(self):
+        return '<user_id {} movie_id {} comment {}>'.format(self.user_id, self.movie_id, self.comment)
+
+    def serialize(self):
+        return {
+            'user_id': self.user_id,
+            'movie_id': self.movie_id,
+            'comment': self.comment,
+            'date_of_comment': self.date_of_comment,
+        }

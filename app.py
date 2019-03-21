@@ -28,7 +28,7 @@ from user_models import User, Friends
 from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
-from user_media_models import Movie, TVShows
+from user_media_models import Movie, MovieComment, TVShows
 
 # Force pymysql to be used as replacement for MySQLdb
 pymysql.install_as_MySQLdb()
@@ -409,6 +409,38 @@ def rate_movie():
             user_rated_movie.user_rating = rating
             db.session.commit()
             update_average_rating(False, movie_id)
+            return jsonify({'valid_user': True, 'valid_movie': True, 'success': True})
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/movie/comment', methods=['POST'])
+def comment_movie():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        movie_id = data['movie_id']
+        comment = data['comment']
+        date_of_comment = str(date.today())
+
+        user = User.query.filter_by(id=user_id).first()
+        movie = Movie.query.filter_by(id=movie_id).first()
+
+        if user is None and movie is None:
+            return jsonify({'valid_user': False, 'valid_movie': False, 'success': False})
+        elif user is None:
+            return jsonify({'valid_user': False, 'valid_movie': True, 'success': False})
+        elif movie is None:
+            return jsonify({'valid_user': True, 'valid_movie': False, 'success': False})
+        else:
+            user_comment = MovieComment(
+                user_id=user_id,
+                movie_id=movie_id,
+                comment=comment,
+                date_of_comment=date_of_comment,
+            )
+            db.session.add(user_comment)
+            db.session.commit()
             return jsonify({'valid_user': True, 'valid_movie': True, 'success': True})
     except Exception as e:
         return str(e)
