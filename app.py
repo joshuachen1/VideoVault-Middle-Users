@@ -179,13 +179,35 @@ def resub():
     tv_show_id = str(data['tv_show_id'])
 
     tv_show_ids = [id.strip() for id in tv_show_id.split(',')]
+    user_check = User.query.filter_by(id=user_id).first()
 
+    # add each entry to the user_slots table
     i = 1
     for tv_show_id in tv_show_ids:
+        tv_show_check = TVShows.query.filter_by(id=tv_show_id).first()
+
+        # return boolean for invalid inputs
+        if user_check is None and (tv_show_check is None or len(tv_show_ids) is not 10):
+            return jsonify({'success:': False,
+                            'valid_user': False,
+                            'valid_tv_shows': False})
+        elif user_check is None:
+            return jsonify({'success:': False,
+                            'valid_user': False,
+                            'valid_tv_shows': True})
+        elif tv_show_check is None or len(tv_show_ids) is not 10:
+            return jsonify({'success': False,
+                            'valid_user': True,
+                            'valid_tv_shows': False})
+
         slot_num = i
         add_tv_show(True, slot_num, tv_show_id, user_id)
         i = i + 1
-    return 'success'
+
+    db.session.commit()
+    return jsonify({'success:':True,
+                    'valid_user':True,
+                    'valid_tv_shows':True})
 
 
 # Json input: user_id, slot_num, tv_show_title
@@ -203,7 +225,8 @@ def add_tv_show(resub=False, slot_num=None, tv_show_id=None, user_id=None):
         user.slot_num = slot_num
         user.tv_show_id = tv_show_id
 
-        db.session.commit()
+        if resub is False:
+            db.session.commit()
         return "tv show added"
     except Exception as e:
         return str(e)
