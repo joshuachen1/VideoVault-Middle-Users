@@ -209,11 +209,6 @@ def add_tv_show(resub=False, slot_num=None, tv_show_id=None, user_id=None):
         return str(e)
 
 
-def tv_show_to_id(title):
-    tv_show = TVShows.query.filter_by(title=title).first()
-    return tv_show.id
-
-
 # [url]/users/page=[page]
 # [url]/users
 @app.route('/users/page=<int:page>', methods=['GET'])
@@ -393,6 +388,11 @@ def add_empty_slot(user_id, slot_num):
     db.session.add(user_slots)
     db.session.commit()
     return "user_slots added"
+
+
+def tv_show_to_id(title):
+    tv_show = TVShows.query.filter_by(title=title).first()
+    return tv_show.id
 
 
 # Pseudo Pagination
