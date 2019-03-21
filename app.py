@@ -198,7 +198,7 @@ def add_tv_show(resub=False, slot_num=None, tv_show_id=None, user_id=None):
         tv_show_id = data['tv_show_id']
 
     try:
-        user=UserSlots.query.filter_by(slot_num=slot_num).filter_by(user_id=user_id).first()
+        user = UserSlots.query.filter_by(slot_num=slot_num).filter_by(user_id=user_id).first()
         user.user_id = user_id
         user.slot_num = slot_num
         user.tv_show_id = tv_show_id
@@ -281,7 +281,7 @@ def remove_friend(user_id=None, friend_id=None):
     try:
         friend = User.query.filter_by(id=friend_id).first()
 
-        if friend is None:
+        if friend is None or user_id is None or friend_id is None:
             return jsonify({'user_exist': False, 'friend_exist': False, 'friend_deleted': False})
         else:
             relationship = Friends.query.filter_by(user_id=user_id).filter_by(friend_id=friend_id).first()
@@ -391,12 +391,12 @@ def get_user_tv_show_list(user_id=None):
 
 
 @app.route('/user=<int:user_id>/rented_movies', methods=['GET'])
-def get_user_rented_movies(user_id = None):
+def get_user_rented_movies(user_id=None):
     try:
         movies = list()
-        user_movie_rel = UserRentedMovies.query.filter_by(user_id = user_id).all()
+        user_movie_rel = UserRentedMovies.query.filter_by(user_id=user_id).all()
         for user_movie in user_movie_rel:
-            movies.append(Movie.query.filter_by(id = user_movie.movie_id).first())
+            movies.append(Movie.query.filter_by(id=user_movie.movie_id).first())
 
         return jsonify({'user_rented_movies': [movie.serialize() for movie in movies]})
 
@@ -413,9 +413,9 @@ def rent_movie():
 
     try:
         user_rented_movies = UserRentedMovies(
-            user_id = user_id,
-            movie_id = movie_id,
-            rent_datetime = rent_datetime
+            user_id=user_id,
+            movie_id=movie_id,
+            rent_datetime=rent_datetime
         )
         db.session.add(user_rented_movies)
         db.session.commit()
