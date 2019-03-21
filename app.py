@@ -28,7 +28,7 @@ from user_models import User, Friends
 from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
-from user_media_models import Movie, TVShows
+from user_media_models import Movie, MovieComment, TVShows, TVShowComment
 
 # Force pymysql to be used as replacement for MySQLdb
 pymysql.install_as_MySQLdb()
@@ -414,14 +414,46 @@ def rate_movie():
         return str(e)
 
 
+@app.route('/movie/comment', methods=['POST'])
+def comment_movie():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        movie_id = data['movie_id']
+        comment = data['comment']
+        date_of_comment = str(date.today())
+
+        user = User.query.filter_by(id=user_id).first()
+        movie = Movie.query.filter_by(id=movie_id).first()
+
+        if user is None and movie is None:
+            return jsonify({'valid_user': False, 'valid_movie': False, 'success': False})
+        elif user is None:
+            return jsonify({'valid_user': False, 'valid_movie': True, 'success': False})
+        elif movie is None:
+            return jsonify({'valid_user': True, 'valid_movie': False, 'success': False})
+        else:
+            user_comment = MovieComment(
+                user_id=user_id,
+                movie_id=movie_id,
+                comment=comment,
+                date_of_comment=date_of_comment,
+            )
+            db.session.add(user_comment)
+            db.session.commit()
+            return jsonify({'valid_user': True, 'valid_movie': True, 'success': True})
+    except Exception as e:
+        return str(e)
+
+
 # { user_id: [user_id], tv_show_id: [tv_show_id], rating: [1-5] }
 # [url]/tv_show/rating
 @app.route('/user/tv_show/rating', methods=['POST'])
 def rate_tv_show():
     try:
         data = request.get_json()
-        user_id = data['user_id']
         tv_show_id = data['tv_show_id']
+        user_id = data['user_id']
         rating = data['rating']
 
         user = User.query.filter_by(id=user_id).first()
@@ -453,6 +485,38 @@ def rate_tv_show():
             user_rated_tv_show.user_rating = rating
             db.session.commit()
             update_average_rating(True, tv_show_id)
+            return jsonify({'valid_user': True, 'valid_tv_show': True, 'success': True})
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/tv_show/comment', methods=['POST'])
+def comment_tv_show():
+    try:
+        data = request.get_json()
+        tv_show_id = data['tv_show_id']
+        user_id = data['user_id']
+        comment = data['comment']
+        date_of_comment = str(date.today())
+
+        user = User.query.filter_by(id=user_id).first()
+        tv_show = TVShows.query.filter_by(id=tv_show_id).first()
+
+        if user is None and tv_show is None:
+            return jsonify({'valid_user': False, 'valid_tv_show': False, 'success': False})
+        elif user is None:
+            return jsonify({'valid_user': False, 'valid_tv_show': True, 'success': False})
+        elif tv_show is None:
+            return jsonify({'valid_user': True, 'valid_tv_show': False, 'success': False})
+        else:
+            user_comment = TVShowComment(
+                tv_show_id=tv_show_id,
+                user_id=user_id,
+                comment=comment,
+                date_of_comment=date_of_comment,
+            )
+            db.session.add(user_comment)
+            db.session.commit()
             return jsonify({'valid_user': True, 'valid_tv_show': True, 'success': True})
     except Exception as e:
         return str(e)
