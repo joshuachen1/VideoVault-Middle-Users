@@ -209,6 +209,27 @@ def add_tv_show(resub=False, slot_num=None, tv_show_id=None, user_id=None):
         return str(e)
 
 
+@app.route('/search/user=<query>', methods=['GET'])
+@app.route('/search/user=', methods=['GET'])
+def user_search(query=None):
+    try:
+        # Assume query == username
+        if User.query.filter_by(email=query).first() is not None:
+            user = User.query.filter_by(email=query).first()
+            return jsonify({user.username: user.serialize()})
+
+        # Assume query == username
+        elif User.query.filter_by(username=query).first() is not None:
+            user = User.query.filter_by(username=query).first()
+            return jsonify({user.username: user.serialize()})
+
+        else:
+            return jsonify({'user_exist': False})
+
+    except Exception as e:
+        return str(e)
+
+
 # [url]/users/page=[page]
 # [url]/users
 @app.route('/users/page=<int:page>', methods=['GET'])
