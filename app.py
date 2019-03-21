@@ -244,6 +244,20 @@ def get_users(page=1):
         return str(e)
 
 
+# Check Friendship
+# [url]/user1=[user1_id]/user2=[user2_id]
+@app.route('/user1=<int:user1_id>/user2=<int:user2_id>')
+def is_friend(user1_id=None, user2_id=None):
+    try:
+        friendship = Friends.query.filter_by(user_id=user1_id).filter_by(friend_id=user2_id).first()
+        if friendship is not None:
+            return jsonify({'is_friend': True})
+        else:
+            return jsonify({'is_friend': False})
+    except Exception as e:
+        return str(e)
+
+
 # Display user friends
 # [url]/users=[user_id]/friends/page=[page]
 # [url]/users=[user_id]/friends
@@ -412,7 +426,8 @@ def rate_tv_show():
 
         user = User.query.filter_by(id=user_id).first()
         tv_show = TVShows.query.filter_by(id=tv_show_id).first()
-        user_rated_tv_show = UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+        user_rated_tv_show = UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(
+            tv_show_id=tv_show_id).first()
 
         if user is None and tv_show is None:
             return jsonify({'valid_user': False, 'valid_tv_show': False, 'success': False})
