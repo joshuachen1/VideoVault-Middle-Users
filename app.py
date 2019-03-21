@@ -400,6 +400,49 @@ def rate_movie():
         return str(e)
 
 
+# { user_id: [user_id], tv_show_id: [tv_show_id], rating: [1-5] }
+# [url]/tv_show/rating
+@app.route('/user/tv_show/rating', methods=['POST'])
+def rate_tv_show():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        tv_show_id = data['tv_show_id']
+        rating = data['rating']
+
+        user = User.query.filter_by(id=user_id).first()
+        tv_show = TVShows.query.filter_by(id=tv_show_id).first()
+        user_rated_tv_show = UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+
+        if user is None and tv_show is None:
+            return jsonify({'valid_user': False, 'valid_tv_show': False, 'success': False})
+        elif user is None:
+            return jsonify({'valid_user': False, 'valid_tv_show': True, 'success': False})
+        elif tv_show is None:
+            return jsonify({'valid_user': True, 'valid_tv_show': False, 'success': False})
+
+        # First Time Rating TV Show
+        elif user_rated_tv_show is None:
+            new_rated_tv_show = UserRatedTVShowRel(
+                user_id=user_id,
+                tv_show_id=tv_show_id,
+                user_rating=rating,
+            )
+            db.session.add(new_rated_tv_show)
+            db.session.commit()
+            update_average_rating(True, tv_show_id)
+            return jsonify({'valid_user': True, 'valid_tv_show': True, 'success': True})
+
+        # Updating Their current Rating
+        else:
+            user_rated_tv_show.user_rating = rating
+            db.session.commit()
+            update_average_rating(True, tv_show_id)
+            return jsonify({'valid_user': True, 'valid_tv_show': True, 'success': True})
+    except Exception as e:
+        return str(e)
+
+
 # [url]/users=[user_id]/tv_show_list
 @app.route('/user=<int:user_id>/tv_show_list', methods=['GET'])
 def get_user_tv_show_list(user_id=None):
