@@ -209,6 +209,7 @@ def add_tv_show(resub=False, slot_num=None, tv_show_id=None, user_id=None):
         return str(e)
 
 
+# [url]/search/user=[email_or_username]
 @app.route('/search/user=<query>', methods=['GET'])
 @app.route('/search/user=', methods=['GET'])
 def user_search(query=None):
