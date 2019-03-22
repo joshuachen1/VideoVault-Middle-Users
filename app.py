@@ -241,6 +241,28 @@ def add_tv_show(resub=False, slot_num=None, tv_show_id=None, user_id=None):
         slot_num = data['slot_num']
         tv_show_id = data['tv_show_id']
 
+        user_check = User.query.filter_by(id=user_id).first()
+        tv_show_list = UserSlots.query.filter_by(user_id=user_id).all()
+        tv_show_check = TVShows.query.filter_by(id=tv_show_id).first()
+
+        tv_show_id_list = list()
+        for slot in tv_show_list:
+            tv_show_id_list.append(slot.tv_show_id)
+
+        # checks to see if input is valid
+        if user_check is None and (tv_show_check is None or tv_show_id in tv_show_id_list):
+            return jsonify({'success:': False,
+                            'valid_user': False,
+                            'valid_tv_show': False})
+        elif user_check is None:
+            return jsonify({'success:': False,
+                            'valid_user': False,
+                            'valid_tv_show': True})
+        elif tv_show_check is None or tv_show_id in tv_show_id_list:
+            return jsonify({'success': False,
+                            'valid_user': True,
+                            'valid_tv_show': False})
+
     try:
         # adds tv show to slot
         user = UserSlots.query.filter_by(slot_num=slot_num).filter_by(user_id=user_id).first()
