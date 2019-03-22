@@ -197,9 +197,9 @@ def add_slot():
 def resub():
     data = request.get_json()
     user_id = data['user_id']
-    tv_show_id = str(data['tv_show_id'])
+    tv_show_id = data['tv_show_id']
 
-    tv_show_ids = [id.strip() for id in tv_show_id.split(',')]
+    tv_show_ids = [int(id) for id in tv_show_id]
     user_check = User.query.filter_by(id=user_id).first()
     tv_show_len = len(set(tv_show_id))
 
