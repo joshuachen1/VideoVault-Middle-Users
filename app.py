@@ -199,7 +199,6 @@ def resub():
     user_id = data['user_id']
     tv_show_id = data['tv_show_id']
 
-    tv_show_ids = [int(id) for id in tv_show_id]
     user_check = User.query.filter_by(id=user_id).first()
     tv_show_len = len(set(tv_show_id))
 
@@ -219,7 +218,7 @@ def resub():
 
     # add each entry to the user_slots table
     i = 1
-    for tv_show_id in tv_show_ids:
+    for tv_show_id in tv_show_id:
         tv_show_check = TVShows.query.filter_by(id=tv_show_id).first()
 
         # return boolean for invalid inputs
