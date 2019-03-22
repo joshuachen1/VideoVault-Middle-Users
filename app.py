@@ -140,9 +140,10 @@ def signup():
     except Exception as e:
         return str(e)
 
-
+# [url]/add_slot
 @app.route('/add_slot', methods=['PUT'])
 def add_slot():
+    # increment slot number in users
     data = request.get_json()
     newId = data['id']
     name = str(data['name'])
@@ -165,6 +166,7 @@ def add_slot():
         user.sub_date = sub_date
         db.session.commit()
 
+        # Add a new entry to user_slot
         add_empty_slot(newId, num_slots)
 
         return "1 slot added"
@@ -214,6 +216,7 @@ def resub():
 # Json input: user_id, slot_num, tv_show_title
 @app.route('/add_tv_show', methods=['PUT'])
 def add_tv_show(resub=False, slot_num=None, tv_show_id=None, user_id=None):
+    # only run this section of code to add tv show to newly added slot
     if resub is False:
         data = request.get_json()
         user_id = data['user_id']
@@ -221,6 +224,7 @@ def add_tv_show(resub=False, slot_num=None, tv_show_id=None, user_id=None):
         tv_show_id = data['tv_show_id']
 
     try:
+        # adds tv show to slot
         user = UserSlots.query.filter_by(slot_num=slot_num).filter_by(user_id=user_id).first()
         user.user_id = user_id
         user.slot_num = slot_num
@@ -228,7 +232,9 @@ def add_tv_show(resub=False, slot_num=None, tv_show_id=None, user_id=None):
 
         if resub is False:
             db.session.commit()
-        return "tv show added"
+        return jsonify({'success':True,
+                        'valid_user':True,
+                        'valid_tv_show':True})
     except Exception as e:
         return str(e)
 
@@ -608,7 +614,9 @@ def rent_movie():
         )
         db.session.add(user_rented_movies)
         db.session.commit()
-        return 'movie rental success'
+        return jsonify({'success':True,
+                        'valid_user':True,
+                        'valid_movie':True})
     except Exception as e:
         return str(e)
 
@@ -659,6 +667,7 @@ def get_average_rating(is_tv_show: bool, media_id: int):
         return str(e)
 
 
+# adds an empty slot to user_slots in database
 def add_empty_slot(user_id, slot_num):
     user_slots = UserSlots(
         user_id=user_id,
@@ -668,11 +677,6 @@ def add_empty_slot(user_id, slot_num):
     db.session.add(user_slots)
     db.session.commit()
     return "user_slots added"
-
-
-def tv_show_to_id(title):
-    tv_show = TVShows.query.filter_by(title=title).first()
-    return tv_show.id
 
 
 # Pseudo Pagination
