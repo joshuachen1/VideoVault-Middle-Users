@@ -140,6 +140,7 @@ def signup():
     except Exception as e:
         return str(e)
 
+
 # [url]/add_slot
 @app.route('/add_slot', methods=['PUT'])
 def add_slot():
