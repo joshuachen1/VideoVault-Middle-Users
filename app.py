@@ -145,7 +145,7 @@ def signup():
 def add_slot():
     # increment slot number in users
     data = request.get_json()
-    newId = data['id']
+    user_id = data['id']
     name = str(data['name'])
     username = str(data['username'])
     email = str(data['email'])
@@ -153,10 +153,26 @@ def add_slot():
     card_num = str(data['card_num'])
     num_slots = data['num_slots']
     sub_date = data['sub_date']
+
+    check_id = User.query.filter_by(id=user_id).first()
+    check_num_slots = check_id.num_slots + 1
+
+    if check_id is None and num_slots != check_num_slots:
+        return jsonify({'success':False,
+                        'valid_user':False,
+                        'valid_num_slots':False})
+    elif check_id is None:
+        return jsonify({'success': False,
+                        'valid_user': False,
+                        'valid_num_slots': True})
+    elif num_slots != check_num_slots:
+        return jsonify({'success': False,
+                        'valid_user': True,
+                        'valid_num_slots': False})
+
     try:
-        user = User.query.filter_by(id=newId).first()
-        if newId is not None:
-            user.id = newId
+        user = User.query.filter_by(id=user_id).first()
+        user.id = user_id
         user.name = name
         user.username = username
         user.email = email
@@ -167,9 +183,11 @@ def add_slot():
         db.session.commit()
 
         # Add a new entry to user_slot
-        add_empty_slot(newId, num_slots)
+        add_empty_slot(user_id, num_slots)
 
-        return "1 slot added"
+        return jsonify({'success':True,
+                        'valid_user':True,
+                        'valid_num_slots':True})
     except Exception as e:
         return str(e)
 
