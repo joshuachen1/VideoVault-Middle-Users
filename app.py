@@ -396,7 +396,7 @@ def get_user_slots(user_id=None):
             slot_info = list()
             for user_slot in user_slots:
                 if user_slot.tv_show_id is None:
-                    slot = Slot(user_slot.slot_num, None)
+                    slot = Slot(user_slot.slot_num, None, None)
                 else:
                     tv_show = TVShows.query.filter_by(id=user_slot.tv_show_id).first()
                     slot = Slot(user_slot.slot_num, tv_show.title, tv_show.image_url)
