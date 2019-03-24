@@ -28,7 +28,7 @@ from user_models import User, Friends
 from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
-from user_media_models import Movie, MovieComment, TVShows, TVShowComment
+from user_media_models import Movie, MovieComment, TVShows, TVShowComment, Comment
 
 # Force pymysql to be used as replacement for MySQLdb
 pymysql.install_as_MySQLdb()
@@ -527,14 +527,28 @@ def comment_movie():
 
 
 @app.route('/movie=<title>/comments', methods=['GET'])
-def get_tv_show_comments(title=None):
+def get_movie_comments(title=None):
     try:
         movie = Movie.query.filter_by(title=title).first()
 
         if movie is None:
             return jsonify({'valid_movie': False})
         else:
-            comments = MovieComment.query.filter_by(movie_id=movie.id).order_by(MovieComment.date_of_comment)
+            comments = list()
+            raw_comments = MovieComment.query.filter_by(movie_id=movie.id).order_by(MovieComment.date_of_comment)
+
+            for rc in raw_comments:
+                user_id = rc.user_id
+                username = User.query.filter_by(id=user_id).first().username
+                comment = rc.comment
+                date_of_comment = rc.date_of_comment
+                comments.append(Comment(
+                    user_id=user_id,
+                    username=username,
+                    comment=comment,
+                    date_of_comment=date_of_comment,
+                ))
+
             return jsonify({'comments': comment.serialize() for comment in comments})
 
     except Exception as e:
@@ -625,7 +639,21 @@ def get_tv_show_comments(title=None):
         if tv_show is None:
             return jsonify({'valid_tv_show': False})
         else:
-            comments = TVShowComment.query.filter_by(tv_show_id=tv_show.id).order_by(TVShowComment.date_of_comment)
+            comments = list()
+            raw_comments = TVShowComment.query.filter_by(tv_show_id=tv_show.id).order_by(TVShowComment.date_of_comment)
+
+            for rc in raw_comments:
+                user_id = rc.user_id
+                username = User.query.filter_by(id=user_id).first().username
+                comment = rc.comment
+                date_of_comment = rc.date_of_comment
+                comments.append(Comment(
+                    user_id=user_id,
+                    username=username,
+                    comment=comment,
+                    date_of_comment=date_of_comment,
+                ))
+
             return jsonify({'comments': comment.serialize() for comment in comments})
 
     except Exception as e:
