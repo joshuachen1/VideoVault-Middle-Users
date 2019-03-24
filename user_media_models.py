@@ -148,6 +148,7 @@ class TVShowComment(db.Model):
 
     def serialize(self):
         return {
+            'tv_show_id': self.tv_show_id,
             'user_id': self.user_id,
             'comment': self.comment,
             'date_of_comment': self.date_of_comment,

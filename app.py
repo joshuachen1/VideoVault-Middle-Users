@@ -526,6 +526,21 @@ def comment_movie():
         return str(e)
 
 
+@app.route('/movie=<title>/comments', methods=['GET'])
+def get_tv_show_comments(title=None):
+    try:
+        movie = Movie.query.filter_by(title=title).first()
+
+        if movie is None:
+            return jsonify({'valid_movie': False})
+        else:
+            comments = MovieComment.query.filter_by(movie_id=movie.id).order_by(MovieComment.date_of_comment)
+            return jsonify({'comments': comment.serialize() for comment in comments})
+
+    except Exception as e:
+        return str(e)
+
+
 # { user_id: [user_id], tv_show_id: [tv_show_id], rating: [1-5] }
 # [url]/tv_show/rating
 @app.route('/user/tv_show/rating', methods=['POST'])
