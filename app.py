@@ -602,6 +602,21 @@ def comment_tv_show():
         return str(e)
 
 
+@app.route('/tv_show=<title>/comments', methods=['GET'])
+def get_tv_show_comments(title=None):
+    try:
+        tv_show = TVShows.query.filter_by(title=title).first()
+
+        if tv_show is None:
+            return jsonify({'valid_tv_show': False})
+        else:
+            comments = TVShowComment.query.filter_by(tv_show_id=tv_show.id).order_by(TVShowComment.date_of_comment)
+            return jsonify({'comments': comment.serialize() for comment in comments})
+
+    except Exception as e:
+        return str(e)
+
+
 # [url]/users=[user_id]/tv_show_list
 @app.route('/user=<int:user_id>/tv_show_list', methods=['GET'])
 def get_user_tv_show_list(user_id=None):
