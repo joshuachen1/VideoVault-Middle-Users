@@ -153,3 +153,19 @@ class TVShowComment(db.Model):
             'comment': self.comment,
             'date_of_comment': self.date_of_comment,
         }
+
+
+class Comment:
+    def __init__(self, user_id, username, comment, date_of_comment):
+        self.user_id = user_id
+        self.username = username
+        self.comment = comment
+        self.date_of_comment = date_of_comment
+
+    def serialize(self):
+        return {
+            'user_id': self.user_id,
+            'username': self.username,
+            'comment': self.comment,
+            'date_of_comment': self.date_of_comment,
+        }
