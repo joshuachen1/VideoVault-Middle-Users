@@ -375,24 +375,44 @@ def add_friend():
     user_id = data['user_id']
     friend_id = data['friend_id']
 
+    check_user_id = User.query.filter_by(id=user_id).first()
+    check_friend_id = User.query.filter_by(id=friend_id).first()
+
+    if check_user_id is None and check_friend_id is None:
+        return jsonify({'success':False,
+                        'valid_user_id':False,
+                        'valid_friend_id':False})
+    elif check_user_id is None:
+        return jsonify({'success': False,
+                        'valid_user_id': False,
+                        'valid_friend_id': True})
+    elif check_friend_id is None:
+        return jsonify({'success': False,
+                        'valid_user_id': True,
+                        'valid_friend_id': False})
+
     try:
+        # Add friend to database
         friend = Friends(
             user_id=user_id,
             friend_id=friend_id
         )
         db.session.add(friend)
 
+        # Friend adds back
         friend_back = Friends(
             user_id=friend_id,
             friend_id=user_id
             )
         db.session.add(friend_back)
         db.session.commit()
-        return "Friend Added"
+        return jsonify({'success':True,
+                 'valid_user_id':True,
+                 'valid_friend_id':True})
     except Exception as e:
         return str(e)
 
-        # add friend to database
+
 
 
     except Exception as e:
