@@ -359,6 +359,35 @@ def get_user_friend_list(user_id=None, page=1):
     except Exception as e:
         return str(e)
 
+# [url]/user=[user_id]/friends/add=[friend_id]
+@app.route('/add_friend', methods=['POST'])
+def add_friend():
+    data = request.get_json()
+    user_id = data['user_id']
+    friend_id = data['friend_id']
+
+    try:
+        friend = Friends(
+            user_id=user_id,
+            friend_id=friend_id
+        )
+        db.session.add(friend)
+
+        friend_back = Friends(
+            user_id=friend_id,
+            friend_id=user_id
+            )
+        db.session.add(friend_back)
+        db.session.commit()
+        return "Friend Added"
+    except Exception as e:
+        return str(e)
+
+        # add friend to database
+
+
+    except Exception as e:
+        return str(e)
 
 # [url]/user=[user_id]/friends/remove=[friend_id]
 @app.route('/user=<int:user_id>/friends/remove=<int:friend_id>', methods=['DELETE'])
