@@ -28,7 +28,7 @@ from user_models import User, Friends
 from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
-from user_media_models import Movie, MovieComment, TVShows, TVShowComment
+from user_media_models import Movie, MovieComment, TVShows, TVShowComment, Comment
 
 # Force pymysql to be used as replacement for MySQLdb
 pymysql.install_as_MySQLdb()
@@ -199,25 +199,34 @@ def resub():
     user_id = data['user_id']
     tv_show_id = data['tv_show_id']
 
-    tv_show_ids = [int(id) for id in tv_show_id]
     user_check = User.query.filter_by(id=user_id).first()
     tv_show_len = len(set(tv_show_id))
 
+    # return boolean for invalid inputs
+    if user_check is None and tv_show_len is not 10:
+        return jsonify({'success:': False,
+                        'valid_user': False,
+                        'valid_tv_shows': False})
+    elif user_check is None:
+        return jsonify({'success:': False,
+                        'valid_user': False,
+                        'valid_tv_shows': True})
+    elif tv_show_len is not 10:
+        return jsonify({'success': False,
+                        'valid_user': True,
+                        'valid_tv_shows': False})
+
     # add each entry to the user_slots table
     i = 1
-    for tv_show_id in tv_show_ids:
+    for tv_show_id in tv_show_id:
         tv_show_check = TVShows.query.filter_by(id=tv_show_id).first()
 
         # return boolean for invalid inputs
-        if user_check is None and (tv_show_check is None or tv_show_len is not 10):
+        if user_check is None and tv_show_check is None:
             return jsonify({'success:': False,
                             'valid_user': False,
                             'valid_tv_shows': False})
-        elif user_check is None:
-            return jsonify({'success:': False,
-                            'valid_user': False,
-                            'valid_tv_shows': True})
-        elif tv_show_check is None or tv_show_len is not 10:
+        elif tv_show_check is None:
             return jsonify({'success': False,
                             'valid_user': True,
                             'valid_tv_shows': False})
@@ -366,24 +375,44 @@ def add_friend():
     user_id = data['user_id']
     friend_id = data['friend_id']
 
+    check_user_id = User.query.filter_by(id=user_id).first()
+    check_friend_id = User.query.filter_by(id=friend_id).first()
+
+    if check_user_id is None and check_friend_id is None:
+        return jsonify({'success':False,
+                        'valid_user_id':False,
+                        'valid_friend_id':False})
+    elif check_user_id is None:
+        return jsonify({'success': False,
+                        'valid_user_id': False,
+                        'valid_friend_id': True})
+    elif check_friend_id is None:
+        return jsonify({'success': False,
+                        'valid_user_id': True,
+                        'valid_friend_id': False})
+
     try:
+        # Add friend to database
         friend = Friends(
             user_id=user_id,
             friend_id=friend_id
         )
         db.session.add(friend)
 
+        # Friend adds back
         friend_back = Friends(
             user_id=friend_id,
             friend_id=user_id
             )
         db.session.add(friend_back)
         db.session.commit()
-        return "Friend Added"
+        return jsonify({'success':True,
+                 'valid_user_id':True,
+                 'valid_friend_id':True})
     except Exception as e:
         return str(e)
 
-        # add friend to database
+
 
 
     except Exception as e:
@@ -546,6 +575,35 @@ def comment_movie():
         return str(e)
 
 
+@app.route('/movie=<title>/comments', methods=['GET'])
+def get_movie_comments(title=None):
+    try:
+        movie = Movie.query.filter_by(title=title).first()
+
+        if movie is None:
+            return jsonify({'valid_movie': False})
+        else:
+            comments = list()
+            raw_comments = MovieComment.query.filter_by(movie_id=movie.id).order_by(MovieComment.date_of_comment)
+
+            for rc in raw_comments:
+                user_id = rc.user_id
+                username = User.query.filter_by(id=user_id).first().username
+                comment = rc.comment
+                date_of_comment = rc.date_of_comment
+                comments.append(Comment(
+                    user_id=user_id,
+                    username=username,
+                    comment=comment,
+                    date_of_comment=date_of_comment,
+                ))
+
+            return jsonify({'comments': comment.serialize() for comment in comments})
+
+    except Exception as e:
+        return str(e)
+
+
 # { user_id: [user_id], tv_show_id: [tv_show_id], rating: [1-5] }
 # [url]/tv_show/rating
 @app.route('/user/tv_show/rating', methods=['POST'])
@@ -618,6 +676,35 @@ def comment_tv_show():
             db.session.add(user_comment)
             db.session.commit()
             return jsonify({'valid_user': True, 'valid_tv_show': True, 'success': True})
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/tv_show=<title>/comments', methods=['GET'])
+def get_tv_show_comments(title=None):
+    try:
+        tv_show = TVShows.query.filter_by(title=title).first()
+
+        if tv_show is None:
+            return jsonify({'valid_tv_show': False})
+        else:
+            comments = list()
+            raw_comments = TVShowComment.query.filter_by(tv_show_id=tv_show.id).order_by(TVShowComment.date_of_comment)
+
+            for rc in raw_comments:
+                user_id = rc.user_id
+                username = User.query.filter_by(id=user_id).first().username
+                comment = rc.comment
+                date_of_comment = rc.date_of_comment
+                comments.append(Comment(
+                    user_id=user_id,
+                    username=username,
+                    comment=comment,
+                    date_of_comment=date_of_comment,
+                ))
+
+            return jsonify({'comments': comment.serialize() for comment in comments})
+
     except Exception as e:
         return str(e)
 
