@@ -547,7 +547,7 @@ def comment_movie():
         user_id = data['user_id']
         movie_id = data['movie_id']
         comment = data['comment']
-        date_of_comment = str(datetime.now())
+        date_of_comment = str(date.today())
 
         user = User.query.filter_by(id=user_id).first()
         movie = Movie.query.filter_by(id=movie_id).first()
@@ -652,7 +652,7 @@ def comment_tv_show():
         tv_show_id = data['tv_show_id']
         user_id = data['user_id']
         comment = data['comment']
-        date_of_comment = str(datetime.now())
+        date_of_comment = str(date.today())
 
         user = User.query.filter_by(id=user_id).first()
         tv_show = TVShows.query.filter_by(id=tv_show_id).first()
