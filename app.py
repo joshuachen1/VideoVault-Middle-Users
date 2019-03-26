@@ -415,12 +415,6 @@ def add_friend():
         return str(e)
 
 
-
-
-    except Exception as e:
-        return str(e)
-
-
 # [url]/user=[user_id]/friends/remove=[friend_id]
 @app.route('/user=<int:user_id>/friends/remove=<int:friend_id>', methods=['DELETE'])
 def remove_friend(user_id=None, friend_id=None):
