@@ -135,7 +135,7 @@ class TVShowComment(db.Model):
     tv_show_id = db.Column(db.Integer)
     user_id = db.Column(db.Integer)
     comment = db.Column(db.VARCHAR)
-    date_of_comment = db.Column(db.Date, primary_key=True)
+    date_of_comment = db.Column(db.DateTime, primary_key=True)
 
     def __init__(self, tv_show_id, user_id, comment, date_of_comment):
         self.tv_show_id = tv_show_id
