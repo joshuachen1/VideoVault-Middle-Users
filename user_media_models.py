@@ -109,7 +109,7 @@ class MovieComment(db.Model):
     movie_id = db.Column(db.Integer)
     user_id = db.Column(db.Integer)
     comment = db.Column(db.VARCHAR)
-    date_of_comment = db.Column(db.Date, primary_key=True)
+    date_of_comment = db.Column(db.DateTime, primary_key=True)
 
     def __init__(self, movie_id, user_id, comment, date_of_comment):
         self.movie_id = movie_id
