@@ -595,7 +595,7 @@ def get_movie_comments(title=None):
                     date_of_comment=date_of_comment,
                 ))
 
-            return jsonify({'comments': comment.serialize() for comment in comments})
+            return jsonify({'comments': [comment.serialize() for comment in comments]})
 
     except Exception as e:
         return str(e)
@@ -700,7 +700,7 @@ def get_tv_show_comments(title=None):
                     date_of_comment=date_of_comment,
                 ))
 
-            return jsonify({'comments': comment.serialize() for comment in comments})
+            return jsonify({'comments': [comment.serialize() for comment in comments]})
 
     except Exception as e:
         return str(e)
