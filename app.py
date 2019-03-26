@@ -436,6 +436,7 @@ def remove_friend(user_id=None, friend_id=None):
                 return jsonify({'user_exist': True, 'friend_exist': False, 'friend_deleted': False})
             else:
                 Friends.query.filter_by(user_id=user_id).filter_by(friend_id=friend_id).delete()
+                Friends.query.filter_by(user_id=friend_id).filter_by(friend_id=user_id).delete()
                 db.session.commit()
                 return jsonify({'user_exist': True, 'friend_exist': True, 'friend_deleted': True})
 
