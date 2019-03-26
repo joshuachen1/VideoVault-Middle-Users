@@ -1,3 +1,4 @@
+import re
 import math
 import os
 from datetime import date, datetime
@@ -86,6 +87,11 @@ def signup():
         card_num = str(data['card_num'])
         num_slots = 10
         sub_date = str(date.today())
+
+        # Check if @ sign and period after @ sign
+        email_pattern = re.compile("[^@]+@[^@]+\.[^@]+")
+        if email_pattern.match(email) is None:
+            return jsonify({'valid_email': False})
 
         # Check if email exists
         check_unique = User.query.filter_by(email=email).first()
