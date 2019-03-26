@@ -1,11 +1,12 @@
-from cryptography.fernet import Fernet
-from flask import Flask, request, jsonify, make_response
-from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS
-from datetime import date, datetime
-import pymysql
 import math
 import os
+from datetime import date, datetime
+
+import pymysql
+from cryptography.fernet import Fernet
+from flask import Flask, request, jsonify, make_response
+from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
 
 # Setup App
 app = Flask(__name__)
@@ -368,6 +369,7 @@ def get_user_friend_list(user_id=None, page=1):
     except Exception as e:
         return str(e)
 
+
 # [url]/user=[user_id]/friends/add=[friend_id]
 @app.route('/add_friend', methods=['POST'])
 def add_friend():
@@ -379,9 +381,9 @@ def add_friend():
     check_friend_id = User.query.filter_by(id=friend_id).first()
 
     if check_user_id is None and check_friend_id is None:
-        return jsonify({'success':False,
-                        'valid_user_id':False,
-                        'valid_friend_id':False})
+        return jsonify({'success': False,
+                        'valid_user_id': False,
+                        'valid_friend_id': False})
     elif check_user_id is None:
         return jsonify({'success': False,
                         'valid_user_id': False,
@@ -403,12 +405,12 @@ def add_friend():
         friend_back = Friends(
             user_id=friend_id,
             friend_id=user_id
-            )
+        )
         db.session.add(friend_back)
         db.session.commit()
-        return jsonify({'success':True,
-                 'valid_user_id':True,
-                 'valid_friend_id':True})
+        return jsonify({'success': True,
+                        'valid_user_id': True,
+                        'valid_friend_id': True})
     except Exception as e:
         return str(e)
 
@@ -417,6 +419,7 @@ def add_friend():
 
     except Exception as e:
         return str(e)
+
 
 # [url]/user=[user_id]/friends/remove=[friend_id]
 @app.route('/user=<int:user_id>/friends/remove=<int:friend_id>', methods=['DELETE'])
