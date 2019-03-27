@@ -196,6 +196,21 @@ def resub():
                     'valid_tv_shows': True})
 
 
+@app.route('/is_tv_show_in_slot/user=<user_id>/tv_show=<tv_show_id>')
+@app.route('/is_tv_show_in_slot/user=/tv_show=')
+def is_tv_show_in_slot(user_id=None, tv_show_id=None):
+    try:
+        #check_user = User.query.filter_by(id=user_id).first()
+        #check_tv_show = TVShows.query.filter_by(id=tv_show_id).first()
+        #if(check_user is not None and check_tv_show is not None):
+        if UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first() is not None:
+            return jsonify({'is_tv_show_in_slot':True})
+        else:
+            return jsonify({'is_tv_show_in_slot':False})
+    except Exception as e:
+        return str(e)
+
+
 # Json input: user_id, slot_num, tv_show_title
 @app.route('/add_tv_show', methods=['PUT'])
 def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
