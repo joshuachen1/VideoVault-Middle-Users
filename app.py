@@ -240,15 +240,21 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
                             'unique_tv_show': is_unique_tv_show})
 
     try:
-        slot = UserSlots(
-            user_id = user_id,
-            slot_num = new_slot_id,
-            tv_show_id = tv_show_id,
-        )
-        db.session.add(slot)
-
         if resub is False:
+            slot = UserSlots(
+                user_id = user_id,
+                slot_num = new_slot_id,
+                tv_show_id = tv_show_id,
+            )
+            db.session.add(slot)
             db.session.commit()
+        else:
+            data = request.get_json()
+            user_slots = UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=new_slot_id).first()
+            user_slots.user_id = user_id,
+            user_slots.slot_num = new_slot_id,
+            user_slots.tv_show_id = tv_show_id,
+
         return jsonify({'success': True,
                         'valid_user': True,
                         'valid_tv_show': True,
