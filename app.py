@@ -196,6 +196,7 @@ def resub():
                     'valid_tv_shows': True})
 
 
+#[url]/user=[user_id]/tv_show[tv_show_id]/is_tv_show_in_slot
 @app.route('/user=<user_id>/tv_show=<tv_show_id>/is_tv_show_in_slot', methods=['GET'])
 @app.route('/user=/tv_show=/is_tv_show_in_slot', methods=['GET'])
 def is_tv_show_in_slot(user_id=None, tv_show_id=None):
@@ -727,6 +728,7 @@ def get_user_tv_show_list(user_id=None):
         return str(e)
 
 
+# [url]/user=[user_id]/movie=[movie_id]/is_movie_rented
 @app.route('/user=<user_id>/movie=<movie_id>/is_movie_rented', methods=['GET'])
 @app.route('/user=/movie=/is_movie_rented', methods=['GET'])
 def is_movie_rented(user_id=None, movie_id=None):
