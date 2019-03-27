@@ -148,58 +148,6 @@ def signup():
         return str(e)
 
 
-# [url]/add_slot
-@app.route('/add_slot', methods=['PUT'])
-def add_slot():
-    # increment slot number in users
-    data = request.get_json()
-    user_id = data['id']
-    name = str(data['name'])
-    username = str(data['username'])
-    email = str(data['email'])
-    password = str(data['password'])
-    card_num = str(data['card_num'])
-    num_slots = data['num_slots']
-    sub_date = data['sub_date']
-
-    check_id = User.query.filter_by(id=user_id).first()
-    check_num_slots = check_id.num_slots + 1
-
-    if check_id is None and num_slots != check_num_slots:
-        return jsonify({'success': False,
-                        'valid_user': False,
-                        'valid_num_slots': False})
-    elif check_id is None:
-        return jsonify({'success': False,
-                        'valid_user': False,
-                        'valid_num_slots': True})
-    elif num_slots != check_num_slots:
-        return jsonify({'success': False,
-                        'valid_user': True,
-                        'valid_num_slots': False})
-
-    try:
-        user = User.query.filter_by(id=user_id).first()
-        user.id = user_id
-        user.name = name
-        user.username = username
-        user.email = email
-        user.password = password
-        user.card_num = card_num
-        user.num_slots = num_slots
-        user.sub_date = sub_date
-        db.session.commit()
-
-        # Add a new entry to user_slot
-        add_empty_slot(user_id, num_slots)
-
-        return jsonify({'success': True,
-                        'valid_user': True,
-                        'valid_num_slots': True})
-    except Exception as e:
-        return str(e)
-
-
 @app.route('/resub', methods=['PUT'])
 def resub():
     data = request.get_json()
@@ -250,48 +198,61 @@ def resub():
 
 # Json input: user_id, slot_num, tv_show_title
 @app.route('/add_tv_show', methods=['PUT'])
-def add_tv_show(resub=False, slot_num=None, tv_show_id=None, user_id=None):
+def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
     # only run this section of code to add tv show to newly added slot
     if resub is False:
         data = request.get_json()
         user_id = data['user_id']
-        slot_num = data['slot_num']
         tv_show_id = data['tv_show_id']
 
+        # Update user's slot number
+        new_slot_id = increment_slot(user_id)
+
         user_check = User.query.filter_by(id=user_id).first()
-        tv_show_list = UserSlots.query.filter_by(user_id=user_id).all()
+        current_user_slots = UserSlots.query.filter_by(user_id=user_id).all()
         tv_show_check = TVShows.query.filter_by(id=tv_show_id).first()
 
-        tv_show_id_list = list()
-        for slot in tv_show_list:
-            tv_show_id_list.append(slot.tv_show_id)
+        # all current tv show ids in user slots
+        curr_tv_show_slot_ids = list()
+        for slot in current_user_slots:
+            curr_tv_show_slot_ids.append(slot.tv_show_id)
+
+        # default boolean variables to success
+        is_success = True
+        is_valid_user = True
+        is_valid_tv_show = True
+        is_unique_tv_show = True
 
         # checks to see if input is valid
-        if user_check is None and (tv_show_check is None or tv_show_id in tv_show_id_list):
-            return jsonify({'success:': False,
-                            'valid_user': False,
-                            'valid_tv_show': False})
-        elif user_check is None:
-            return jsonify({'success:': False,
-                            'valid_user': False,
-                            'valid_tv_show': True})
-        elif tv_show_check is None or tv_show_id in tv_show_id_list:
-            return jsonify({'success': False,
-                            'valid_user': True,
-                            'valid_tv_show': False})
+        if user_check is None:
+            is_success = False
+            is_valid_user = False
+        if tv_show_check is None:
+            is_success = False
+            is_valid_tv_show = False
+        if tv_show_id in curr_tv_show_slot_ids:
+            is_success = False
+            is_unique_tv_show = False
+        if is_success is False:
+            return jsonify({'success': is_success,
+                            'valid_user': is_valid_user,
+                            'valid_tv_show': is_valid_tv_show,
+                            'unique_tv_show': is_unique_tv_show})
 
     try:
-        # adds tv show to slot
-        user = UserSlots.query.filter_by(slot_num=slot_num).filter_by(user_id=user_id).first()
-        user.user_id = user_id
-        user.slot_num = slot_num
-        user.tv_show_id = tv_show_id
+        slot = UserSlots(
+            user_id = user_id,
+            slot_num = new_slot_id,
+            tv_show_id = tv_show_id,
+        )
+        db.session.add(slot)
 
         if resub is False:
             db.session.commit()
         return jsonify({'success': True,
                         'valid_user': True,
-                        'valid_tv_show': True})
+                        'valid_tv_show': True,
+                        'unique_tv_show': True,})
     except Exception as e:
         return str(e)
 
@@ -857,6 +818,36 @@ def add_empty_slot(user_id, slot_num):
     db.session.add(user_slots)
     db.session.commit()
     return "user_slots added"
+
+
+# (Pseudo PUT) increment user's slot_num by 1 and return new slot_id
+def increment_slot(user_id) -> int:
+    # increment slot number in users
+    check_id = User.query.filter_by(id=user_id).first()
+
+    name = check_id.name
+    username = check_id.username
+    email = check_id.email
+    password = check_id.password
+    card_num = check_id.card_num
+    num_slots = check_id.num_slots + 1
+    sub_date = check_id.sub_date
+
+    try:
+        user = User.query.filter_by(id=user_id).first()
+        user.id = user_id
+        user.name = name
+        user.username = username
+        user.email = email
+        user.password = password
+        user.card_num = card_num
+        user.num_slots = num_slots
+        user.sub_date = sub_date
+
+        return num_slots
+
+    except Exception as e:
+        return str(e)
 
 
 # Pseudo Pagination
