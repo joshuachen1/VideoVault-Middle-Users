@@ -196,13 +196,10 @@ def resub():
                     'valid_tv_shows': True})
 
 
-@app.route('/is_tv_show_in_slot/user=<user_id>/tv_show=<tv_show_id>')
-@app.route('/is_tv_show_in_slot/user=/tv_show=')
+@app.route('/user=<user_id>/tv_show=<tv_show_id>/is_tv_show_in_slot', methods=['GET'])
+@app.route('/user=/tv_show=/is_tv_show_in_slot', methods=['GET'])
 def is_tv_show_in_slot(user_id=None, tv_show_id=None):
     try:
-        #check_user = User.query.filter_by(id=user_id).first()
-        #check_tv_show = TVShows.query.filter_by(id=tv_show_id).first()
-        #if(check_user is not None and check_tv_show is not None):
         if UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first() is not None:
             return jsonify({'is_tv_show_in_slot':True})
         else:
@@ -726,6 +723,18 @@ def get_user_tv_show_list(user_id=None):
 
         return jsonify({'tv_show_list': user_rated_tv_shows.serialize()})
 
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/user=<user_id>/movie=<movie_id>/is_movie_rented', methods=['GET'])
+@app.route('/user=/movie=/is_movie_rented', methods=['GET'])
+def is_movie_rented(user_id=None, movie_id=None):
+    try:
+        if UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first() is not None:
+            return jsonify({'is_movie_rented':True})
+        else:
+            return jsonify({'is_movie_rented':False})
     except Exception as e:
         return str(e)
 
