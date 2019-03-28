@@ -196,7 +196,7 @@ def resub():
                     'valid_tv_shows': True})
 
 
-#[url]/user=[user_id]/tv_show[tv_show_id]/is_tv_show_in_slot
+# [url]/user=[user_id]/tv_show[tv_show_id]/is_tv_show_in_slot
 @app.route('/user=<user_id>/tv_show=<tv_show_id>/is_tv_show_in_slot', methods=['GET'])
 @app.route('/user=/tv_show=/is_tv_show_in_slot', methods=['GET'])
 def is_tv_show_in_slot(user_id=None, tv_show_id=None):
@@ -277,23 +277,27 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
 
 
 # [url]/search/user=[email_or_username]
+@app.route('/search/user=<query>/page=<int:page>', methods=['GET'])
+@app.route('/search/user=<query>/page=', methods=['GET'])
 @app.route('/search/user=<query>', methods=['GET'])
 @app.route('/search/user=', methods=['GET'])
-def user_search(query=None):
+def user_search(query=None, page=1):
     try:
-        # Assume query == username
-        if User.query.filter_by(email=query).first() is not None:
-            user = User.query.filter_by(email=query).first()
-            return jsonify({user.username: user.serialize()})
+        results = list()
+        query_user = '{}%'.format(query)
 
-        # Assume query == username
-        elif User.query.filter_by(username=query).first() is not None:
-            user = User.query.filter_by(username=query).first()
-            return jsonify({user.username: user.serialize()})
+        # Get all LIKE username
+        username_dict = User.query.filter(User.username.like(query_user))
+        for user in username_dict:
+            results.append(user)
 
-        else:
-            return jsonify({'user_exist': False})
+        # Get exact user email
+        email_dict = User.query.filter(User.email.like(query_user))
+        for user in email_dict:
+            if user not in results:
+                results.append(user)
 
+        return paginated_json('users', results, page)
     except Exception as e:
         return str(e)
 
