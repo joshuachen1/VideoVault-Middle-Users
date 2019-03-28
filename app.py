@@ -278,7 +278,7 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
 
 # [url]/search/user=[email_or_username]
 @app.route('/search/user=<query>/page=<int:page>', methods=['GET'])
-@app.route('/search/user=<query>/page=', methods=['GET'])
+@app.route('/search/user=/page=<int:page>', methods=['GET'])
 @app.route('/search/user=<query>', methods=['GET'])
 @app.route('/search/user=', methods=['GET'])
 def user_search(query=None, page=1):
