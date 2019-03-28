@@ -196,7 +196,23 @@ def resub():
                     'valid_tv_shows': True})
 
 
-# [url]/user=[user_id]/tv_show[tv_show_id]/is_tv_show_in_slot
+# [url]/user=[user_id]/is_slots_full
+@app.route('/user=<user_id>/is_slots_full', methods=['GET'])
+@app.route('/user=/is_slots_full', methods=['GET'])
+def is_slots_full(user_id=None):
+    # Gets list of slots to get length
+    user_slots = UserSlots.query.filter_by(user_id=user_id).all()
+    user = User.query.filter_by(id=user_id).first()
+    user_num_slots = user.num_slots
+
+    # Compares length of user_slots to User's num_slots
+    if len(user_slots) is user_num_slots:
+        return jsonify({'is_slots_full':True})
+    else:
+        return jsonify({'is_slots_full':False})
+
+
+#[url]/user=[user_id]/tv_show[tv_show_id]/is_tv_show_in_slot
 @app.route('/user=<user_id>/tv_show=<tv_show_id>/is_tv_show_in_slot', methods=['GET'])
 @app.route('/user=/tv_show=/is_tv_show_in_slot', methods=['GET'])
 def is_tv_show_in_slot(user_id=None, tv_show_id=None):
