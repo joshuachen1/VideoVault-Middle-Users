@@ -200,16 +200,20 @@ def resub():
 @app.route('/user=<user_id>/is_slots_full', methods=['GET'])
 @app.route('/user=/is_slots_full', methods=['GET'])
 def is_slots_full(user_id=None):
-    # Gets list of slots to get length
+    # Gets list of user slots to get length
     user_slots = UserSlots.query.filter_by(user_id=user_id).all()
+    # Gets list of tv show ids to check for null entries later
+    tv_shows_list = list()
+    for slot in user_slots:
+        tv_shows_list.append(slot.tv_show_id)
     user = User.query.filter_by(id=user_id).first()
     user_num_slots = user.num_slots
 
-    # Compares length of user_slots to User's num_slots
-    if len(user_slots) is user_num_slots:
-        return jsonify({'is_slots_full':True})
-    else:
+    # Compares length of user_slots to User's num_slots and ensures there is no null entry
+    if len(user_slots) is not user_num_slots or any(tv_show is None for tv_show in tv_shows_list):
         return jsonify({'is_slots_full':False})
+    else:
+        return jsonify({'is_slots_full':True})
 
 
 #[url]/user=[user_id]/tv_show[tv_show_id]/is_tv_show_in_slot
