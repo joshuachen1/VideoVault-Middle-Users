@@ -508,6 +508,16 @@ def get_user_movie_list(user_id=None):
         return str(e)
 
 
+# [url]/user=[user_id]/movie=[movie_id]/rating
+@app.route('/user=<user_id>/movie=<movie_id>/rating', methods=['GET'])
+def get_user_movie_rating(user_id=None, movie_id=None):
+    try:
+        entry = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+        return jsonify({'movie_rating':entry.user_rating})
+    except Exception as e:
+        return str(e)
+
+
 # { user_id: [user_id], movie_id: [movie_id], rating: [1-5] }
 # [url]/rate/movie
 @app.route('/user/movie/rating', methods=['POST'])
@@ -608,6 +618,16 @@ def get_movie_comments(title=None):
 
             return jsonify({'comments': [comment.serialize() for comment in comments]})
 
+    except Exception as e:
+        return str(e)
+
+
+# [url]/user=[user_id]/tv_show=[tv_show_id]/rating
+@app.route('/user=<user_id>/tv_show=<tv_show_id>/rating', methods=['GET'])
+def get_user_tv_show_rating(user_id=None, tv_show_id=None):
+    try:
+        entry = UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+        return jsonify({'tv_show_rating':entry.user_rating})
     except Exception as e:
         return str(e)
 
