@@ -508,6 +508,15 @@ def get_user_movie_list(user_id=None):
         return str(e)
 
 
+@app.route('/user=<user_id>/movie=<movie_id>/rating', methods=['GET'])
+def get_user_movie_rating(user_id=None, movie_id=None):
+    try:
+        entry = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+        return jsonify({'movie_rating':entry.user_rating})
+    except Exception as e:
+        return str(e)
+
+
 # { user_id: [user_id], movie_id: [movie_id], rating: [1-5] }
 # [url]/rate/movie
 @app.route('/user/movie/rating', methods=['POST'])
