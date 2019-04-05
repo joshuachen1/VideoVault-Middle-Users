@@ -196,7 +196,27 @@ def resub():
                     'valid_tv_shows': True})
 
 
-# [url]/user=[user_id]/tv_show[tv_show_id]/is_tv_show_in_slot
+# [url]/user=[user_id]/is_slots_full
+@app.route('/user=<user_id>/is_slots_full', methods=['GET'])
+@app.route('/user=/is_slots_full', methods=['GET'])
+def is_slots_full(user_id=None):
+    # Gets list of user slots to get length
+    user_slots = UserSlots.query.filter_by(user_id=user_id).all()
+    # Gets list of tv show ids to check for null entries later
+    tv_shows_list = list()
+    for slot in user_slots:
+        tv_shows_list.append(slot.tv_show_id)
+    user = User.query.filter_by(id=user_id).first()
+    user_num_slots = user.num_slots
+
+    # Compares length of user_slots to User's num_slots and ensures there is no null entry
+    if len(user_slots) is not user_num_slots or any(tv_show is None for tv_show in tv_shows_list):
+        return jsonify({'is_slots_full':False})
+    else:
+        return jsonify({'is_slots_full':True})
+
+
+#[url]/user=[user_id]/tv_show[tv_show_id]/is_tv_show_in_slot
 @app.route('/user=<user_id>/tv_show=<tv_show_id>/is_tv_show_in_slot', methods=['GET'])
 @app.route('/user=/tv_show=/is_tv_show_in_slot', methods=['GET'])
 def is_tv_show_in_slot(user_id=None, tv_show_id=None):
@@ -488,6 +508,16 @@ def get_user_movie_list(user_id=None):
         return str(e)
 
 
+# [url]/user=[user_id]/movie=[movie_id]/rating
+@app.route('/user=<user_id>/movie=<movie_id>/rating', methods=['GET'])
+def get_user_movie_rating(user_id=None, movie_id=None):
+    try:
+        entry = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+        return jsonify({'movie_rating':entry.user_rating})
+    except Exception as e:
+        return str(e)
+
+
 # { user_id: [user_id], movie_id: [movie_id], rating: [1-5] }
 # [url]/rate/movie
 @app.route('/user/movie/rating', methods=['POST'])
@@ -594,6 +624,16 @@ def get_movie_comments(title=None, reverse=False):
 
             return jsonify({'comments': [comment.serialize() for comment in comments]})
 
+    except Exception as e:
+        return str(e)
+
+
+# [url]/user=[user_id]/tv_show=[tv_show_id]/rating
+@app.route('/user=<user_id>/tv_show=<tv_show_id>/rating', methods=['GET'])
+def get_user_tv_show_rating(user_id=None, tv_show_id=None):
+    try:
+        entry = UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+        return jsonify({'tv_show_rating':entry.user_rating})
     except Exception as e:
         return str(e)
 
