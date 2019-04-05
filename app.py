@@ -563,8 +563,11 @@ def comment_movie():
         return str(e)
 
 
+# Comments Chronologically
+# [url]/movie=[title]/comments
+@app.route('/movie=<title>/comments/reverse=<reverse>', methods=['GET'])
 @app.route('/movie=<title>/comments', methods=['GET'])
-def get_movie_comments(title=None):
+def get_movie_comments(title=None, reverse=False):
     try:
         movie = Movie.query.filter_by(title=title).first()
 
@@ -585,6 +588,9 @@ def get_movie_comments(title=None):
                     comment=comment,
                     date_of_comment=date_of_comment,
                 ))
+
+            if reverse:
+                comments = reversed(comments)
 
             return jsonify({'comments': [comment.serialize() for comment in comments]})
 
