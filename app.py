@@ -593,7 +593,7 @@ def comment_movie():
         return str(e)
 
 
-# Comments Chronologically
+# Chronological Movie Comments
 # [url]/movie=[title]/comments
 @app.route('/movie=<title>/comments/reverse=<reverse>', methods=['GET'])
 @app.route('/movie=<title>/comments', methods=['GET'])
@@ -716,8 +716,11 @@ def comment_tv_show():
         return str(e)
 
 
+# Chronological TV Show Comments
+# [url]/tv_show=[title]/comments
+@app.route('/tv_show=<title>/comments/reverse=<reverse>', methods=['GET'])
 @app.route('/tv_show=<title>/comments', methods=['GET'])
-def get_tv_show_comments(title=None):
+def get_tv_show_comments(title=None, reverse=False):
     try:
         tv_show = TVShows.query.filter_by(title=title).first()
 
@@ -738,6 +741,9 @@ def get_tv_show_comments(title=None):
                     comment=comment,
                     date_of_comment=date_of_comment,
                 ))
+
+            if reverse:
+                comments = reversed(comments)
 
             return jsonify({'comments': [comment.serialize() for comment in comments]})
 
