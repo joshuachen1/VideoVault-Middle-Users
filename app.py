@@ -91,6 +91,7 @@ def signup():
         card_num = str(data['card_num'])
         num_slots = 10
         sub_date = str(date.today())
+        profile_pic = "https://upload.wikimedia.org/wikipedia/en/1/13/Stick_figure.png"
 
         # Check if @ sign and period after @ sign
         email_pattern = re.compile("[^@]+@[^@]+\.[^@]+")
@@ -130,7 +131,8 @@ def signup():
                 password=encrypted_pwd,
                 card_num=encrypted_cn,
                 num_slots=num_slots,
-                sub_date=sub_date
+                sub_date=sub_date,
+                profile_pic=profile_pic,
             )
             db.session.add(user)
 
