@@ -19,6 +19,17 @@ class Email:
         self.server.quit()
         return 'Email Sent'
 
+    def reminder_email(self, username: str, user_email: str):
+        subject = 'Welcome to VideoVault'
+        text = 'Welcome {} to Videovault.\n' \
+               'You have 2 days before your VideoVault subscription expires\n' \
+               'Remember to resubscribe to keep your shows!'.format(username)
+        message = 'Subject: {}\n\n{}'.format(subject, text)
+
+        self.server.sendmail(self.email, user_email, message)
+        self.server.quit()
+        return 'Email Sent'
+
 
 class CompanyEmail(db.Model):
     __tablename__ = 'CompanyEmail'
