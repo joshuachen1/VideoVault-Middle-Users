@@ -24,6 +24,7 @@ db = SQLAlchemy(app)
 port = int(os.environ.get('PORT', 33507))
 
 # Import Models
+from Email import Email
 from crypto_models import Key
 from user_models import Signup, Login
 from user_models import User, Friends
@@ -35,6 +36,8 @@ from user_media_models import Movie, MovieComment, TVShows, TVShowComment, Comme
 # Force pymysql to be used as replacement for MySQLdb
 pymysql.install_as_MySQLdb()
 
+# Set Up Email Server
+email_sender = Email(app.config['COMPANY_EMAIL'])
 
 # [url]/
 @app.route('/')
@@ -141,6 +144,7 @@ def signup():
 
             db.session.commit()
 
+            email_sender.welcome_email(username=username, user_email=email)
             return jsonify(new_user.serialize())
         except Exception as e:
             return str(e)
