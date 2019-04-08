@@ -1,4 +1,5 @@
 import smtplib
+
 from app import db
 
 
@@ -11,7 +12,7 @@ class Email:
 
     def welcome_email(self, username: str, user_email: str):
         subject = 'Welcome to VideoVault'
-        text = 'Welcome {} to Videovault.\n' \
+        text = 'Welcome {} to VideoVault.\n' \
                'You have 30 days before your VideoVault subscription expires.'.format(username)
         message = 'Subject: {}\n\n{}'.format(subject, text)
 
