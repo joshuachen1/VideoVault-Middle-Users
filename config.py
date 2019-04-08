@@ -8,6 +8,7 @@ class Config(object):
     TESTING = False
     CSRF_ENABLED = True
     SECRET_KEY = 'key'
+    COMPANY_EMAIL = 'videovault.company48'
     SQLALCHEMY_DATABASE_URI = os.environ['AWS_RDS_URL']
     POSTS_PER_PAGE = 5  # How many items to display per page (for pagination)
 

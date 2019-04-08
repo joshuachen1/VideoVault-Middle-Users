@@ -1,6 +1,6 @@
-import re
 import math
 import os
+import re
 from datetime import date, datetime
 
 import pymysql
@@ -24,6 +24,7 @@ db = SQLAlchemy(app)
 port = int(os.environ.get('PORT', 33507))
 
 # Import Models
+from Email import Email
 from crypto_models import Key
 from user_models import Signup, Login
 from user_models import User, Friends
@@ -34,6 +35,9 @@ from user_media_models import Movie, MovieComment, TVShows, TVShowComment, Comme
 
 # Force pymysql to be used as replacement for MySQLdb
 pymysql.install_as_MySQLdb()
+
+# Set Up Email Server
+email_sender = Email(app.config['COMPANY_EMAIL'])
 
 
 # [url]/
@@ -141,6 +145,7 @@ def signup():
 
             db.session.commit()
 
+            email_sender.welcome_email(username=username, user_email=email)
             return jsonify(new_user.serialize())
         except Exception as e:
             return str(e)
@@ -211,20 +216,20 @@ def is_slots_full(user_id=None):
 
     # Compares length of user_slots to User's num_slots and ensures there is no null entry
     if len(user_slots) is not user_num_slots or any(tv_show is None for tv_show in tv_shows_list):
-        return jsonify({'is_slots_full':False})
+        return jsonify({'is_slots_full': False})
     else:
-        return jsonify({'is_slots_full':True})
+        return jsonify({'is_slots_full': True})
 
 
-#[url]/user=[user_id]/tv_show[tv_show_id]/is_tv_show_in_slot
+# [url]/user=[user_id]/tv_show[tv_show_id]/is_tv_show_in_slot
 @app.route('/user=<user_id>/tv_show=<tv_show_id>/is_tv_show_in_slot', methods=['GET'])
 @app.route('/user=/tv_show=/is_tv_show_in_slot', methods=['GET'])
 def is_tv_show_in_slot(user_id=None, tv_show_id=None):
     try:
         if UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first() is not None:
-            return jsonify({'is_tv_show_in_slot':True})
+            return jsonify({'is_tv_show_in_slot': True})
         else:
-            return jsonify({'is_tv_show_in_slot':False})
+            return jsonify({'is_tv_show_in_slot': False})
     except Exception as e:
         return str(e)
 
@@ -275,9 +280,9 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
     try:
         if resub is False:
             slot = UserSlots(
-                user_id = user_id,
-                slot_num = new_slot_id,
-                tv_show_id = tv_show_id,
+                user_id=user_id,
+                slot_num=new_slot_id,
+                tv_show_id=tv_show_id,
             )
             db.session.add(slot)
             db.session.commit()
@@ -291,7 +296,7 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
         return jsonify({'success': True,
                         'valid_user': True,
                         'valid_tv_show': True,
-                        'unique_tv_show': True,})
+                        'unique_tv_show': True, })
     except Exception as e:
         return str(e)
 
@@ -513,7 +518,7 @@ def get_user_movie_list(user_id=None):
 def get_user_movie_rating(user_id=None, movie_id=None):
     try:
         entry = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
-        return jsonify({'movie_rating':entry.user_rating})
+        return jsonify({'movie_rating': entry.user_rating})
     except Exception as e:
         return str(e)
 
@@ -593,8 +598,11 @@ def comment_movie():
         return str(e)
 
 
+# Chronological Movie Comments
+# [url]/movie=[title]/comments
+@app.route('/movie=<title>/comments/reverse=<reverse>', methods=['GET'])
 @app.route('/movie=<title>/comments', methods=['GET'])
-def get_movie_comments(title=None):
+def get_movie_comments(title=None, reverse=False):
     try:
         movie = Movie.query.filter_by(title=title).first()
 
@@ -616,6 +624,9 @@ def get_movie_comments(title=None):
                     date_of_comment=date_of_comment,
                 ))
 
+            if reverse:
+                comments = reversed(comments)
+
             return jsonify({'comments': [comment.serialize() for comment in comments]})
 
     except Exception as e:
@@ -627,7 +638,7 @@ def get_movie_comments(title=None):
 def get_user_tv_show_rating(user_id=None, tv_show_id=None):
     try:
         entry = UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
-        return jsonify({'tv_show_rating':entry.user_rating})
+        return jsonify({'tv_show_rating': entry.user_rating})
     except Exception as e:
         return str(e)
 
@@ -710,8 +721,11 @@ def comment_tv_show():
         return str(e)
 
 
+# Chronological TV Show Comments
+# [url]/tv_show=[title]/comments
+@app.route('/tv_show=<title>/comments/reverse=<reverse>', methods=['GET'])
 @app.route('/tv_show=<title>/comments', methods=['GET'])
-def get_tv_show_comments(title=None):
+def get_tv_show_comments(title=None, reverse=False):
     try:
         tv_show = TVShows.query.filter_by(title=title).first()
 
@@ -732,6 +746,9 @@ def get_tv_show_comments(title=None):
                     comment=comment,
                     date_of_comment=date_of_comment,
                 ))
+
+            if reverse:
+                comments = reversed(comments)
 
             return jsonify({'comments': [comment.serialize() for comment in comments]})
 
@@ -778,9 +795,9 @@ def get_user_tv_show_list(user_id=None):
 def is_movie_rented(user_id=None, movie_id=None):
     try:
         if UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first() is not None:
-            return jsonify({'is_movie_rented':True})
+            return jsonify({'is_movie_rented': True})
         else:
-            return jsonify({'is_movie_rented':False})
+            return jsonify({'is_movie_rented': False})
     except Exception as e:
         return str(e)
 
