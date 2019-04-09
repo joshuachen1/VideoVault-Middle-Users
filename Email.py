@@ -5,19 +5,21 @@ from app import db
 
 class Email:
     def __init__(self, email_username):
-        acc = CompanyEmail.query.filter_by(username=email_username).first()
-        self.email = '{}@gmail.com'.format(acc.username)
-        self.server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        self.server.login(acc.username, acc.password)
+        self.email_username = email_username
 
     def welcome_email(self, username: str, user_email: str):
+        acc = CompanyEmail.query.filter_by(username=self.email_username).first()
+        email = '{}@gmail.com'.format(acc.username)
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(acc.username, acc.password)
+
         subject = 'Welcome to VideoVault'
         text = 'Welcome {} to VideoVault.\n' \
                'You have 30 days before your VideoVault subscription expires.'.format(username)
         message = 'Subject: {}\n\n{}'.format(subject, text)
 
-        self.server.sendmail(self.email, user_email, message)
-        self.server.quit()
+        server.sendmail(email, user_email, message)
+        server.quit()
         return 'Email Sent'
 
     def sub_reminder_email(self, username: str, user_email: str):
