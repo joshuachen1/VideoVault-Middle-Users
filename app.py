@@ -25,6 +25,7 @@ port = int(os.environ.get('PORT', 33507))
 
 # Import Models
 from Email import Email
+from db_cursor import DBInfo
 from crypto_models import Key
 from user_models import Signup, Login
 from user_models import User, Friends
@@ -91,6 +92,7 @@ def signup():
         card_num = str(data['card_num'])
         num_slots = 10
         sub_date = str(date.today())
+        profile_pic = "https://upload.wikimedia.org/wikipedia/en/1/13/Stick_figure.png"
 
         # Check if @ sign and period after @ sign
         email_pattern = re.compile("[^@]+@[^@]+\.[^@]+")
@@ -130,7 +132,8 @@ def signup():
                 password=encrypted_pwd,
                 card_num=encrypted_cn,
                 num_slots=num_slots,
-                sub_date=sub_date
+                sub_date=sub_date,
+                profile_pic=profile_pic,
             )
             db.session.add(user)
 
@@ -853,6 +856,29 @@ def rent_movie():
                         'valid_movie': True})
     except Exception as e:
         return str(e)
+
+
+# Creates a new table in the database for the new user
+def create_new_timeline(username: str):
+    db_info = DBInfo.query.filter_by(user='company48').first()
+    dbHost = db_info.host
+    dbUser = db_info.user
+    dbPassword = db_info.password
+    dbName = db_info.name
+    charSet = 'utf8mb4'
+    cursorType = pymysql.cursors.DictCursor
+    connectionObject = pymysql.connect(host=dbHost, user=dbUser, password=dbPassword, db=dbName, charset=charSet,
+                                       cursorclass=cursorType)
+    try:
+        db_cursor = connectionObject.cursor()
+        sql_query = 'CREATE TABLE ' + username + '_timeline(id int, post varchar(255))'
+        db_cursor.execute(sql_query)
+        print('success')
+    except Exception as e:
+        print(str(e))
+
+    finally:
+        connectionObject.close()
 
 
 def update_average_rating(is_tv_show: bool, media_id: int):
