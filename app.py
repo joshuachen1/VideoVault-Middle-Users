@@ -859,7 +859,7 @@ def rent_movie():
 
 
 # Creates a new table in the database for the new user
-def create_new_timeline(username:str):
+def create_new_timeline(username: str):
     db_info = DBInfo.query.filter_by(user='company48').first()
     dbHost = db_info.host
     dbUser = db_info.user
@@ -873,9 +873,9 @@ def create_new_timeline(username:str):
         db_cursor = connectionObject.cursor()
         sql_query = 'CREATE TABLE ' + username + '_timeline(id int, post varchar(255))'
         db_cursor.execute(sql_query)
-        return 'success'
+        print('success')
     except Exception as e:
-        return (str(e))
+        print(str(e))
 
     finally:
         connectionObject.close()
