@@ -136,6 +136,7 @@ def signup():
                 profile_pic=profile_pic,
             )
             db.session.add(user)
+            email_sender.welcome_email(username=username, user_email=email)
 
             new_user = User.query.filter_by(username=username).first()
             for i in range(num_slots):
@@ -147,8 +148,6 @@ def signup():
                 db.session.add(slot)
 
             db.session.commit()
-
-            email_sender.welcome_email(username=username, user_email=email)
             return jsonify(new_user.serialize())
         except Exception as e:
             return str(e)
