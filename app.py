@@ -203,6 +203,41 @@ def resub():
                     'valid_tv_shows': True})
 
 
+# { "user_id": [user_id], "profile_pic": [profile_pic] }
+# [url]/update/profile_pic
+@app.route('/update/profile_pic', methods=['PUT'])
+def update_profile_pic():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        profile_pic = data['profile_pic']
+
+        # Must end in png
+        profile_pic_pattern = re.compile("[^@]+\.png")
+        user = User.query.filter_by(id=user_id).first()
+
+        if user is None and profile_pic_pattern.match(profile_pic) is None:
+            return jsonify({'success': False,
+                            'valid_user': False,
+                            'valid_pic': False})
+        elif user is None:
+            return jsonify({'success': False,
+                            'valid_user': False,
+                            'valid_pic': True})
+        elif profile_pic_pattern.match(profile_pic) is None:
+            return jsonify({'success': False,
+                            'valid_user': True,
+                            'valid_pic': False})
+        else:
+            user.profile_pic = profile_pic
+            db.session.commit()
+            return jsonify({'success': True,
+                            'valid_user': True,
+                            'valid_pic': True})
+    except Exception as e:
+        return str(e)
+
+
 # [url]/user=[user_id]/is_slots_full
 @app.route('/user=<user_id>/is_slots_full', methods=['GET'])
 @app.route('/user=/is_slots_full', methods=['GET'])
