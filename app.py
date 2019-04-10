@@ -203,6 +203,68 @@ def resub():
                     'valid_tv_shows': True})
 
 
+# Need User Id and Password
+@app.route('/account/delete', methods=['DELETE'])
+def delete_account():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        password = data['password']
+
+        user = User.query.filter_by(id=user_id).first()
+
+        # Get Key
+        key = Key.query.filter_by(id=1).first().key
+        key = key.encode('utf-8')
+        cipher = Fernet(key)
+
+        # Check Matching Password
+        true_pwd = user.password.encode('utf-8')
+        decrypted_pwd = (cipher.decrypt(true_pwd)).decode('utf-8')
+
+        if user.id is not user_id:
+            return jsonify({'success:': False,
+                            'valid_user': False})
+        elif decrypted_pwd != password:
+            return jsonify({'success:': False,
+                            'valid_user': True,
+                            'valid_password': False})
+        else:
+            # Delete From Friends Table
+            Friends.query.filter_by(user_id=user_id).delete()
+            Friends.query.filter_by(friend_id=user_id).delete()
+
+            # Delete All User Comments
+            MovieComment.query.filter_by(user_id=user_id).delete()
+            TVShowComment.query.filter_by(user_id=user_id).delete()
+
+            # Delete User Rated Media Lists
+            movie_list = UserRatedMovieRel.query.filter_by(user_id=user_id).delete()
+            for m in movie_list:
+                UserRatedMovieRel.query.filter_by(movie_id=m.movie_id).delete()
+                update_average_rating(False, m.movie_id)
+
+            tv_show_list = UserRatedTVShowRel.query.filter_by(user_id=user_id).delete()
+            for tvs in tv_show_list:
+                UserRatedTVShowRel.query.filter_by(tv_show_id=tvs.tv_show_id).delete()
+                update_average_rating(True, tvs.tv_show_id)
+
+            # Remove All User Slots
+            UserSlots.query.filter_by(user_id=user_id).delete()
+
+            # Remove From User Table
+            User.query.filter_by(id=user_id).delete()
+
+            db.session.commit()
+
+            return jsonify({'success:': True,
+                            'valid_user': True,
+                            'valid_password': True})
+
+    except Exception as e:
+        return str(e)
+
+
 # { "user_id": [user_id], "profile_pic": [profile_pic] }
 # [url]/update/profile_pic
 @app.route('/update/profile_pic', methods=['PUT'])
