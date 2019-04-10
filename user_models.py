@@ -220,6 +220,8 @@ class Slot:
 
 
 class UserRentedMovies(db.Model):
+    __tablename__ = 'user_rented_movies'
+
     user_id = db.Column(db.Integer, primary_key=True)
     movie_id = db.Column(db.Integer, primary_key=True)
     rent_datetime = db.Column(db.Integer)
