@@ -87,6 +87,44 @@ class Friends(db.Model):
         }
 
 
+class TimeLine(db.Model):
+    __tablename__ = 'user_timeline'
+
+    user_id = db.Column(db.Integer, primary_key=True)
+    post_user_id = db.Column(db.Integer)
+    post = db.Column(db.VARCHAR)
+    date_of_post = db.Column(db.DateTime, primary_key=True)
+
+    def __init__(self, user_id, post_user_id, post, date_of_post):
+        self.user_id = user_id
+        self.post_user_id = post_user_id
+        self.post = post
+        self.date_of_post = date_of_post
+
+    def serialize(self):
+        return {
+            'user_id': self.user_id,
+            'post_user_id': self.post_user_id,
+            'post': self.post,
+            'date_of_post': self.date_of_post,
+        }
+
+
+class Post:
+    def __init__(self, username, post_username, post, date_of_post):
+        self.username = username
+        self.post_username = post_username
+        self.post = post
+        self.date_of_post = date_of_post
+
+    def serialize(self):
+        return {
+            'username': self.username,
+            'post_username': self.post_username,
+            'post': self.post,
+            'date_of_post': self.date_of_post,
+        }
+
 class UserRatedMovieRel(db.Model):
     __tablename__ = 'user_rated_movies'
 
