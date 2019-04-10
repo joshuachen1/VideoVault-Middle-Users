@@ -458,8 +458,27 @@ def clear_slots():
     except Exception as e:
         return str(e)
 
-# route to delete a slot (deletes the top slot ONLY IF EMPTY and delete user's slot use fuction already provided)
-# route to delete tv_show in slot (move all existing tv_shows up)
+# route to delete a slot (deletes the top slot ONLY IF EMPTY and delete user's slot, use fuction already provided)
+@app.route('/delete_slot', methods=['PUT'])
+def delete_slot():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+
+        user = User.query.filter_by(id=user_id).first()
+        top_user_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).first()
+
+        if top_user_slot.tv_show_id is None:
+            UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).delete()
+            decrement_slot(user_id)
+            db.session.commit()
+            return jsonify({'success':True})
+        else:
+            return jsonify({'success':False})
+
+    except Exception as e:
+        return str(e)
+# route to delete tv_show in slot(move all existing tv_shows up)
 
 
 # [url]/search/user=[email_or_username]
@@ -1216,6 +1235,36 @@ def increment_slot(user_id) -> int:
     password = check_id.password
     card_num = check_id.card_num
     num_slots = check_id.num_slots + 1
+    sub_date = check_id.sub_date
+
+    try:
+        user = User.query.filter_by(id=user_id).first()
+        user.id = user_id
+        user.name = name
+        user.username = username
+        user.email = email
+        user.password = password
+        user.card_num = card_num
+        user.num_slots = num_slots
+        user.sub_date = sub_date
+
+        return num_slots
+
+    except Exception as e:
+        return str(e)
+
+
+# (Pseudo PUT) increment user's slot_num by 1 and return new slot_id
+def decrement_slot(user_id) -> int:
+    # increment slot number in users
+    check_id = User.query.filter_by(id=user_id).first()
+
+    name = check_id.name
+    username = check_id.username
+    email = check_id.email
+    password = check_id.password
+    card_num = check_id.card_num
+    num_slots = check_id.num_slots - 1
     sub_date = check_id.sub_date
 
     try:
