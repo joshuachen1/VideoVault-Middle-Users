@@ -1,7 +1,7 @@
 import math
 import os
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 import pymysql
 from cryptography.fernet import Fernet
@@ -72,6 +72,7 @@ def login(email=None, attempted_pwd=None):
         decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
 
         if decrypted_saved_pwd == attempted_pwd:
+            delete_expired_movies()
             return jsonify(user_info.serialize())
         else:
             result = Login(False, True, False)
@@ -136,6 +137,7 @@ def signup():
                 profile_pic=profile_pic,
             )
             db.session.add(user)
+            email_sender.welcome_email(username=username, user_email=email)
 
             new_user = User.query.filter_by(username=username).first()
             for i in range(num_slots):
@@ -147,8 +149,6 @@ def signup():
                 db.session.add(slot)
 
             db.session.commit()
-
-            email_sender.welcome_email(username=username, user_email=email)
             return jsonify(new_user.serialize())
         except Exception as e:
             return str(e)
@@ -202,6 +202,41 @@ def resub():
     return jsonify({'success:': True,
                     'valid_user': True,
                     'valid_tv_shows': True})
+
+
+# { "user_id": [user_id], "profile_pic": [profile_pic] }
+# [url]/update/profile_pic
+@app.route('/update/profile_pic', methods=['PUT'])
+def update_profile_pic():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        profile_pic = data['profile_pic']
+
+        # Must end in png
+        profile_pic_pattern = re.compile("[^@]+\.png")
+        user = User.query.filter_by(id=user_id).first()
+
+        if user is None and profile_pic_pattern.match(profile_pic) is None:
+            return jsonify({'success': False,
+                            'valid_user': False,
+                            'valid_pic': False})
+        elif user is None:
+            return jsonify({'success': False,
+                            'valid_user': False,
+                            'valid_pic': True})
+        elif profile_pic_pattern.match(profile_pic) is None:
+            return jsonify({'success': False,
+                            'valid_user': True,
+                            'valid_pic': False})
+        else:
+            user.profile_pic = profile_pic
+            db.session.commit()
+            return jsonify({'success': True,
+                            'valid_user': True,
+                            'valid_pic': True})
+    except Exception as e:
+        return str(e)
 
 
 # [url]/user=[user_id]/is_slots_full
@@ -926,6 +961,23 @@ def get_average_rating(is_tv_show: bool, media_id: int):
     except Exception as e:
         return str(e)
 
+
+# checks database if movies are past rented due date and deletes them
+def delete_expired_movies():
+    try:
+        yesterday_datetime = datetime.now() - timedelta(1)
+
+        # ensures list is not empty
+        check_not_empty = UserRentedMovies.query.filter(UserRentedMovies.rent_datetime<=yesterday_datetime)
+        if check_not_empty:
+            UserRentedMovies.query.filter(UserRentedMovies.rent_datetime<=yesterday_datetime).delete()
+            db.session.commit()
+            return 'success'
+        else:
+            return 'no movies to delete'
+
+    except Exception as e:
+        return str(e)
 
 # adds an empty slot to user_slots in database
 def add_empty_slot(user_id, slot_num):
