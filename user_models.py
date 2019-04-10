@@ -224,7 +224,7 @@ class UserRentedMovies(db.Model):
 
     user_id = db.Column(db.Integer, primary_key=True)
     movie_id = db.Column(db.Integer, primary_key=True)
-    rent_datetime = db.Column(db.Integer)
+    rent_datetime = db.Column(db.DATETIME)
 
     def __init__(self, user_id, movie_id, rent_datetime):
         self.user_id = user_id

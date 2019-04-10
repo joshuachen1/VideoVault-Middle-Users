@@ -969,7 +969,7 @@ def delete_expired_movies():
 
         # ensures list is not empty
         check_not_empty = UserRentedMovies.query.filter(UserRentedMovies.rent_datetime<=yesterday_datetime)
-        if not check_not_empty:
+        if check_not_empty:
             UserRentedMovies.query.filter(UserRentedMovies.rent_datetime<=yesterday_datetime).delete()
             db.session.commit()
             return 'success'
