@@ -41,8 +41,10 @@ class User(db.Model):
     num_slots = db.Column(db.Integer)
     sub_date = db.Column(db.Date)
     profile_pic = db.Column(db.VARCHAR)
+    unsubscribe = db.Column(db.BOOLEAN)
 
-    def __init__(self, name, username, email, password, card_num, num_slots, sub_date, profile_pic):
+
+    def __init__(self, name, username, email, password, card_num, num_slots, sub_date, profile_pic, unsubscribe):
         self.name = name
         self.username = username
         self.email = email
@@ -51,6 +53,8 @@ class User(db.Model):
         self.num_slots = num_slots
         self.sub_date = sub_date
         self.profile_pic = profile_pic
+        self.unsubscribe = unsubscribe
+
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
@@ -64,6 +68,7 @@ class User(db.Model):
             'num_slots': self.num_slots,
             'sub_date': self.sub_date,
             'profile_pic': self.profile_pic,
+            'unsubsribe': self.unsubscribe,
         }
 
 

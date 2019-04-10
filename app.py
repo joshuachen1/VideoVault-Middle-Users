@@ -407,6 +407,45 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
         return str(e)
 
 
+# boolean to unsubscribe
+@app.route('/unsubscribe', methods=['PUT'])
+def unsubscribe(id=None):
+    try:
+        data = request.get_json()
+        id = data['user_id']
+        if id is not None:
+            user = User.query.filter_by(id=id).first()
+            change_subscription_status(user.id, True)
+            db.session.commit()
+            return jsonify({'is_success': True})
+        else:
+            return jsonify({'is_success': False})
+    except Exception as e:
+        return str(e)
+
+
+# boolean to subscribe
+@app.route('/subscribe', methods=['PUT'])
+def subscribe(id=None):
+    try:
+        data = request.get_json()
+        id = data['user_id']
+        if id is not None:
+            user = User.query.filter_by(id=id).first()
+            change_subscription_status(user.id, False)
+            db.session.commit()
+            return jsonify({'is_success': True})
+        else:
+            return jsonify({'is_success': False})
+    except Exception as e:
+        return str(e)
+
+
+# route to unsubscribe (remove tv shows in all slots)
+# route to delete a slot
+# route to delete tv_show in slot
+
+
 # [url]/search/user=[email_or_username]
 @app.route('/search/user=<query>/page=<int:page>', methods=['GET'])
 @app.route('/search/user=/page=<int:page>', methods=['GET'])
@@ -1147,6 +1186,39 @@ def increment_slot(user_id) -> int:
         user.card_num = card_num
         user.num_slots = num_slots
         user.sub_date = sub_date
+
+        return num_slots
+
+    except Exception as e:
+        return str(e)
+
+
+# (Pseudo PUT) increment user's slot_num by 1 and return new slot_id
+def change_subscription_status(user_id, unsubscribe_boolean):
+    # increment slot number in users
+    check_id = User.query.filter_by(id=user_id).first()
+
+    name = check_id.name
+    username = check_id.username
+    email = check_id.email
+    password = check_id.password
+    card_num = check_id.card_num
+    num_slots = check_id.num_slots
+    sub_date = check_id.sub_date
+    profile_pic = check_id.profile_pic
+
+    try:
+        user = User.query.filter_by(id=user_id).first()
+        user.id = user_id
+        user.name = name
+        user.username = username
+        user.email = email
+        user.password = password
+        user.card_num = card_num
+        user.num_slots = num_slots
+        user.sub_date = sub_date
+        user.profile_pic = profile_pic
+        user.unsubscribe = unsubscribe_boolean
 
         return num_slots
 
