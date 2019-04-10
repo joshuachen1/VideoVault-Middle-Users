@@ -1115,8 +1115,7 @@ def get_average_rating(is_tv_show: bool, media_id: int):
             for tsr in tv_show_ratings:
                 total += tsr.user_rating
                 num_ratings += 1
-
-            return total / num_ratings
+            return '%.2f' % (total / num_ratings)
 
         else:
             movie_ratings = UserRatedMovieRel.query.filter_by(movie_id=media_id)
@@ -1127,7 +1126,7 @@ def get_average_rating(is_tv_show: bool, media_id: int):
                 total += mr.user_rating
                 num_ratings += 1
 
-            return total / num_ratings
+            return '%.2f' % (total / num_ratings)
 
     except Exception as e:
         return str(e)
