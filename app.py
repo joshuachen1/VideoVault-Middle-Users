@@ -1,7 +1,7 @@
 import math
 import os
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 import pymysql
 from cryptography.fernet import Fernet
@@ -72,6 +72,7 @@ def login(email=None, attempted_pwd=None):
         decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
 
         if decrypted_saved_pwd == attempted_pwd:
+            delete_expired_movies()
             return jsonify(user_info.serialize())
         else:
             result = Login(False, True, False)
@@ -1022,6 +1023,23 @@ def get_average_rating(is_tv_show: bool, media_id: int):
     except Exception as e:
         return str(e)
 
+
+# checks database if movies are past rented due date and deletes them
+def delete_expired_movies():
+    try:
+        yesterday_datetime = datetime.now() - timedelta(1)
+
+        # ensures list is not empty
+        check_not_empty = UserRentedMovies.query.filter(UserRentedMovies.rent_datetime<=yesterday_datetime)
+        if check_not_empty:
+            UserRentedMovies.query.filter(UserRentedMovies.rent_datetime<=yesterday_datetime).delete()
+            db.session.commit()
+            return 'success'
+        else:
+            return 'no movies to delete'
+
+    except Exception as e:
+        return str(e)
 
 # adds an empty slot to user_slots in database
 def add_empty_slot(user_id, slot_num):
