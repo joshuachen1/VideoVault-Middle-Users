@@ -442,8 +442,24 @@ def subscribe(id=None):
 
 
 # route to unsubscribe (remove tv shows in all slots)
-# route to delete a slot
-# route to delete tv_show in slot
+@app.route('/clear_slots', methods=['PUT'])
+def clear_slots():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        user_slots_list = UserSlots.query.filter_by(user_id=user_id).all()
+        if user_slots_list:
+            for user_slots in user_slots_list:
+                clear_individual_slot(user_slots.user_id, user_slots.slot_num)
+            db.session.commit()
+            return jsonify({'slots_cleared':True})
+        else:
+            return jsonify({'slots_cleared':False})
+    except Exception as e:
+        return str(e)
+
+# route to delete a slot (deletes the top slot ONLY IF EMPTY and delete user's slot use fuction already provided)
+# route to delete tv_show in slot (move all existing tv_shows up)
 
 
 # [url]/search/user=[email_or_username]
@@ -1219,7 +1235,18 @@ def increment_slot(user_id) -> int:
         return str(e)
 
 
-# (Pseudo PUT) increment user's slot_num by 1 and return new slot_id
+def clear_individual_slot(user_id, slot_num):
+    try:
+        check_slot_id = UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=slot_num).first()
+        if check_slot_id is not None:
+            check_slot_id.user_id = user_id
+            check_slot_id.slot_id = slot_num
+            check_slot_id.tv_show_id = None
+            return 'success'
+    except Exception as e:
+        return str(e)
+
+
 def change_subscription_status(user_id, unsubscribe_boolean):
     # increment slot number in users
     check_id = User.query.filter_by(id=user_id).first()
