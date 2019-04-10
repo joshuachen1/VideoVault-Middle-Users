@@ -1004,6 +1004,33 @@ def rent_movie():
         return str(e)
 
 
+@app.route('/user=<user_id>/wall', methods=['GET'])
+def display_wall(user_id=None):
+    try:
+        timeline = list()
+        user = User.query.filter_by(id=user_id).first()
+
+        wall = TimeLine.query.filter_by(user_id=user.id).order_by(TimeLine.date_of_post)
+        for post in wall:
+            username = User.query.filter_by(id=post.user_id).first().username
+            post_username = User.query.filter_by(id=post.post_user_id).first().username
+            timeline.append(Post(
+                                username=username,
+                                post_username=post_username,
+                                post=post.post,
+                                date_of_post=post.date_of_post,
+                                ))
+
+        timeline.sort(key=lambda tl: tl.date_of_post)
+        timeline = reversed(timeline)
+
+        title = "{}'s timeline".format(user.username)
+        return jsonify({title: [tl.serialize() for tl in timeline]})
+
+    except Exception as e:
+        return str(e)
+
+
 @app.route('/user=<user_id>/timeline', methods=['GET'])
 def display_timeline(user_id=None):
     try:
