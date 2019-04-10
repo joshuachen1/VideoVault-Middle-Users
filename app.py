@@ -28,7 +28,7 @@ from Email import Email
 from db_cursor import DBInfo
 from crypto_models import Key
 from user_models import Signup, Login
-from user_models import User, Friends
+from user_models import User, Friends, TimeLine, Post
 from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
@@ -148,6 +148,12 @@ def signup():
                 )
                 db.session.add(slot)
 
+                # Add self to friend_list
+                friend = Friends(
+                    user_id=new_user.id,
+                    friend_id=new_user.id,
+                )
+                db.session.add(friend)
             db.session.commit()
             return jsonify(new_user.serialize())
         except Exception as e:
@@ -443,12 +449,16 @@ def get_users(page=1):
 # Check Friendship
 # [url]/user1=[user1_id]/user2=[user2_id]
 @app.route('/user1=<int:user1_id>/user2=<int:user2_id>')
-def is_friend(user1_id=None, user2_id=None):
+def is_friend(user1_id=None, user2_id=None, inner_call=False):
     try:
         friendship = Friends.query.filter_by(user_id=user1_id).filter_by(friend_id=user2_id).first()
         if friendship is not None:
+            if inner_call:
+                return True
             return jsonify({'is_friend': True})
         else:
+            if inner_call:
+                return False
             return jsonify({'is_friend': False})
     except Exception as e:
         return str(e)
@@ -955,6 +965,66 @@ def rent_movie():
         return str(e)
 
 
+@app.route('/user=<user_id>/timeline', methods=['GET'])
+def display_timeline(user_id=None):
+    try:
+        timeline = list()
+        user = User.query.filter_by(id=user_id).first()
+        friend_list = Friends.query.filter_by(user_id=user_id)
+
+        # View All Self and Friend Walls
+        for friend in friend_list:
+            friend_wall = TimeLine.query.filter_by(user_id=friend.friend_id).order_by(TimeLine.date_of_post)
+
+            for post in friend_wall:
+                username = User.query.filter_by(id=post.user_id).first().username
+                post_username = User.query.filter_by(id=post.post_user_id).first().username
+                timeline.append(Post(
+                                    username=username,
+                                    post_username=post_username,
+                                    post=post.post,
+                                    date_of_post=post.date_of_post,
+                                    ))
+
+        timeline.sort(key=lambda tl: tl.date_of_post)
+        timeline = reversed(timeline)
+
+        title = "{}'s timeline".format(user.username)
+        return jsonify({title: [tl.serialize() for tl in timeline]})
+
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/timeline/post', methods=['POST'])
+def post_timeline():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        post_user_id = data['post_user_id']
+        post = data['post']
+        date_of_post = datetime.now()
+
+        # Can only post if friend
+        if is_friend(user_id, post_user_id, True):
+            timeline = TimeLine(user_id=user_id,
+                                post_user_id=post_user_id,
+                                post=post,
+                                date_of_post=date_of_post)
+            db.session.add(timeline)
+            db.session.commit()
+
+            return jsonify({'success': True,
+                            'valid_user': True,
+                            'valid_friend': True})
+        else:
+            return jsonify({'success': False,
+                            'valid_user': True,
+                            'valid_friend': False})
+    except Exception as e:
+        return str(e)
+
+
 # Creates a new table in the database for the new user
 def create_new_timeline(username: str):
     db_info = DBInfo.query.filter_by(user='company48').first()
@@ -1040,6 +1110,7 @@ def delete_expired_movies():
 
     except Exception as e:
         return str(e)
+
 
 # adds an empty slot to user_slots in database
 def add_empty_slot(user_id, slot_num):
