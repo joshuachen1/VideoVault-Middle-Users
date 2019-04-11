@@ -1243,7 +1243,8 @@ def delete_expired_tv_shows():
         if expired_users:
             for user in expired_users:
                 remove_list = UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True)
-                email_sender.subscription_renew_email(user.username, user.email)
+                update_sub_date(user.id)
+                email_sender.subscription_renew_email(user.username, user.email, user.sub_date + timedelta(30))
                 for tv_show_to_remove in remove_list:
                     subscribe(user.id, tv_show_to_remove.tv_show_id, True)
                     remove_tv_show(user.id, tv_show_to_remove.tv_show_id)
@@ -1251,6 +1252,36 @@ def delete_expired_tv_shows():
             return jsonify({'expired_tv_shows_removed':True})
         else:
             return jsonify({'expired_tv_shows_removed':False})
+
+    except Exception as e:
+        return str(e)
+
+
+# updates user's resub date by adding 30 days
+def update_sub_date(user_id=None):
+    # increment slot number in users
+    check_id = User.query.filter_by(id=user_id).first()
+
+    name = check_id.name
+    username = check_id.username
+    email = check_id.email
+    password = check_id.password
+    card_num = check_id.card_num
+    num_slots = check_id.num_slots
+    sub_date = check_id.sub_date + timedelta(30)
+
+    try:
+        user = User.query.filter_by(id=user_id).first()
+        user.id = user_id
+        user.name = name
+        user.username = username
+        user.email = email
+        user.password = password
+        user.card_num = card_num
+        user.num_slots = num_slots
+        user.sub_date = sub_date
+
+        return 'sucess'
 
     except Exception as e:
         return str(e)
