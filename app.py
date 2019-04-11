@@ -407,7 +407,8 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
         return str(e)
 
 
-# boolean to unsubscribe
+# boolean to convert unsubscribe of user to true
+# [url]/unsubscribe
 @app.route('/unsubscribe', methods=['PUT'])
 def unsubscribe(id=None):
     try:
@@ -424,7 +425,8 @@ def unsubscribe(id=None):
         return str(e)
 
 
-# boolean to subscribe
+# boolean to convert unsubscribe of user to false
+# [url]/subscribe
 @app.route('/subscribe', methods=['PUT'])
 def subscribe(id=None):
     try:
@@ -441,7 +443,8 @@ def subscribe(id=None):
         return str(e)
 
 
-# route to unsubscribe (remove tv shows in all slots)
+# route to clear all slots
+# [url]/clear_slots
 @app.route('/clear_slots', methods=['PUT'])
 def clear_slots():
     try:
@@ -458,7 +461,8 @@ def clear_slots():
     except Exception as e:
         return str(e)
 
-# route to delete a slot (deletes the top slot ONLY IF EMPTY and delete user's slot, use fuction already provided)
+# route to delete a slot only if top slot is empty
+# [url]/delete_slot
 @app.route('/delete_slot', methods=['PUT'])
 def delete_slot():
     try:
@@ -479,7 +483,8 @@ def delete_slot():
     except Exception as e:
         return str(e)
 
-# route to delete tv_show in slot(move all existing tv_shows up)
+# route to delete tv_show in slot
+# [url]/remove_tv_show
 @app.route('/remove_tv_show', methods=['PUT'])
 def remove_tv_show():
     try:
