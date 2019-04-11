@@ -407,7 +407,8 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
         return str(e)
 
 
-# boolean to unsubscribe
+# boolean to convert unsubscribe of user to true
+# [url]/unsubscribe
 @app.route('/unsubscribe', methods=['PUT'])
 def unsubscribe(id=None):
     try:
@@ -424,7 +425,8 @@ def unsubscribe(id=None):
         return str(e)
 
 
-# boolean to subscribe
+# boolean to convert unsubscribe of user to false
+# [url]/subscribe
 @app.route('/subscribe', methods=['PUT'])
 def subscribe(id=None):
     try:
@@ -441,10 +443,75 @@ def subscribe(id=None):
         return str(e)
 
 
-# route to unsubscribe (remove tv shows in all slots)
-# route to delete a slot
-# route to delete tv_show in slot
+# route to clear all slots
+# [url]/clear_slots
+@app.route('/clear_slots', methods=['PUT'])
+def clear_slots():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        user_slots_list = UserSlots.query.filter_by(user_id=user_id).all()
+        if user_slots_list:
+            for user_slots in user_slots_list:
+                clear_individual_slot(user_slots.user_id, user_slots.slot_num)
+            db.session.commit()
+            return jsonify({'slots_cleared':True})
+        else:
+            return jsonify({'slots_cleared':False})
+    except Exception as e:
+        return str(e)
 
+# route to delete a slot only if top slot is empty
+# [url]/delete_slot
+@app.route('/delete_slot', methods=['PUT'])
+def delete_slot():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+
+        user = User.query.filter_by(id=user_id).first()
+        top_user_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).first()
+
+        if top_user_slot.tv_show_id is None:
+            UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).delete()
+            decrement_slot(user_id)
+            db.session.commit()
+            return jsonify({'success':True})
+        else:
+            return jsonify({'success':False})
+
+    except Exception as e:
+        return str(e)
+
+# route to delete tv_show in slot
+# [url]/remove_tv_show
+@app.route('/remove_tv_show', methods=['PUT'])
+def remove_tv_show():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        tv_show_id = data['tv_show_id']
+
+        # get slot_num of deleted tv show
+        deletion_index = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+        deletion_index = deletion_index.slot_num
+
+        # shift all the values in the database back one
+        user_slots = UserSlots.query.filter_by(user_id=user_id).all()
+        previous_slot = None
+        for slot in user_slots:
+            if slot.slot_num > deletion_index:
+                previous_slot.user_id = user_id
+                previous_slot.slot_num = previous_slot.slot_num
+                previous_slot.tv_show_id = slot.tv_show_id
+            previous_slot = slot
+            if slot.slot_num == len(user_slots):
+                clear_individual_slot(user_id, slot.slot_num)
+        db.session.commit()
+        return jsonify({'tv_show_deleted':True})
+
+    except Exception as e:
+        return str(e)
 
 # [url]/search/user=[email_or_username]
 @app.route('/search/user=<query>/page=<int:page>', methods=['GET'])
@@ -1004,6 +1071,34 @@ def rent_movie():
         return str(e)
 
 
+# [url]/user=[user_id]/wall
+@app.route('/user=<user_id>/wall', methods=['GET'])
+def display_wall(user_id=None):
+    try:
+        timeline = list()
+        user = User.query.filter_by(id=user_id).first()
+
+        wall = TimeLine.query.filter_by(user_id=user.id).order_by(TimeLine.date_of_post)
+        for post in wall:
+            username = User.query.filter_by(id=post.user_id).first().username
+            post_username = User.query.filter_by(id=post.post_user_id).first().username
+            timeline.append(Post(
+                                username=username,
+                                post_username=post_username,
+                                post=post.post,
+                                date_of_post=post.date_of_post,
+                                ))
+
+        timeline.sort(key=lambda tl: tl.date_of_post)
+        timeline = reversed(timeline)
+
+        title = "{}_timeline".format(user.username)
+        return jsonify({title: [tl.serialize() for tl in timeline]})
+
+    except Exception as e:
+        return str(e)
+
+# [url]/user=[user_id]/timeline
 @app.route('/user=<user_id>/timeline', methods=['GET'])
 def display_timeline(user_id=None):
     try:
@@ -1035,6 +1130,8 @@ def display_timeline(user_id=None):
         return str(e)
 
 
+# { "user_id": [user_id], "post_user_id": [post_user_id], "post": [post_text] }
+# [url]/timeline/post
 @app.route('/timeline/post', methods=['POST'])
 def post_timeline():
     try:
@@ -1115,8 +1212,7 @@ def get_average_rating(is_tv_show: bool, media_id: int):
             for tsr in tv_show_ratings:
                 total += tsr.user_rating
                 num_ratings += 1
-
-            return total / num_ratings
+            return '%.2f' % (total / num_ratings)
 
         else:
             movie_ratings = UserRatedMovieRel.query.filter_by(movie_id=media_id)
@@ -1127,7 +1223,7 @@ def get_average_rating(is_tv_show: bool, media_id: int):
                 total += mr.user_rating
                 num_ratings += 1
 
-            return total / num_ratings
+            return '%.2f' % (total / num_ratings)
 
     except Exception as e:
         return str(e)
@@ -1194,6 +1290,47 @@ def increment_slot(user_id) -> int:
 
 
 # (Pseudo PUT) increment user's slot_num by 1 and return new slot_id
+def decrement_slot(user_id) -> int:
+    # increment slot number in users
+    check_id = User.query.filter_by(id=user_id).first()
+
+    name = check_id.name
+    username = check_id.username
+    email = check_id.email
+    password = check_id.password
+    card_num = check_id.card_num
+    num_slots = check_id.num_slots - 1
+    sub_date = check_id.sub_date
+
+    try:
+        user = User.query.filter_by(id=user_id).first()
+        user.id = user_id
+        user.name = name
+        user.username = username
+        user.email = email
+        user.password = password
+        user.card_num = card_num
+        user.num_slots = num_slots
+        user.sub_date = sub_date
+
+        return num_slots
+
+    except Exception as e:
+        return str(e)
+
+
+def clear_individual_slot(user_id, slot_num):
+    try:
+        check_slot_id = UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=slot_num).first()
+        if check_slot_id is not None:
+            check_slot_id.user_id = user_id
+            check_slot_id.slot_id = slot_num
+            check_slot_id.tv_show_id = None
+            return 'success'
+    except Exception as e:
+        return str(e)
+
+
 def change_subscription_status(user_id, unsubscribe_boolean):
     # increment slot number in users
     check_id = User.query.filter_by(id=user_id).first()
@@ -1236,7 +1373,7 @@ def pseudo_paginate(page: int, list_to_paginate: []):
     return list_to_paginate[start_page:end_page]
 
 
-# Return json
+# Return Paginated json
 def paginated_json(json_name: str, queried_results: [], page: int):
     num_pages = max_pages(queried_results)
 
