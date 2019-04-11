@@ -410,11 +410,12 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
 # boolean to convert unsubscribe of user to true
 # [url]/unsubscribe
 @app.route('/unsubscribe', methods=['PUT'])
-def unsubscribe(id=None):
+def unsubscribe(user_id=None, tv_show_id=None, function_call = False):
     try:
-        data = request.get_json()
-        user_id = data['user_id']
-        tv_show_id = data['tv_show_id']
+        if function_call is False:
+            data = request.get_json()
+            user_id = data['user_id']
+            tv_show_id = data['tv_show_id']
         check_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
 
         if check_slot is not None:
@@ -432,11 +433,12 @@ def unsubscribe(id=None):
 # boolean to convert unsubscribe of user to false
 # [url]/subscribe
 @app.route('/subscribe', methods=['PUT'])
-def subscribe(id=None):
+def subscribe(user_id=None, tv_show_id=None, function_call=False):
     try:
-        data = request.get_json()
-        user_id = data['user_id']
-        tv_show_id = data['tv_show_id']
+        if function_call is False:
+            data = request.get_json()
+            user_id = data['user_id']
+            tv_show_id = data['tv_show_id']
         check_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
 
         if check_slot is not None:
@@ -492,14 +494,8 @@ def delete_slot():
         return str(e)
 
 # route to delete tv_show in slot
-# [url]/remove_tv_show
-@app.route('/remove_tv_show', methods=['PUT'])
-def remove_tv_show():
+def remove_tv_show(user_id=None, tv_show_id=None):
     try:
-        data = request.get_json()
-        user_id = data['user_id']
-        tv_show_id = data['tv_show_id']
-
         # get slot_num of deleted tv show
         deletion_index = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
         deletion_index = deletion_index.slot_num
@@ -515,7 +511,6 @@ def remove_tv_show():
             previous_slot = slot
             if slot.slot_num == len(user_slots):
                 clear_individual_slot(user_id, slot.slot_num)
-        db.session.commit()
         return jsonify({'tv_show_deleted':True})
 
     except Exception as e:
@@ -1249,6 +1244,27 @@ def delete_expired_movies():
             return 'success'
         else:
             return 'no movies to delete'
+
+    except Exception as e:
+        return str(e)
+
+
+def delete_expired_tv_shows():
+    try:
+        month_ago_date = (datetime.now() - timedelta(30)).date()
+        # ensures list is not empty
+        expired_users = User.query.filter(User.sub_date<=month_ago_date)
+
+        if expired_users:
+            for user in expired_users:
+                remove_list = UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True)
+                for tv_show_to_remove in remove_list:
+                    subscribe(user.id, tv_show_to_remove.tv_show_id, True)
+                    remove_tv_show(user.id, tv_show_to_remove.tv_show_id)
+            db.session.commit()
+            return jsonify({'expired_tv_shows_removed':True})
+        else:
+            return jsonify({'expired_tv_shows_removed':False})
 
     except Exception as e:
         return str(e)

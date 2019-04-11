@@ -41,7 +41,6 @@ class User(db.Model):
     num_slots = db.Column(db.Integer)
     sub_date = db.Column(db.Date)
     profile_pic = db.Column(db.VARCHAR)
-    unsubscribe = db.Column(db.BOOLEAN)
 
 
     def __init__(self, name, username, email, password, card_num, num_slots, sub_date, profile_pic):
