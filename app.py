@@ -1243,6 +1243,7 @@ def delete_expired_tv_shows():
         if expired_users:
             for user in expired_users:
                 remove_list = UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True)
+                email_sender.subscription_renew_email(user.username, user.email)
                 for tv_show_to_remove in remove_list:
                     subscribe(user.id, tv_show_to_remove.tv_show_id, True)
                     remove_tv_show(user.id, tv_show_to_remove.tv_show_id)

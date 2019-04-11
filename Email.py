@@ -67,6 +67,21 @@ class Email:
         server.quit()
         return 'Email Sent'
 
+    def subscription_renew_email(self, username: str, user_email: str):
+        acc = CompanyEmail.query.filter_by(username=self.email_username).first()
+        email = '{}@gmail.com'.format(acc.username)
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(acc.username, acc.password)
+
+        subject = 'Subscription Renewed'
+        text = 'Hey {}, it\'s been 30 days!\n' \
+               'Your subscriptions have been renewed. All of the TV shows that have been set to unsubscribe has been removed.\n' \
+                'Come back and choose new TV shows to watch!'.format(username)
+        message = 'Subject: {}\n\n{}'.format(subject, text)
+
+        server.sendmail(email, user_email, message)
+        server.quit()
+        return 'Email Sent'
 
 class CompanyEmail(db.Model):
     __tablename__ = 'CompanyEmail'
