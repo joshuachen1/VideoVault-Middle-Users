@@ -1004,6 +1004,7 @@ def rent_movie():
         return str(e)
 
 
+# [url]/user=[user_id]/wall
 @app.route('/user=<user_id>/wall', methods=['GET'])
 def display_wall(user_id=None):
     try:
@@ -1024,13 +1025,13 @@ def display_wall(user_id=None):
         timeline.sort(key=lambda tl: tl.date_of_post)
         timeline = reversed(timeline)
 
-        title = "{}'s timeline".format(user.username)
+        title = "{}_timeline".format(user.username)
         return jsonify({title: [tl.serialize() for tl in timeline]})
 
     except Exception as e:
         return str(e)
 
-
+# [url]/user=[user_id]/timeline
 @app.route('/user=<user_id>/timeline', methods=['GET'])
 def display_timeline(user_id=None):
     try:
@@ -1062,6 +1063,8 @@ def display_timeline(user_id=None):
         return str(e)
 
 
+# { "user_id": [user_id], "post_user_id": [post_user_id], "post": [post_text] }
+# [url]/timeline/post
 @app.route('/timeline/post', methods=['POST'])
 def post_timeline():
     try:
@@ -1262,7 +1265,7 @@ def pseudo_paginate(page: int, list_to_paginate: []):
     return list_to_paginate[start_page:end_page]
 
 
-# Return json
+# Return Paginated json
 def paginated_json(json_name: str, queried_results: [], page: int):
     num_pages = max_pages(queried_results)
 
