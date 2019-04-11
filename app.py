@@ -1092,8 +1092,7 @@ def display_wall(user_id=None):
         wall.sort(key=lambda w: w.date_of_post)
         wall = reversed(wall)
 
-        title = "{}_wall".format(user.username)
-        return jsonify({title: [w.serialize() for w in wall]})
+        return jsonify({'wall': [w.serialize() for w in wall]})
 
     except Exception as e:
         return str(e)
@@ -1124,8 +1123,7 @@ def display_timeline(user_id=None):
         timeline.sort(key=lambda tl: tl.date_of_post)
         timeline = reversed(timeline)
 
-        title = "{}_timeline".format(user.username)
-        return jsonify({title: [tl.serialize() for tl in timeline]})
+        return jsonify({'timeline': [tl.serialize() for tl in timeline]})
 
     except Exception as e:
         return str(e)
