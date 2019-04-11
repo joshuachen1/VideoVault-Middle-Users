@@ -435,14 +435,18 @@ def unsubscribe(id=None):
 def subscribe(id=None):
     try:
         data = request.get_json()
-        id = data['user_id']
-        if id is not None:
-            user = User.query.filter_by(id=id).first()
-            change_subscription_status(user.id, False)
+        user_id = data['user_id']
+        tv_show_id = data['tv_show_id']
+        check_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+
+        if check_slot is not None:
+            change_subscription_status(user_id, tv_show_id, False)
             db.session.commit()
-            return jsonify({'is_success': True})
+            return jsonify({'is_success': True,
+                            'is_slot_exist': True})
         else:
-            return jsonify({'is_success': False})
+            return jsonify({'is_success': False,
+                            'is_slot_exist:': False})
     except Exception as e:
         return str(e)
 
