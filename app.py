@@ -407,7 +407,8 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
         return str(e)
 
 
-# boolean to unsubscribe
+# boolean to convert unsubscribe of user to true
+# [url]/unsubscribe
 @app.route('/unsubscribe', methods=['PUT'])
 def unsubscribe(id=None):
     try:
@@ -424,7 +425,8 @@ def unsubscribe(id=None):
         return str(e)
 
 
-# boolean to subscribe
+# boolean to convert unsubscribe of user to false
+# [url]/subscribe
 @app.route('/subscribe', methods=['PUT'])
 def subscribe(id=None):
     try:
@@ -441,7 +443,8 @@ def subscribe(id=None):
         return str(e)
 
 
-# route to unsubscribe (remove tv shows in all slots)
+# route to clear all slots
+# [url]/clear_slots
 @app.route('/clear_slots', methods=['PUT'])
 def clear_slots():
     try:
@@ -458,7 +461,8 @@ def clear_slots():
     except Exception as e:
         return str(e)
 
-# route to delete a slot (deletes the top slot ONLY IF EMPTY and delete user's slot, use fuction already provided)
+# route to delete a slot only if top slot is empty
+# [url]/delete_slot
 @app.route('/delete_slot', methods=['PUT'])
 def delete_slot():
     try:
@@ -478,8 +482,36 @@ def delete_slot():
 
     except Exception as e:
         return str(e)
-# route to delete tv_show in slot(move all existing tv_shows up)
 
+# route to delete tv_show in slot
+# [url]/remove_tv_show
+@app.route('/remove_tv_show', methods=['PUT'])
+def remove_tv_show():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        tv_show_id = data['tv_show_id']
+
+        # get slot_num of deleted tv show
+        deletion_index = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+        deletion_index = deletion_index.slot_num
+
+        # shift all the values in the database back one
+        user_slots = UserSlots.query.filter_by(user_id=user_id).all()
+        previous_slot = None
+        for slot in user_slots:
+            if slot.slot_num > deletion_index:
+                previous_slot.user_id = user_id
+                previous_slot.slot_num = previous_slot.slot_num
+                previous_slot.tv_show_id = slot.tv_show_id
+            previous_slot = slot
+            if slot.slot_num == len(user_slots):
+                clear_individual_slot(user_id, slot.slot_num)
+        db.session.commit()
+        return jsonify({'tv_show_deleted':True})
+
+    except Exception as e:
+        return str(e)
 
 # [url]/search/user=[email_or_username]
 @app.route('/search/user=<query>/page=<int:page>', methods=['GET'])
