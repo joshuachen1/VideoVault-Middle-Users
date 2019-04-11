@@ -506,9 +506,7 @@ def remove_tv_show():
                 previous_slot.tv_show_id = slot.tv_show_id
             previous_slot = slot
             if slot.slot_num == len(user_slots):
-                slot.user_id = user_id
-                slot.slot_num = slot.slot_num
-                slot.tv_show_id = None
+                clear_individual_slot(user_id, slot.slot_num)
         db.session.commit()
         return jsonify({'tv_show_deleted':True})
 
