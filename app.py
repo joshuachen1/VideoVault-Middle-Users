@@ -481,40 +481,24 @@ def delete_slot():
 
         user = User.query.filter_by(id=user_id).first()
         top_user_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).first()
+        empty_slot = top_user_slot.tv_show_id is None
+        more_than_ten_slots = user.num_slots > 10
 
-        if top_user_slot.tv_show_id is None:
+        if empty_slot and more_than_ten_slots:
             UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).delete()
             decrement_slot(user_id)
             db.session.commit()
-            return jsonify({'success':True})
+            return jsonify({'success':True,
+                            'more_than_ten_slots':more_than_ten_slots,
+                            'empty_slot':empty_slot})
         else:
-            return jsonify({'success':False})
+            return jsonify({'success':False,
+                            'more_than_ten_slots':more_than_ten_slots,
+                            'empty_slot':empty_slot})
 
     except Exception as e:
         return str(e)
 
-# route to delete tv_show in slot
-def remove_tv_show(user_id=None, tv_show_id=None):
-    try:
-        # get slot_num of deleted tv show
-        deletion_index = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
-        deletion_index = deletion_index.slot_num
-
-        # shift all the values in the database back one
-        user_slots = UserSlots.query.filter_by(user_id=user_id).all()
-        previous_slot = None
-        for slot in user_slots:
-            if slot.slot_num > deletion_index:
-                previous_slot.user_id = user_id
-                previous_slot.slot_num = previous_slot.slot_num
-                previous_slot.tv_show_id = slot.tv_show_id
-            previous_slot = slot
-            if slot.slot_num == len(user_slots):
-                clear_individual_slot(user_id, slot.slot_num)
-        return jsonify({'tv_show_deleted':True})
-
-    except Exception as e:
-        return str(e)
 
 # [url]/search/user=[email_or_username]
 @app.route('/search/user=<query>/page=<int:page>', methods=['GET'])
@@ -1248,7 +1232,7 @@ def delete_expired_movies():
     except Exception as e:
         return str(e)
 
-
+# need to add to login function and need to add check to not allow deleting slots past 10
 def delete_expired_tv_shows():
     try:
         month_ago_date = (datetime.now() - timedelta(30)).date()
@@ -1280,6 +1264,31 @@ def add_empty_slot(user_id, slot_num):
     db.session.add(user_slots)
     db.session.commit()
     return "user_slots added"
+
+
+# route to delete tv_show in slot
+def remove_tv_show(user_id=None, tv_show_id=None):
+    try:
+        # get slot_num of deleted tv show
+        deletion_index = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+        deletion_index = deletion_index.slot_num
+
+        # shift all the values in the database back one
+        user_slots = UserSlots.query.filter_by(user_id=user_id).all()
+        previous_slot = None
+        for slot in user_slots:
+            if slot.slot_num > deletion_index:
+                previous_slot.user_id = user_id
+                previous_slot.slot_num = previous_slot.slot_num
+                previous_slot.tv_show_id = slot.tv_show_id
+            previous_slot = slot
+            if slot.slot_num == len(user_slots):
+                clear_individual_slot(user_id, slot.slot_num)
+        return jsonify({'tv_show_deleted':True})
+
+    except Exception as e:
+        return str(e)
+
 
 
 # (Pseudo PUT) increment user's slot_num by 1 and return new slot_id
