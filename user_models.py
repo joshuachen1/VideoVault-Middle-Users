@@ -44,7 +44,7 @@ class User(db.Model):
     unsubscribe = db.Column(db.BOOLEAN)
 
 
-    def __init__(self, name, username, email, password, card_num, num_slots, sub_date, profile_pic, unsubscribe):
+    def __init__(self, name, username, email, password, card_num, num_slots, sub_date, profile_pic):
         self.name = name
         self.username = username
         self.email = email
@@ -53,8 +53,6 @@ class User(db.Model):
         self.num_slots = num_slots
         self.sub_date = sub_date
         self.profile_pic = profile_pic
-        self.unsubscribe = unsubscribe
-
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
@@ -68,7 +66,6 @@ class User(db.Model):
             'num_slots': self.num_slots,
             'sub_date': self.sub_date,
             'profile_pic': self.profile_pic,
-            'unsubsribe': self.unsubscribe,
         }
 
 
@@ -231,11 +228,13 @@ class UserSlots(db.Model):
     user_id = db.Column(db.Integer, primary_key=True)
     slot_num = db.Column(db.Integer, primary_key=True)
     tv_show_id = db.Column(db.Integer)
+    unsubscribe = db.Column(db.BOOLEAN)
 
-    def __init__(self, user_id, slot_num, tv_show_id):
+    def __init__(self, user_id, slot_num, tv_show_id, unsubscribe):
         self.user_id = user_id
         self.slot_num = slot_num
         self.tv_show_id = tv_show_id
+        self.unsubscribe = unsubscribe
 
 
 class DisplayUserSlots:

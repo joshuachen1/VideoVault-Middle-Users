@@ -413,14 +413,18 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
 def unsubscribe(id=None):
     try:
         data = request.get_json()
-        id = data['user_id']
-        if id is not None:
-            user = User.query.filter_by(id=id).first()
-            change_subscription_status(user.id, True)
+        user_id = data['user_id']
+        tv_show_id = data['tv_show_id']
+        check_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+
+        if check_slot is not None:
+            change_subscription_status(user_id, tv_show_id, True)
             db.session.commit()
-            return jsonify({'is_success': True})
+            return jsonify({'is_success': True,
+                            'is_slot_exist':True})
         else:
-            return jsonify({'is_success': False})
+            return jsonify({'is_success': False,
+                            'is_slot_exist:':False})
     except Exception as e:
         return str(e)
 
@@ -1330,33 +1334,18 @@ def clear_individual_slot(user_id, slot_num):
         return str(e)
 
 
-def change_subscription_status(user_id, unsubscribe_boolean):
+def change_subscription_status(user_id, tv_show_id, unsubscribe_boolean):
     # increment slot number in users
-    check_id = User.query.filter_by(id=user_id).first()
-
-    name = check_id.name
-    username = check_id.username
-    email = check_id.email
-    password = check_id.password
-    card_num = check_id.card_num
-    num_slots = check_id.num_slots
-    sub_date = check_id.sub_date
-    profile_pic = check_id.profile_pic
 
     try:
-        user = User.query.filter_by(id=user_id).first()
-        user.id = user_id
-        user.name = name
-        user.username = username
-        user.email = email
-        user.password = password
-        user.card_num = card_num
-        user.num_slots = num_slots
-        user.sub_date = sub_date
-        user.profile_pic = profile_pic
-        user.unsubscribe = unsubscribe_boolean
+        user_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
 
-        return num_slots
+        user_slot.user_id = user_id
+        user_slot.slot_num = user_slot.slot_num
+        user_slot.tv_show_id = tv_show_id
+        user_slot.unsubscribe = unsubscribe_boolean
+
+        return 'success'
 
     except Exception as e:
         return str(e)
