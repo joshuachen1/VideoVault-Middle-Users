@@ -73,6 +73,7 @@ def login(email=None, attempted_pwd=None):
 
         if decrypted_saved_pwd == attempted_pwd:
             delete_expired_movies()
+            delete_expired_tv_shows()
             return jsonify(user_info.serialize())
         else:
             result = Login(False, True, False)
@@ -474,7 +475,7 @@ def clear_slots():
 # route to delete a slot only if top slot is empty
 # [url]/delete_slot
 @app.route('/delete_slot', methods=['PUT'])
-def delete_slot():
+def delete_slot(user_id=None):
     try:
         data = request.get_json()
         user_id = data['user_id']
