@@ -28,7 +28,7 @@ from Email import Email
 from db_cursor import DBInfo
 from crypto_models import Key
 from user_models import Signup, Login
-from user_models import User, Friends, TimeLine, Post
+from user_models import User, Friends, PendingFriends, TimeLine, Post
 from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
@@ -538,6 +538,47 @@ def get_users(page=1):
         return paginated_json('users', users, page)
     except Exception as e:
         return str(e)
+
+
+@app.route('/send_friend_request', methods=['POST'])
+def send_friend_request():
+    try:
+        data=request.get_json()
+        user_id = data['user_id']
+        pending_user_id = data['pending_user_id']
+
+        check_user = User.query.filter_by(id=user_id).first()
+        check_user = check_user is not None
+        check_friend_id = User.query.filter_by(id=pending_user_id).first()
+        check_friend_id = check_friend_id is not None
+        check_friendship = Friends.query.filter_by(user_id=user_id).filter_by(friend_id=pending_user_id).first()
+        check_friendship = check_friendship is None
+        if check_user and check_friend_id and check_friendship:
+            # add request to table
+            new_friend_request = PendingFriends(
+                user_id=user_id,
+                pending_user_id=pending_user_id,
+            )
+            db.session.add(new_friend_request)
+            db.session.commit()
+            return jsonify({'success': True,
+                            'valid_user_id': check_user,
+                            'valid_friend_id': check_friend_id,
+                            'not_already_friends':check_friendship})
+        else:
+            return jsonify({'success':False,
+                            'valid_user_id':check_user,
+                            'valid_friend_id':check_friend_id,
+                            'not_already_friends':check_friendship})
+
+
+    except Exception as e:
+        return str(e)
+
+
+#@app.route('/accept_friend_request', methods=['POST'])
+#def accept_friend_request():
+
 
 
 # Check Friendship

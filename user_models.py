@@ -88,6 +88,23 @@ class Friends(db.Model):
         }
 
 
+class PendingFriends(db.Model):
+    __tablename__ = 'pending_friends'
+
+    user_id = db.Column(db.Integer, primary_key=True)
+    pending_user_id = db.Column(db.Integer, primary_key=True)
+
+    def __init__(self, user_id, pending_user_id):
+       self.user_id = user_id
+       self.pending_user_id = pending_user_id
+
+    def serialize(self):
+        return {
+            'user_id': self.user_id,
+            'pending_user_id': self.pending_user_id,
+        }
+
+
 class TimeLine(db.Model):
     __tablename__ = 'user_timeline'
 
