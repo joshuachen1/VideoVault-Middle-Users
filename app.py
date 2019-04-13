@@ -545,19 +545,19 @@ def send_friend_request():
     try:
         data=request.get_json()
         user_id = data['user_id']
-        pending_user_id = data['pending_user_id']
+        pending_friend_id = data['pending_friend_id']
 
         check_user = User.query.filter_by(id=user_id).first()
         check_user = check_user is not None
-        check_friend_id = User.query.filter_by(id=pending_user_id).first()
+        check_friend_id = User.query.filter_by(id=pending_friend_id).first()
         check_friend_id = check_friend_id is not None
-        check_friendship = Friends.query.filter_by(user_id=user_id).filter_by(friend_id=pending_user_id).first()
+        check_friendship = Friends.query.filter_by(user_id=user_id).filter_by(friend_id=pending_friend_id).first()
         check_friendship = check_friendship is None
         if check_user and check_friend_id and check_friendship:
             # add request to table
             new_friend_request = PendingFriends(
                 user_id=user_id,
-                pending_user_id=pending_user_id,
+                pending_friend_id=pending_friend_id,
             )
             db.session.add(new_friend_request)
             db.session.commit()
@@ -570,15 +570,47 @@ def send_friend_request():
                             'valid_user_id':check_user,
                             'valid_friend_id':check_friend_id,
                             'not_already_friends':check_friendship})
-
-
     except Exception as e:
         return str(e)
 
 
-#@app.route('/accept_friend_request', methods=['POST'])
-#def accept_friend_request():
+@app.route('/accept_friend_request', methods=['POST'])
+def accept_friend_request():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        pending_friend_id = data['pending_friend_id']
+        check_user_id = User.query.filter_by(id=user_id).first()
+        check_user_id = check_user_id is not None
+        check_friend_id = User.query.filter_by(id=pending_friend_id).first()
+        check_friend_id = check_friend_id is not None
 
+        # checks for valid inputs
+        if check_friend_id and check_user_id:
+            check_friend_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=pending_friend_id).first()
+            check_friend_request = check_friend_request is not None
+            # checks if friend request exists
+            if check_friend_request:
+                add_friend(user_id, pending_friend_id)
+                # delete request
+                PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=pending_friend_id).delete()
+                db.session.commit()
+                return jsonify({'success': True,
+                                'valid_friendship_request': check_friend_request,
+                                'valid_user_id': check_user_id,
+                                'valid_friend_id': check_friend_id})
+            else:
+                return jsonify({'success': False,
+                                'valid_friendship_request': check_friend_request,
+                                'valid_user_id':check_user_id,
+                                'valid_friend_id':check_friend_id})
+        else:
+            return jsonify({'success': False,
+                            'valid_friendship_request': False,
+                            'valid_user_id': check_user_id,
+                            'valid_friend_id': check_friend_id})
+    except Exception as e:
+        return str(e)
 
 
 # Check Friendship
@@ -626,51 +658,6 @@ def get_user_friend_list(user_id=None, page=1):
 
         return paginated_json('friends', friend_list, page)
 
-    except Exception as e:
-        return str(e)
-
-
-# [url]/user=[user_id]/friends/add=[friend_id]
-@app.route('/add_friend', methods=['POST'])
-def add_friend():
-    data = request.get_json()
-    user_id = data['user_id']
-    friend_id = data['friend_id']
-
-    check_user_id = User.query.filter_by(id=user_id).first()
-    check_friend_id = User.query.filter_by(id=friend_id).first()
-
-    if check_user_id is None and check_friend_id is None:
-        return jsonify({'success': False,
-                        'valid_user_id': False,
-                        'valid_friend_id': False})
-    elif check_user_id is None:
-        return jsonify({'success': False,
-                        'valid_user_id': False,
-                        'valid_friend_id': True})
-    elif check_friend_id is None:
-        return jsonify({'success': False,
-                        'valid_user_id': True,
-                        'valid_friend_id': False})
-
-    try:
-        # Add friend to database
-        friend = Friends(
-            user_id=user_id,
-            friend_id=friend_id
-        )
-        db.session.add(friend)
-
-        # Friend adds back
-        friend_back = Friends(
-            user_id=friend_id,
-            friend_id=user_id
-        )
-        db.session.add(friend_back)
-        db.session.commit()
-        return jsonify({'success': True,
-                        'valid_user_id': True,
-                        'valid_friend_id': True})
     except Exception as e:
         return str(e)
 
@@ -1096,6 +1083,27 @@ def rent_movie():
         return jsonify({'success': True,
                         'valid_user': True,
                         'valid_movie': True})
+    except Exception as e:
+        return str(e)
+
+
+# add friend friend and friend adds back
+def add_friend(user_id, friend_id):
+    try:
+        # Add friend to database
+        friend = Friends(
+            user_id=user_id,
+            friend_id=friend_id
+        )
+        db.session.add(friend)
+
+        # Friend adds back
+        friend_back = Friends(
+            user_id=friend_id,
+            friend_id=user_id
+        )
+        db.session.add(friend_back)
+        return 'success'
     except Exception as e:
         return str(e)
 
