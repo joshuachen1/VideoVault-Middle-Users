@@ -76,12 +76,13 @@ class Email:
         subject = 'Subscription Renewed'
         text = 'Hey {}, it\'s been 30 days! Your next renewal date will be on {}\n' \
                'Your subscriptions have been renewed. All of the TV shows that have been set to unsubscribe has been removed.\n' \
-                'Come back and choose new TV shows to watch!'.format(username, user_sub_date)
+               'Come back and choose new TV shows to watch!'.format(username, user_sub_date)
         message = 'Subject: {}\n\n{}'.format(subject, text)
 
         server.sendmail(email, user_email, message)
         server.quit()
         return 'Email Sent'
+
 
 class CompanyEmail(db.Model):
     __tablename__ = 'CompanyEmail'

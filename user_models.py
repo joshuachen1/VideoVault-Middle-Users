@@ -42,7 +42,6 @@ class User(db.Model):
     sub_date = db.Column(db.Date)
     profile_pic = db.Column(db.VARCHAR)
 
-
     def __init__(self, name, username, email, password, card_num, num_slots, sub_date, profile_pic):
         self.name = name
         self.username = username
@@ -95,8 +94,8 @@ class PendingFriends(db.Model):
     pending_friend_id = db.Column(db.Integer, primary_key=True)
 
     def __init__(self, user_id, pending_friend_id):
-       self.user_id = user_id
-       self.pending_friend_id = pending_friend_id
+        self.user_id = user_id
+        self.pending_friend_id = pending_friend_id
 
     def serialize(self):
         return {
@@ -108,10 +107,11 @@ class PendingFriends(db.Model):
 class TimeLine(db.Model):
     __tablename__ = 'user_timeline'
 
-    user_id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer)
     post_user_id = db.Column(db.Integer)
     post = db.Column(db.VARCHAR)
-    date_of_post = db.Column(db.DateTime, primary_key=True)
+    date_of_post = db.Column(db.DateTime)
 
     def __init__(self, user_id, post_user_id, post, date_of_post):
         self.user_id = user_id
@@ -154,13 +154,15 @@ class PostComments(db.Model):
     comment_user_id = db.Column(db.Integer, primary_key=True)
     comment = db.Column(db.VARCHAR)
     date_of_comment = db.Column(db.DateTime, primary_key=True)
+    post_id = db.Column(db.Integer, unique=True)
 
-    def __init__(self, user_id, post_user_id, comment_user_id, comment, date_of_comment):
+    def __init__(self, user_id, post_user_id, comment_user_id, comment, date_of_comment, post_id):
         self.user_id = user_id
         self.post_user_id = post_user_id
         self.comment_user_id = comment_user_id
         self.comment = comment
         self.date_of_comment = date_of_comment
+        self.post_id = post_id
 
     def serialize(self):
         return {
@@ -181,8 +183,6 @@ class PostComment:
 
     def serialize(self):
         return {
-            'username': self.username,
-            'post_username': self.post_username,
             'comment_username': self.comment_username,
             'comment': self.comment,
             'date_of_comment': self.date_of_comment,

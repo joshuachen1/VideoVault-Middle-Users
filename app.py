@@ -411,7 +411,7 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
 # boolean to convert unsubscribe of user to true
 # [url]/unsubscribe
 @app.route('/unsubscribe', methods=['PUT'])
-def unsubscribe(user_id=None, tv_show_id=None, function_call = False):
+def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
     try:
         if function_call is False:
             data = request.get_json()
@@ -423,10 +423,10 @@ def unsubscribe(user_id=None, tv_show_id=None, function_call = False):
             change_subscription_status(user_id, tv_show_id, True)
             db.session.commit()
             return jsonify({'is_success': True,
-                            'is_slot_exist':True})
+                            'is_slot_exist': True})
         else:
             return jsonify({'is_success': False,
-                            'is_slot_exist:':False})
+                            'is_slot_exist:': False})
     except Exception as e:
         return str(e)
 
@@ -466,11 +466,12 @@ def clear_slots():
             for user_slots in user_slots_list:
                 clear_individual_slot(user_slots.user_id, user_slots.slot_num)
             db.session.commit()
-            return jsonify({'slots_cleared':True})
+            return jsonify({'slots_cleared': True})
         else:
-            return jsonify({'slots_cleared':False})
+            return jsonify({'slots_cleared': False})
     except Exception as e:
         return str(e)
+
 
 # route to delete a slot only if top slot is empty
 # [url]/delete_slot
@@ -489,13 +490,13 @@ def delete_slot(user_id=None):
             UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).delete()
             decrement_slot(user_id)
             db.session.commit()
-            return jsonify({'success':True,
-                            'more_than_ten_slots':more_than_ten_slots,
-                            'empty_slot':empty_slot})
+            return jsonify({'success': True,
+                            'more_than_ten_slots': more_than_ten_slots,
+                            'empty_slot': empty_slot})
         else:
-            return jsonify({'success':False,
-                            'more_than_ten_slots':more_than_ten_slots,
-                            'empty_slot':empty_slot})
+            return jsonify({'success': False,
+                            'more_than_ten_slots': more_than_ten_slots,
+                            'empty_slot': empty_slot})
 
     except Exception as e:
         return str(e)
@@ -543,7 +544,7 @@ def get_users(page=1):
 @app.route('/send_friend_request', methods=['POST'])
 def send_friend_request():
     try:
-        data=request.get_json()
+        data = request.get_json()
         user_id = data['user_id']
         pending_friend_id = data['pending_friend_id']
 
@@ -564,18 +565,18 @@ def send_friend_request():
             return jsonify({'success': True,
                             'valid_user_id': check_user,
                             'valid_friend_id': check_friend_id,
-                            'not_already_friends':check_friendship})
+                            'not_already_friends': check_friendship})
         else:
-            return jsonify({'success':False,
-                            'valid_user_id':check_user,
-                            'valid_friend_id':check_friend_id,
-                            'not_already_friends':check_friendship})
+            return jsonify({'success': False,
+                            'valid_user_id': check_user,
+                            'valid_friend_id': check_friend_id,
+                            'not_already_friends': check_friendship})
     except Exception as e:
         return str(e)
 
 
 @app.route('/accept_friend_request', methods=['POST'])
-def accept_friend_request(function_call = False):
+def accept_friend_request(function_call=False):
     try:
         data = request.get_json()
         user_id = data['user_id']
@@ -587,7 +588,8 @@ def accept_friend_request(function_call = False):
 
         # checks for valid inputs
         if check_friend_id and check_user_id:
-            check_friend_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=pending_friend_id).first()
+            check_friend_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(
+                pending_friend_id=pending_friend_id).first()
             check_friend_request = check_friend_request is not None
             # checks if friend request exists
             if check_friend_request:
@@ -603,8 +605,8 @@ def accept_friend_request(function_call = False):
             else:
                 return jsonify({'success': False,
                                 'valid_friendship_request': check_friend_request,
-                                'valid_user_id':check_user_id,
-                                'valid_friend_id':check_friend_id})
+                                'valid_user_id': check_user_id,
+                                'valid_friend_id': check_friend_id})
         else:
             return jsonify({'success': False,
                             'valid_friendship_request': False,
@@ -616,7 +618,36 @@ def accept_friend_request(function_call = False):
 
 @app.route('/decline_friend_request', methods=['POST'])
 def decline_friend_request():
-   return accept_friend_request(True)
+    return accept_friend_request(True)
+
+
+# returns a list of all friend requests from a specific user
+@app.route('/get_friend_requests/user=<int:user_id>', methods=['GET'])
+def get_friend_requests(user_id=None):
+    try:
+        if user_id is not None:
+            pending_request_rel=PendingFriends.query.filter_by(user_id=user_id).all()
+            pending_request_list = list()
+
+            for request in pending_request_rel:
+                pending_request_list.append(request.pending_friend_id)
+        return jsonify({'user_id':user_id,
+                        'friend_requests': pending_request_list,})
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/is_friend_request/user=<int:user_id>', methods=['GET'])
+def is_friend_request(user_id=None):
+    try:
+        friend_request_boolean=False
+        if user_id is not None:
+            pending_request_rel = PendingFriends.query.filter_by(user_id=user_id).all()
+            if pending_request_rel:
+                friend_request_boolean=True
+        return jsonify({'at_least_one_request':friend_request_boolean})
+    except Exception as e:
+        return str(e)
 
 
 # Check Friendship
@@ -1122,15 +1153,31 @@ def display_wall(user_id=None):
         user = User.query.filter_by(id=user_id).first()
 
         wall_posts = TimeLine.query.filter_by(user_id=user.id).order_by(TimeLine.date_of_post)
+
         for post in wall_posts:
             username = User.query.filter_by(id=post.user_id).first().username
             post_username = User.query.filter_by(id=post.post_user_id).first().username
+
+            comments = list()
+            comment_list = PostComments.query.filter_by(user_id=post.user_id).filter_by(
+                post_user_id=post.post_user_id).filter_by(post_id=post.post_id)
+            for comment in comment_list:
+                comment_username = User.query.filter_by(id=comment.comment_user_id).first().username
+                comments.append(PostComment(
+                    username=username,
+                    post_username=post_username,
+                    comment_username=comment_username,
+                    comment=comment.comment,
+                    date_of_comment=comment.date_of_comment,
+                ))
+
             wall.append(Post(
-                                username=username,
-                                post_username=post_username,
-                                post=post.post,
-                                date_of_post=post.date_of_post,
-                                ))
+                username=username,
+                post_username=post_username,
+                post=post.post,
+                date_of_post=post.date_of_post,
+                comments=reversed(comments),
+            ))
 
         wall.sort(key=lambda w: w.date_of_post)
         wall = reversed(wall)
@@ -1158,7 +1205,8 @@ def display_timeline(user_id=None):
                 post_username = User.query.filter_by(id=post.post_user_id).first().username
 
                 comments = list()
-                comment_list = PostComments.query.filter_by(user_id=post.user_id).filter_by(post_user_id=post.post_user_id)
+                comment_list = PostComments.query.filter_by(user_id=post.user_id).filter_by(
+                    post_user_id=post.post_user_id).filter_by(post_id=post.post_id)
                 for comment in comment_list:
                     comment_username = User.query.filter_by(id=comment.comment_user_id).first().username
                     comments.append(PostComment(
@@ -1170,12 +1218,12 @@ def display_timeline(user_id=None):
                     ))
 
                 timeline.append(Post(
-                        username=username,
-                        post_username=post_username,
-                        post=post.post,
-                        date_of_post=post.date_of_post,
-                        comments=comments,
-                    ))
+                    username=username,
+                    post_username=post_username,
+                    post=post.post,
+                    date_of_post=post.date_of_post,
+                    comments=reversed(comments),
+                ))
 
         timeline.sort(key=lambda tl: tl.date_of_post)
         timeline = reversed(timeline)
@@ -1228,14 +1276,17 @@ def comment_on_post():
         comment_user_id = data['comment_user_id']
         comment = data['comment']
         date_of_comment = datetime.now()
+        post_id = data['post_id']
 
         # Can only post if friend
         if is_friend(user_id, post_user_id, True) and is_friend(user_id, comment_user_id, True):
+
             post_comment = PostComments(user_id=user_id,
                                         post_user_id=post_user_id,
                                         comment_user_id=comment_user_id,
                                         comment=comment,
-                                        date_of_comment=date_of_comment)
+                                        date_of_comment=date_of_comment,
+                                        post_id=post_id)
             db.session.add(post_comment)
             db.session.commit()
 
@@ -1325,9 +1376,9 @@ def delete_expired_movies():
         yesterday_datetime = datetime.now() - timedelta(1)
 
         # ensures list is not empty
-        check_not_empty = UserRentedMovies.query.filter(UserRentedMovies.rent_datetime<=yesterday_datetime)
+        check_not_empty = UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
         if check_not_empty:
-            UserRentedMovies.query.filter(UserRentedMovies.rent_datetime<=yesterday_datetime).delete()
+            UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
             db.session.commit()
             return 'success'
         else:
@@ -1336,12 +1387,13 @@ def delete_expired_movies():
     except Exception as e:
         return str(e)
 
+
 # need to add to login function and need to add check to not allow deleting slots past 10
 def delete_expired_tv_shows():
     try:
         month_ago_date = (datetime.now() - timedelta(30)).date()
         # ensures list is not empty
-        expired_users = User.query.filter(User.sub_date<=month_ago_date)
+        expired_users = User.query.filter(User.sub_date <= month_ago_date)
 
         if expired_users:
             for user in expired_users:
@@ -1352,9 +1404,9 @@ def delete_expired_tv_shows():
                     subscribe(user.id, tv_show_to_remove.tv_show_id, True)
                     remove_tv_show(user.id, tv_show_to_remove.tv_show_id)
             db.session.commit()
-            return jsonify({'expired_tv_shows_removed':True})
+            return jsonify({'expired_tv_shows_removed': True})
         else:
-            return jsonify({'expired_tv_shows_removed':False})
+            return jsonify({'expired_tv_shows_removed': False})
 
     except Exception as e:
         return str(e)
@@ -1420,7 +1472,7 @@ def remove_tv_show(user_id=None, tv_show_id=None):
             previous_slot = slot
             if slot.slot_num == len(user_slots):
                 clear_individual_slot(user_id, slot.slot_num)
-        return jsonify({'tv_show_deleted':True})
+        return jsonify({'tv_show_deleted': True})
 
     except Exception as e:
         return str(e)
