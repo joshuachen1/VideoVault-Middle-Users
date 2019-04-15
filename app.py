@@ -1158,7 +1158,7 @@ def display_timeline(user_id=None):
                 post_username = User.query.filter_by(id=post.post_user_id).first().username
 
                 comments = list()
-                comment_list = PostComments.query.filter_by(user_id=post.user_id).filter_by(post_user_id=post.post_user_id)
+                comment_list = PostComments.query.filter_by(user_id=post.user_id).filter_by(post_user_id=post.post_user_id).filter_by(post_id=post.post_id)
                 for comment in comment_list:
                     comment_username = User.query.filter_by(id=comment.comment_user_id).first().username
                     comments.append(PostComment(
@@ -1174,7 +1174,7 @@ def display_timeline(user_id=None):
                         post_username=post_username,
                         post=post.post,
                         date_of_post=post.date_of_post,
-                        comments=comments,
+                        comments=reversed(comments),
                     ))
 
         timeline.sort(key=lambda tl: tl.date_of_post)
@@ -1228,14 +1228,17 @@ def comment_on_post():
         comment_user_id = data['comment_user_id']
         comment = data['comment']
         date_of_comment = datetime.now()
+        post_id = data['post_id']
 
         # Can only post if friend
         if is_friend(user_id, post_user_id, True) and is_friend(user_id, comment_user_id, True):
+
             post_comment = PostComments(user_id=user_id,
                                         post_user_id=post_user_id,
                                         comment_user_id=comment_user_id,
                                         comment=comment,
-                                        date_of_comment=date_of_comment)
+                                        date_of_comment=date_of_comment,
+                                        post_id=post_id)
             db.session.add(post_comment)
             db.session.commit()
 
