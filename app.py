@@ -82,7 +82,9 @@ def login(email=None, attempted_pwd=None):
         return str(e)
 
 
-# [url]/signup
+
+# { name: [name], username: [username], email:[email], password: [password], card_num: [card_num] }
+# adds user to user table and creates 10 slots in user_slots
 @app.route('/signup', methods=['POST'])
 def signup():
     try:
@@ -163,6 +165,9 @@ def signup():
         return str(e)
 
 
+
+# { user_id: [user_id], tv_show_id: [tv_show_id_list] }
+# adds 10 tv shows into user_slots table
 @app.route('/resub', methods=['PUT'])
 def resub():
     data = request.get_json()
@@ -341,7 +346,9 @@ def is_tv_show_in_slot(user_id=None, tv_show_id=None):
         return str(e)
 
 
-# Json input: user_id, slot_num, tv_show_title
+
+# { user_id: [user_id], tv_show_id: [tv_show_id] }
+# creates a new slot in user_slots and adds tv show to that slot
 @app.route('/add_tv_show', methods=['PUT'])
 def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
     # only run this section of code to add tv show to newly added slot
@@ -408,8 +415,8 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
         return str(e)
 
 
+# { user_id: [user_id], tv_show_id: [tv_show_id] }
 # boolean to convert unsubscribe of user to true
-# [url]/unsubscribe
 @app.route('/unsubscribe', methods=['PUT'])
 def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
     try:
@@ -431,8 +438,8 @@ def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
         return str(e)
 
 
+# { user_id: [user_id], tv_show_id: [tv_show_id] }
 # boolean to convert unsubscribe of user to false
-# [url]/subscribe
 @app.route('/subscribe', methods=['PUT'])
 def subscribe(user_id=None, tv_show_id=None, function_call=False):
     try:
@@ -454,8 +461,8 @@ def subscribe(user_id=None, tv_show_id=None, function_call=False):
         return str(e)
 
 
+# { user_id: [user_id] }
 # route to clear all slots
-# [url]/clear_slots
 @app.route('/clear_slots', methods=['PUT'])
 def clear_slots():
     try:
@@ -473,8 +480,8 @@ def clear_slots():
         return str(e)
 
 
+# { user_id: [user_id] }
 # route to delete a slot only if top slot is empty
-# [url]/delete_slot
 @app.route('/delete_slot', methods=['PUT'])
 def delete_slot(user_id=None):
     try:
@@ -540,7 +547,8 @@ def get_users(page=1):
     except Exception as e:
         return str(e)
 
-
+# { user_id: [user_id], pending_friend_id: [pending_friend_id] }
+# send a friend request to another user
 @app.route('/send_friend_request', methods=['POST'])
 def send_friend_request():
     try:
@@ -575,6 +583,8 @@ def send_friend_request():
         return str(e)
 
 
+# { user_id: [user_id], pending_friend_id: [pending_friend_id] }
+# accepts a friend request
 @app.route('/accept_friend_request', methods=['POST'])
 def accept_friend_request(function_call=False):
     try:
@@ -616,12 +626,15 @@ def accept_friend_request(function_call=False):
         return str(e)
 
 
+# { user_id: [user_id], pending_friend_id: [pending_friend_id] }
+# decline a friend request
 @app.route('/decline_friend_request', methods=['POST'])
 def decline_friend_request():
     return accept_friend_request(True)
 
 
 # returns a list of all friend requests from a specific user
+# [url]/get_friend_requests/user=[user_id]
 @app.route('/get_friend_requests/user=<int:user_id>', methods=['GET'])
 def get_friend_requests(user_id=None):
     try:
@@ -637,6 +650,8 @@ def get_friend_requests(user_id=None):
         return str(e)
 
 
+# checks if there is at least 1 pending friend request and returns True if there is
+# [url]/is_friend_request/user=[user_id]
 @app.route('/is_friend_request/user=<int:user_id>', methods=['GET'])
 def is_friend_request(user_id=None):
     try:
@@ -1085,6 +1100,8 @@ def get_user_rented_movies(user_id=None):
         return str(e)
 
 
+# { user_id: [user_id], movie_id: [movie_id] }
+# adds rented movie into user_rented_movies table
 @app.route('/rent_movie', methods=['POST'])
 def rent_movie():
     data = request.get_json()
