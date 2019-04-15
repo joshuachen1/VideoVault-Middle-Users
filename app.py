@@ -28,7 +28,7 @@ from Email import Email
 from db_cursor import DBInfo
 from crypto_models import Key
 from user_models import Signup, Login
-from user_models import User, Friends, PendingFriends, TimeLine, Post
+from user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
 from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
@@ -1156,12 +1156,26 @@ def display_timeline(user_id=None):
             for post in friend_wall:
                 username = User.query.filter_by(id=post.user_id).first().username
                 post_username = User.query.filter_by(id=post.post_user_id).first().username
+
+                comments = list()
+                comment_list = PostComments.query.filter_by(user_id=post.user_id).filter_by(post_user_id=post.post_user_id)
+                for comment in comment_list:
+                    comment_username = User.query.filter_by(id=comment.comment_user_id).first().username
+                    comments.append(PostComment(
+                        username=username,
+                        post_username=post_username,
+                        comment_username=comment_username,
+                        comment=comment.comment,
+                        date_of_comment=comment.date_of_comment,
+                    ))
+
                 timeline.append(Post(
-                                    username=username,
-                                    post_username=post_username,
-                                    post=post.post,
-                                    date_of_post=post.date_of_post,
-                                    ))
+                        username=username,
+                        post_username=post_username,
+                        post=post.post,
+                        date_of_post=post.date_of_post,
+                        comments=comments,
+                    ))
 
         timeline.sort(key=lambda tl: tl.date_of_post)
         timeline = reversed(timeline)
@@ -1199,6 +1213,40 @@ def post_timeline():
             return jsonify({'success': False,
                             'valid_user': True,
                             'valid_friend': False})
+    except Exception as e:
+        return str(e)
+
+
+# { "user_id": [user_id], "post_user_id": [post_user_id], "comment_user_id": [comment_user_id', "comment": [comment_text] }
+# [url]/timeline/post/comment
+@app.route('/timeline/post/comment', methods=['POST'])
+def comment_on_post():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        post_user_id = data['post_user_id']
+        comment_user_id = data['comment_user_id']
+        comment = data['comment']
+        date_of_comment = datetime.now()
+
+        # Can only post if friend
+        if is_friend(user_id, post_user_id, True) and is_friend(user_id, comment_user_id, True):
+            post_comment = PostComments(user_id=user_id,
+                                        post_user_id=post_user_id,
+                                        comment_user_id=comment_user_id,
+                                        comment=comment,
+                                        date_of_comment=date_of_comment)
+            db.session.add(post_comment)
+            db.session.commit()
+
+            return jsonify({'success': True,
+                            'valid_user': True,
+                            'valid_friend': True})
+        else:
+            return jsonify({'success': False,
+                            'valid_user': True,
+                            'valid_friend': False})
+
     except Exception as e:
         return str(e)
 
@@ -1376,7 +1424,6 @@ def remove_tv_show(user_id=None, tv_show_id=None):
 
     except Exception as e:
         return str(e)
-
 
 
 # (Pseudo PUT) increment user's slot_num by 1 and return new slot_id
