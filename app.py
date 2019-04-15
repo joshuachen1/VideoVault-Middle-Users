@@ -28,7 +28,7 @@ from Email import Email
 from db_cursor import DBInfo
 from crypto_models import Key
 from user_models import Signup, Login
-from user_models import User, Friends, TimeLine, Post, PostComments, PostComment
+from user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
 from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
@@ -73,6 +73,7 @@ def login(email=None, attempted_pwd=None):
 
         if decrypted_saved_pwd == attempted_pwd:
             delete_expired_movies()
+            delete_expired_tv_shows()
             return jsonify(user_info.serialize())
         else:
             result = Login(False, True, False)
@@ -406,41 +407,51 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
     except Exception as e:
         return str(e)
 
-#
-# # boolean to convert unsubscribe of user to true
-# # [url]/unsubscribe
-# @app.route('/unsubscribe', methods=['PUT'])
-# def unsubscribe(id=None):
-#     try:
-#         data = request.get_json()
-#         id = data['user_id']
-#         if id is not None:
-#             user = User.query.filter_by(id=id).first()
-#             change_subscription_status(user.id, True)
-#             db.session.commit()
-#             return jsonify({'is_success': True})
-#         else:
-#             return jsonify({'is_success': False})
-#     except Exception as e:
-#         return str(e)
-#
-#
-# # boolean to convert unsubscribe of user to false
-# # [url]/subscribe
-# @app.route('/subscribe', methods=['PUT'])
-# def subscribe(id=None):
-#     try:
-#         data = request.get_json()
-#         id = data['user_id']
-#         if id is not None:
-#             user = User.query.filter_by(id=id).first()
-#             change_subscription_status(user.id, False)
-#             db.session.commit()
-#             return jsonify({'is_success': True})
-#         else:
-#             return jsonify({'is_success': False})
-#     except Exception as e:
-#         return str(e)
+
+# boolean to convert unsubscribe of user to true
+# [url]/unsubscribe
+@app.route('/unsubscribe', methods=['PUT'])
+def unsubscribe(user_id=None, tv_show_id=None, function_call = False):
+    try:
+        if function_call is False:
+            data = request.get_json()
+            user_id = data['user_id']
+            tv_show_id = data['tv_show_id']
+        check_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+
+        if check_slot is not None:
+            change_subscription_status(user_id, tv_show_id, True)
+            db.session.commit()
+            return jsonify({'is_success': True,
+                            'is_slot_exist':True})
+        else:
+            return jsonify({'is_success': False,
+                            'is_slot_exist:':False})
+    except Exception as e:
+        return str(e)
+
+
+# boolean to convert unsubscribe of user to false
+# [url]/subscribe
+@app.route('/subscribe', methods=['PUT'])
+def subscribe(user_id=None, tv_show_id=None, function_call=False):
+    try:
+        if function_call is False:
+            data = request.get_json()
+            user_id = data['user_id']
+            tv_show_id = data['tv_show_id']
+        check_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+
+        if check_slot is not None:
+            change_subscription_status(user_id, tv_show_id, False)
+            db.session.commit()
+            return jsonify({'is_success': True,
+                            'is_slot_exist': True})
+        else:
+            return jsonify({'is_success': False,
+                            'is_slot_exist:': False})
+    except Exception as e:
+        return str(e)
 
 
 # route to clear all slots
@@ -464,54 +475,31 @@ def clear_slots():
 # route to delete a slot only if top slot is empty
 # [url]/delete_slot
 @app.route('/delete_slot', methods=['PUT'])
-def delete_slot():
+def delete_slot(user_id=None):
     try:
         data = request.get_json()
         user_id = data['user_id']
 
         user = User.query.filter_by(id=user_id).first()
         top_user_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).first()
+        empty_slot = top_user_slot.tv_show_id is None
+        more_than_ten_slots = user.num_slots > 10
 
-        if top_user_slot.tv_show_id is None:
+        if empty_slot and more_than_ten_slots:
             UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).delete()
             decrement_slot(user_id)
             db.session.commit()
-            return jsonify({'success':True})
+            return jsonify({'success':True,
+                            'more_than_ten_slots':more_than_ten_slots,
+                            'empty_slot':empty_slot})
         else:
-            return jsonify({'success':False})
+            return jsonify({'success':False,
+                            'more_than_ten_slots':more_than_ten_slots,
+                            'empty_slot':empty_slot})
 
     except Exception as e:
         return str(e)
 
-# route to delete tv_show in slot
-# [url]/remove_tv_show
-@app.route('/remove_tv_show', methods=['PUT'])
-def remove_tv_show():
-    try:
-        data = request.get_json()
-        user_id = data['user_id']
-        tv_show_id = data['tv_show_id']
-
-        # get slot_num of deleted tv show
-        deletion_index = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
-        deletion_index = deletion_index.slot_num
-
-        # shift all the values in the database back one
-        user_slots = UserSlots.query.filter_by(user_id=user_id).all()
-        previous_slot = None
-        for slot in user_slots:
-            if slot.slot_num > deletion_index:
-                previous_slot.user_id = user_id
-                previous_slot.slot_num = previous_slot.slot_num
-                previous_slot.tv_show_id = slot.tv_show_id
-            previous_slot = slot
-            if slot.slot_num == len(user_slots):
-                clear_individual_slot(user_id, slot.slot_num)
-        db.session.commit()
-        return jsonify({'tv_show_deleted':True})
-
-    except Exception as e:
-        return str(e)
 
 # [url]/search/user=[email_or_username]
 @app.route('/search/user=<query>/page=<int:page>', methods=['GET'])
@@ -550,6 +538,85 @@ def get_users(page=1):
         return paginated_json('users', users, page)
     except Exception as e:
         return str(e)
+
+
+@app.route('/send_friend_request', methods=['POST'])
+def send_friend_request():
+    try:
+        data=request.get_json()
+        user_id = data['user_id']
+        pending_friend_id = data['pending_friend_id']
+
+        check_user = User.query.filter_by(id=user_id).first()
+        check_user = check_user is not None
+        check_friend_id = User.query.filter_by(id=pending_friend_id).first()
+        check_friend_id = check_friend_id is not None
+        check_friendship = Friends.query.filter_by(user_id=user_id).filter_by(friend_id=pending_friend_id).first()
+        check_friendship = check_friendship is None
+        if check_user and check_friend_id and check_friendship:
+            # add request to table
+            new_friend_request = PendingFriends(
+                user_id=user_id,
+                pending_friend_id=pending_friend_id,
+            )
+            db.session.add(new_friend_request)
+            db.session.commit()
+            return jsonify({'success': True,
+                            'valid_user_id': check_user,
+                            'valid_friend_id': check_friend_id,
+                            'not_already_friends':check_friendship})
+        else:
+            return jsonify({'success':False,
+                            'valid_user_id':check_user,
+                            'valid_friend_id':check_friend_id,
+                            'not_already_friends':check_friendship})
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/accept_friend_request', methods=['POST'])
+def accept_friend_request(function_call = False):
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        pending_friend_id = data['pending_friend_id']
+        check_user_id = User.query.filter_by(id=user_id).first()
+        check_user_id = check_user_id is not None
+        check_friend_id = User.query.filter_by(id=pending_friend_id).first()
+        check_friend_id = check_friend_id is not None
+
+        # checks for valid inputs
+        if check_friend_id and check_user_id:
+            check_friend_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=pending_friend_id).first()
+            check_friend_request = check_friend_request is not None
+            # checks if friend request exists
+            if check_friend_request:
+                if function_call is False:
+                    add_friend(user_id, pending_friend_id)
+                # delete request
+                PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=pending_friend_id).delete()
+                db.session.commit()
+                return jsonify({'success': True,
+                                'valid_friendship_request': check_friend_request,
+                                'valid_user_id': check_user_id,
+                                'valid_friend_id': check_friend_id})
+            else:
+                return jsonify({'success': False,
+                                'valid_friendship_request': check_friend_request,
+                                'valid_user_id':check_user_id,
+                                'valid_friend_id':check_friend_id})
+        else:
+            return jsonify({'success': False,
+                            'valid_friendship_request': False,
+                            'valid_user_id': check_user_id,
+                            'valid_friend_id': check_friend_id})
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/decline_friend_request', methods=['POST'])
+def decline_friend_request():
+   return accept_friend_request(True)
 
 
 # Check Friendship
@@ -597,51 +664,6 @@ def get_user_friend_list(user_id=None, page=1):
 
         return paginated_json('friends', friend_list, page)
 
-    except Exception as e:
-        return str(e)
-
-
-# [url]/user=[user_id]/friends/add=[friend_id]
-@app.route('/add_friend', methods=['POST'])
-def add_friend():
-    data = request.get_json()
-    user_id = data['user_id']
-    friend_id = data['friend_id']
-
-    check_user_id = User.query.filter_by(id=user_id).first()
-    check_friend_id = User.query.filter_by(id=friend_id).first()
-
-    if check_user_id is None and check_friend_id is None:
-        return jsonify({'success': False,
-                        'valid_user_id': False,
-                        'valid_friend_id': False})
-    elif check_user_id is None:
-        return jsonify({'success': False,
-                        'valid_user_id': False,
-                        'valid_friend_id': True})
-    elif check_friend_id is None:
-        return jsonify({'success': False,
-                        'valid_user_id': True,
-                        'valid_friend_id': False})
-
-    try:
-        # Add friend to database
-        friend = Friends(
-            user_id=user_id,
-            friend_id=friend_id
-        )
-        db.session.add(friend)
-
-        # Friend adds back
-        friend_back = Friends(
-            user_id=friend_id,
-            friend_id=user_id
-        )
-        db.session.add(friend_back)
-        db.session.commit()
-        return jsonify({'success': True,
-                        'valid_user_id': True,
-                        'valid_friend_id': True})
     except Exception as e:
         return str(e)
 
@@ -1071,6 +1093,27 @@ def rent_movie():
         return str(e)
 
 
+# add friend friend and friend adds back
+def add_friend(user_id, friend_id):
+    try:
+        # Add friend to database
+        friend = Friends(
+            user_id=user_id,
+            friend_id=friend_id
+        )
+        db.session.add(friend)
+
+        # Friend adds back
+        friend_back = Friends(
+            user_id=friend_id,
+            friend_id=user_id
+        )
+        db.session.add(friend_back)
+        return 'success'
+    except Exception as e:
+        return str(e)
+
+
 # [url]/user=[user_id]/wall
 @app.route('/user=<user_id>/wall', methods=['GET'])
 def display_wall(user_id=None):
@@ -1259,6 +1302,59 @@ def delete_expired_movies():
     except Exception as e:
         return str(e)
 
+# need to add to login function and need to add check to not allow deleting slots past 10
+def delete_expired_tv_shows():
+    try:
+        month_ago_date = (datetime.now() - timedelta(30)).date()
+        # ensures list is not empty
+        expired_users = User.query.filter(User.sub_date<=month_ago_date)
+
+        if expired_users:
+            for user in expired_users:
+                remove_list = UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True)
+                update_sub_date(user.id)
+                email_sender.subscription_renew_email(user.username, user.email, user.sub_date + timedelta(30))
+                for tv_show_to_remove in remove_list:
+                    subscribe(user.id, tv_show_to_remove.tv_show_id, True)
+                    remove_tv_show(user.id, tv_show_to_remove.tv_show_id)
+            db.session.commit()
+            return jsonify({'expired_tv_shows_removed':True})
+        else:
+            return jsonify({'expired_tv_shows_removed':False})
+
+    except Exception as e:
+        return str(e)
+
+
+# updates user's resub date by adding 30 days
+def update_sub_date(user_id=None):
+    # increment slot number in users
+    check_id = User.query.filter_by(id=user_id).first()
+
+    name = check_id.name
+    username = check_id.username
+    email = check_id.email
+    password = check_id.password
+    card_num = check_id.card_num
+    num_slots = check_id.num_slots
+    sub_date = check_id.sub_date + timedelta(30)
+
+    try:
+        user = User.query.filter_by(id=user_id).first()
+        user.id = user_id
+        user.name = name
+        user.username = username
+        user.email = email
+        user.password = password
+        user.card_num = card_num
+        user.num_slots = num_slots
+        user.sub_date = sub_date
+
+        return 'sucess'
+
+    except Exception as e:
+        return str(e)
+
 
 # adds an empty slot to user_slots in database
 def add_empty_slot(user_id, slot_num):
@@ -1270,6 +1366,31 @@ def add_empty_slot(user_id, slot_num):
     db.session.add(user_slots)
     db.session.commit()
     return "user_slots added"
+
+
+# route to delete tv_show in slot
+def remove_tv_show(user_id=None, tv_show_id=None):
+    try:
+        # get slot_num of deleted tv show
+        deletion_index = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+        deletion_index = deletion_index.slot_num
+
+        # shift all the values in the database back one
+        user_slots = UserSlots.query.filter_by(user_id=user_id).all()
+        previous_slot = None
+        for slot in user_slots:
+            if slot.slot_num > deletion_index:
+                previous_slot.user_id = user_id
+                previous_slot.slot_num = previous_slot.slot_num
+                previous_slot.tv_show_id = slot.tv_show_id
+            previous_slot = slot
+            if slot.slot_num == len(user_slots):
+                clear_individual_slot(user_id, slot.slot_num)
+        return jsonify({'tv_show_deleted':True})
+
+    except Exception as e:
+        return str(e)
+
 
 
 # (Pseudo PUT) increment user's slot_num by 1 and return new slot_id
@@ -1342,39 +1463,24 @@ def clear_individual_slot(user_id, slot_num):
             return 'success'
     except Exception as e:
         return str(e)
-#
-#
-# def change_subscription_status(user_id, unsubscribe_boolean):
-#     # increment slot number in users
-#     check_id = User.query.filter_by(id=user_id).first()
-#
-#     name = check_id.name
-#     username = check_id.username
-#     email = check_id.email
-#     password = check_id.password
-#     card_num = check_id.card_num
-#     num_slots = check_id.num_slots
-#     sub_date = check_id.sub_date
-#     profile_pic = check_id.profile_pic
-#
-#     try:
-#         user = User.query.filter_by(id=user_id).first()
-#         user.id = user_id
-#         user.name = name
-#         user.username = username
-#         user.email = email
-#         user.password = password
-#         user.card_num = card_num
-#         user.num_slots = num_slots
-#         user.sub_date = sub_date
-#         user.profile_pic = profile_pic
-#         user.unsubscribe = unsubscribe_boolean
-#
-#         return num_slots
-#
-#     except Exception as e:
-#         return str(e)
-#
+
+
+def change_subscription_status(user_id, tv_show_id, unsubscribe_boolean):
+    # increment slot number in users
+
+    try:
+        user_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+
+        user_slot.user_id = user_id
+        user_slot.slot_num = user_slot.slot_num
+        user_slot.tv_show_id = tv_show_id
+        user_slot.unsubscribe = unsubscribe_boolean
+
+        return 'success'
+
+    except Exception as e:
+        return str(e)
+
 
 # Pseudo Pagination
 def pseudo_paginate(page: int, list_to_paginate: []):
