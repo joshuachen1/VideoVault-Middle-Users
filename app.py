@@ -637,6 +637,19 @@ def get_friend_requests(user_id=None):
         return str(e)
 
 
+@app.route('/is_friend_request/user=<int:user_id>', methods=['GET'])
+def is_friend_request(user_id=None):
+    try:
+        friend_request_boolean=False
+        if user_id is not None:
+            pending_request_rel = PendingFriends.query.filter_by(user_id=user_id).all()
+            if pending_request_rel:
+                friend_request_boolean=True
+        return jsonify({'at_least_one_request':friend_request_boolean})
+    except Exception as e:
+        return str(e)
+
+
 # Check Friendship
 # [url]/user1=[user1_id]/user2=[user2_id]
 @app.route('/user1=<int:user1_id>/user2=<int:user2_id>')
