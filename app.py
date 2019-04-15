@@ -1122,15 +1122,31 @@ def display_wall(user_id=None):
         user = User.query.filter_by(id=user_id).first()
 
         wall_posts = TimeLine.query.filter_by(user_id=user.id).order_by(TimeLine.date_of_post)
+
         for post in wall_posts:
             username = User.query.filter_by(id=post.user_id).first().username
             post_username = User.query.filter_by(id=post.post_user_id).first().username
+
+            comments = list()
+            comment_list = PostComments.query.filter_by(user_id=post.user_id).filter_by(
+                post_user_id=post.post_user_id).filter_by(post_id=post.post_id)
+            for comment in comment_list:
+                comment_username = User.query.filter_by(id=comment.comment_user_id).first().username
+                comments.append(PostComment(
+                    username=username,
+                    post_username=post_username,
+                    comment_username=comment_username,
+                    comment=comment.comment,
+                    date_of_comment=comment.date_of_comment,
+                ))
+
             wall.append(Post(
-                                username=username,
-                                post_username=post_username,
-                                post=post.post,
-                                date_of_post=post.date_of_post,
-                                ))
+                username=username,
+                post_username=post_username,
+                post=post.post,
+                date_of_post=post.date_of_post,
+                comments=reversed(comments),
+            ))
 
         wall.sort(key=lambda w: w.date_of_post)
         wall = reversed(wall)
