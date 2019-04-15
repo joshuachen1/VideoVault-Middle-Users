@@ -116,11 +116,12 @@ class TimeLine(db.Model):
 
 
 class Post:
-    def __init__(self, username, post_username, post, date_of_post):
+    def __init__(self, username, post_username, post, date_of_post, comments):
         self.username = username
         self.post_username = post_username
         self.post = post
         self.date_of_post = date_of_post
+        self.comments = comments
 
     def serialize(self):
         return {
@@ -128,7 +129,52 @@ class Post:
             'post_username': self.post_username,
             'post': self.post,
             'date_of_post': self.date_of_post,
+            'comments': [comment.serialize() for comment in self.comments],
         }
+
+
+class PostComments(db.Model):
+    __tablename__ = 'post_comments'
+
+    user_id = db.Column(db.Integer, primary_key=True)
+    post_user_id = db.Column(db.Integer, primary_key=True)
+    comment_user_id = db.Column(db.Integer, primary_key=True)
+    comment = db.Column(db.VARCHAR)
+    date_of_comment = db.Column(db.DateTime, primary_key=True)
+
+    def __init__(self, username, post_user_id, comment_user_id, comment, date_of_comment):
+        self.username = username
+        self.post_user_id = post_user_id
+        self.comment_user_id = comment_user_id
+        self.comment = comment
+        self.date_of_comment = date_of_comment
+
+    def serialize(self):
+        return {
+            'username': self.username,
+            'comment_username': self.comment_username,
+            'comment': self.comment,
+            'date_of_comment': self.date_of_comment,
+        }
+
+
+class PostComment:
+    def __init__(self, username, post_username, comment_username, comment, date_of_comment):
+        self.username = username
+        self.post_username = post_username
+        self.comment_username = comment_username
+        self.comment = comment
+        self.date_of_comment = date_of_comment
+
+    def serialize(self):
+        return {
+            'username': self.username,
+            'post_username': self.post_username,
+            'comment_username': self.comment_username,
+            'comment': self.comment,
+            'date_of_comment': self.date_of_comment,
+        }
+
 
 class UserRatedMovieRel(db.Model):
     __tablename__ = 'user_rated_movies'

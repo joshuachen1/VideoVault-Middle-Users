@@ -28,7 +28,7 @@ from Email import Email
 from db_cursor import DBInfo
 from crypto_models import Key
 from user_models import Signup, Login
-from user_models import User, Friends, TimeLine, Post
+from user_models import User, Friends, TimeLine, Post, PostComments, PostComment
 from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
@@ -406,41 +406,41 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
     except Exception as e:
         return str(e)
 
-
-# boolean to convert unsubscribe of user to true
-# [url]/unsubscribe
-@app.route('/unsubscribe', methods=['PUT'])
-def unsubscribe(id=None):
-    try:
-        data = request.get_json()
-        id = data['user_id']
-        if id is not None:
-            user = User.query.filter_by(id=id).first()
-            change_subscription_status(user.id, True)
-            db.session.commit()
-            return jsonify({'is_success': True})
-        else:
-            return jsonify({'is_success': False})
-    except Exception as e:
-        return str(e)
-
-
-# boolean to convert unsubscribe of user to false
-# [url]/subscribe
-@app.route('/subscribe', methods=['PUT'])
-def subscribe(id=None):
-    try:
-        data = request.get_json()
-        id = data['user_id']
-        if id is not None:
-            user = User.query.filter_by(id=id).first()
-            change_subscription_status(user.id, False)
-            db.session.commit()
-            return jsonify({'is_success': True})
-        else:
-            return jsonify({'is_success': False})
-    except Exception as e:
-        return str(e)
+#
+# # boolean to convert unsubscribe of user to true
+# # [url]/unsubscribe
+# @app.route('/unsubscribe', methods=['PUT'])
+# def unsubscribe(id=None):
+#     try:
+#         data = request.get_json()
+#         id = data['user_id']
+#         if id is not None:
+#             user = User.query.filter_by(id=id).first()
+#             change_subscription_status(user.id, True)
+#             db.session.commit()
+#             return jsonify({'is_success': True})
+#         else:
+#             return jsonify({'is_success': False})
+#     except Exception as e:
+#         return str(e)
+#
+#
+# # boolean to convert unsubscribe of user to false
+# # [url]/subscribe
+# @app.route('/subscribe', methods=['PUT'])
+# def subscribe(id=None):
+#     try:
+#         data = request.get_json()
+#         id = data['user_id']
+#         if id is not None:
+#             user = User.query.filter_by(id=id).first()
+#             change_subscription_status(user.id, False)
+#             db.session.commit()
+#             return jsonify({'is_success': True})
+#         else:
+#             return jsonify({'is_success': False})
+#     except Exception as e:
+#         return str(e)
 
 
 # route to clear all slots
@@ -1113,12 +1113,26 @@ def display_timeline(user_id=None):
             for post in friend_wall:
                 username = User.query.filter_by(id=post.user_id).first().username
                 post_username = User.query.filter_by(id=post.post_user_id).first().username
+
+                comments = list()
+                comment_list = PostComments.query.filter_by(user_id=post.user_id).filter_by(post_user_id=post.post_user_id)
+                for comment in comment_list:
+                    comment_username = User.query.filter_by(id=comment.comment_user_id).first().username
+                    comments.append(PostComment(
+                        username=username,
+                        post_username=post_username,
+                        comment_username=comment_username,
+                        comment=comment.comment,
+                        date_of_comment=comment.date_of_comment,
+                    ))
+
                 timeline.append(Post(
-                                    username=username,
-                                    post_username=post_username,
-                                    post=post.post,
-                                    date_of_post=post.date_of_post,
-                                    ))
+                        username=username,
+                        post_username=post_username,
+                        post=post.post,
+                        date_of_post=post.date_of_post,
+                        comments=comments,
+                    ))
 
         timeline.sort(key=lambda tl: tl.date_of_post)
         timeline = reversed(timeline)
@@ -1328,39 +1342,39 @@ def clear_individual_slot(user_id, slot_num):
             return 'success'
     except Exception as e:
         return str(e)
-
-
-def change_subscription_status(user_id, unsubscribe_boolean):
-    # increment slot number in users
-    check_id = User.query.filter_by(id=user_id).first()
-
-    name = check_id.name
-    username = check_id.username
-    email = check_id.email
-    password = check_id.password
-    card_num = check_id.card_num
-    num_slots = check_id.num_slots
-    sub_date = check_id.sub_date
-    profile_pic = check_id.profile_pic
-
-    try:
-        user = User.query.filter_by(id=user_id).first()
-        user.id = user_id
-        user.name = name
-        user.username = username
-        user.email = email
-        user.password = password
-        user.card_num = card_num
-        user.num_slots = num_slots
-        user.sub_date = sub_date
-        user.profile_pic = profile_pic
-        user.unsubscribe = unsubscribe_boolean
-
-        return num_slots
-
-    except Exception as e:
-        return str(e)
-
+#
+#
+# def change_subscription_status(user_id, unsubscribe_boolean):
+#     # increment slot number in users
+#     check_id = User.query.filter_by(id=user_id).first()
+#
+#     name = check_id.name
+#     username = check_id.username
+#     email = check_id.email
+#     password = check_id.password
+#     card_num = check_id.card_num
+#     num_slots = check_id.num_slots
+#     sub_date = check_id.sub_date
+#     profile_pic = check_id.profile_pic
+#
+#     try:
+#         user = User.query.filter_by(id=user_id).first()
+#         user.id = user_id
+#         user.name = name
+#         user.username = username
+#         user.email = email
+#         user.password = password
+#         user.card_num = card_num
+#         user.num_slots = num_slots
+#         user.sub_date = sub_date
+#         user.profile_pic = profile_pic
+#         user.unsubscribe = unsubscribe_boolean
+#
+#         return num_slots
+#
+#     except Exception as e:
+#         return str(e)
+#
 
 # Pseudo Pagination
 def pseudo_paginate(page: int, list_to_paginate: []):
