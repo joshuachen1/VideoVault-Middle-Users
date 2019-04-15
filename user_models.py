@@ -42,7 +42,6 @@ class User(db.Model):
     sub_date = db.Column(db.Date)
     profile_pic = db.Column(db.VARCHAR)
 
-
     def __init__(self, name, username, email, password, card_num, num_slots, sub_date, profile_pic):
         self.name = name
         self.username = username
@@ -95,8 +94,8 @@ class PendingFriends(db.Model):
     pending_friend_id = db.Column(db.Integer, primary_key=True)
 
     def __init__(self, user_id, pending_friend_id):
-       self.user_id = user_id
-       self.pending_friend_id = pending_friend_id
+        self.user_id = user_id
+        self.pending_friend_id = pending_friend_id
 
     def serialize(self):
         return {
