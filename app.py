@@ -621,6 +621,22 @@ def decline_friend_request():
     return accept_friend_request(True)
 
 
+# returns a list of all friend requests from a specific user
+@app.route('/get_friend_requests/user=<int:user_id>', methods=['GET'])
+def get_friend_requests(user_id=None):
+    try:
+        if user_id is not None:
+            pending_request_rel=PendingFriends.query.filter_by(user_id=user_id).all()
+            pending_request_list = list()
+
+            for request in pending_request_rel:
+                pending_request_list.append(request.pending_friend_id)
+        return jsonify({'user_id':user_id,
+                        'friend_requests': pending_request_list,})
+    except Exception as e:
+        return str(e)
+
+
 # Check Friendship
 # [url]/user1=[user1_id]/user2=[user2_id]
 @app.route('/user1=<int:user1_id>/user2=<int:user2_id>')
