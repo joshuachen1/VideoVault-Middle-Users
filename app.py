@@ -1217,6 +1217,40 @@ def post_timeline():
         return str(e)
 
 
+# { "user_id": [user_id], "post_user_id": [post_user_id], "comment_user_id": [comment_user_id', "comment": [comment_text] }
+# [url]/timeline/post/comment
+@app.route('/timeline/post/comment', methods=['POST'])
+def comment_on_post():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        post_user_id = data['post_user_id']
+        comment_user_id = data['comment_user_id']
+        comment = data['comment']
+        date_of_comment = datetime.now()
+
+        # Can only post if friend
+        if is_friend(user_id, post_user_id, True) and is_friend(user_id, comment_user_id, True):
+            post_comment = PostComments(user_id=user_id,
+                                        post_user_id=post_user_id,
+                                        comment_user_id=comment_user_id,
+                                        comment=comment,
+                                        date_of_comment=date_of_comment)
+            db.session.add(post_comment)
+            db.session.commit()
+
+            return jsonify({'success': True,
+                            'valid_user': True,
+                            'valid_friend': True})
+        else:
+            return jsonify({'success': False,
+                            'valid_user': True,
+                            'valid_friend': False})
+
+    except Exception as e:
+        return str(e)
+
+
 # Creates a new table in the database for the new user
 def create_new_timeline(username: str):
     db_info = DBInfo.query.filter_by(user='company48').first()
@@ -1390,7 +1424,6 @@ def remove_tv_show(user_id=None, tv_show_id=None):
 
     except Exception as e:
         return str(e)
-
 
 
 # (Pseudo PUT) increment user's slot_num by 1 and return new slot_id

@@ -155,8 +155,8 @@ class PostComments(db.Model):
     comment = db.Column(db.VARCHAR)
     date_of_comment = db.Column(db.DateTime, primary_key=True)
 
-    def __init__(self, username, post_user_id, comment_user_id, comment, date_of_comment):
-        self.username = username
+    def __init__(self, user_id, post_user_id, comment_user_id, comment, date_of_comment):
+        self.user_id = user_id
         self.post_user_id = post_user_id
         self.comment_user_id = comment_user_id
         self.comment = comment
