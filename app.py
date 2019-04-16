@@ -82,7 +82,6 @@ def login(email=None, attempted_pwd=None):
         return str(e)
 
 
-
 # { name: [name], username: [username], email:[email], password: [password], card_num: [card_num] }
 # adds user to user table and creates 10 slots in user_slots
 @app.route('/signup', methods=['POST'])
@@ -163,7 +162,6 @@ def signup():
             return str(e)
     except Exception as e:
         return str(e)
-
 
 
 # { user_id: [user_id], tv_show_id: [tv_show_id_list] }
@@ -344,7 +342,6 @@ def is_tv_show_in_slot(user_id=None, tv_show_id=None):
             return jsonify({'is_tv_show_in_slot': False})
     except Exception as e:
         return str(e)
-
 
 
 # { user_id: [user_id], tv_show_id: [tv_show_id] }
@@ -547,6 +544,7 @@ def get_users(page=1):
     except Exception as e:
         return str(e)
 
+
 # { user_id: [user_id], pending_friend_id: [pending_friend_id] }
 # send a friend request to another user
 @app.route('/send_friend_request', methods=['POST'])
@@ -639,13 +637,13 @@ def decline_friend_request():
 def get_friend_requests(user_id=None):
     try:
         if user_id is not None:
-            pending_request_rel=PendingFriends.query.filter_by(user_id=user_id).all()
+            pending_request_rel = PendingFriends.query.filter_by(user_id=user_id).all()
             pending_request_list = list()
 
             for request in pending_request_rel:
                 pending_request_list.append(request.pending_friend_id)
-        return jsonify({'user_id':user_id,
-                        'friend_requests': pending_request_list,})
+        return jsonify({'user_id': user_id,
+                        'friend_requests': pending_request_list, })
     except Exception as e:
         return str(e)
 
@@ -655,12 +653,12 @@ def get_friend_requests(user_id=None):
 @app.route('/is_friend_request/user=<int:user_id>', methods=['GET'])
 def is_friend_request(user_id=None):
     try:
-        friend_request_boolean=False
+        friend_request_boolean = False
         if user_id is not None:
             pending_request_rel = PendingFriends.query.filter_by(user_id=user_id).all()
             if pending_request_rel:
-                friend_request_boolean=True
-        return jsonify({'at_least_one_request':friend_request_boolean})
+                friend_request_boolean = True
+        return jsonify({'at_least_one_request': friend_request_boolean})
     except Exception as e:
         return str(e)
 
