@@ -646,6 +646,21 @@ def decline_friend_request():
     return accept_friend_request(True)
 
 
+# returns true if user_id and friend_id is in the pending table
+# [url]/has-friend_request/user=[user_id]/friend=[friend_id]
+@app.route('/has_friend_request/user=<int:user_id>/friend=<int:friend_id>', methods=['GET'])
+def has_friend_request(user_id=None, friend_id=None):
+    try:
+        if user_id is not None and friend_id is not None:
+            is_friend_request=PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=friend_id).scalar()
+            if is_friend_request is not None:
+                return jsonify({'has_friend_request':True})
+            else:
+                return jsonify({'has_friend_request':False})
+    except Exception as e:
+        str(e)
+
+
 # returns a list of all friend requests from a specific user
 # [url]/get_friend_requests/user=[user_id]
 @app.route('/get_friend_requests/user=<int:user_id>', methods=['GET'])
