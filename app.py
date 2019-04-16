@@ -646,6 +646,21 @@ def decline_friend_request():
     return accept_friend_request(True)
 
 
+# returns true if user_id and friend_id is in the pending table
+# [url]/has-friend_request/user=[user_id]/friend=[friend_id]
+@app.route('/has_friend_request/user=<int:user_id>/friend=<int:friend_id>', methods=['GET'])
+def has_friend_request(user_id=None, friend_id=None):
+    try:
+        if user_id is not None and friend_id is not None:
+            is_friend_request=PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=friend_id).scalar()
+            if is_friend_request is not None:
+                return jsonify({'has_friend_request':True})
+            else:
+                return jsonify({'has_friend_request':False})
+    except Exception as e:
+        str(e)
+
+
 # returns a list of all friend requests from a specific user
 # [url]/get_friend_requests/user=[user_id]
 @app.route('/get_friend_requests/user=<int:user_id>', methods=['GET'])
@@ -1275,6 +1290,11 @@ def post_timeline():
         post = data['post']
         date_of_post = datetime.now()
 
+        if User.query.filter_by(id=user_id).first() is None:
+            return jsonify({'success': False,
+                            'valid_user': False,
+                            'valid_friend': False})
+
         # Can only post if friend
         if is_friend(user_id, post_user_id, True):
             timeline = TimeLine(user_id=user_id,
@@ -1308,6 +1328,18 @@ def comment_on_post():
         date_of_comment = datetime.now()
         post_id = data['post_id']
 
+        if User.query.filter_by(id=user_id).first() is None:
+            return jsonify({'success': False,
+                            'valid_user': False,
+                            'valid_friend': False,
+                            'valid_post_id': False})
+
+        elif PostComments.query.filter_by(post_id=post_id).first() is None:
+            return jsonify({'success': False,
+                            'valid_user': True,
+                            'valid_friend': False,
+                            'valid_post_id': False})
+
         # Can only post if friend
         if is_friend(user_id, post_user_id, True) and is_friend(user_id, comment_user_id, True):
 
@@ -1322,37 +1354,16 @@ def comment_on_post():
 
             return jsonify({'success': True,
                             'valid_user': True,
-                            'valid_friend': True})
+                            'valid_friend': True,
+                            'valid_post_id': True})
         else:
             return jsonify({'success': False,
                             'valid_user': True,
-                            'valid_friend': False})
+                            'valid_friend': False,
+                            'valid_post_id': True})
 
     except Exception as e:
         return str(e)
-
-
-# Creates a new table in the database for the new user
-def create_new_timeline(username: str):
-    db_info = DBInfo.query.filter_by(user='company48').first()
-    dbHost = db_info.host
-    dbUser = db_info.user
-    dbPassword = db_info.password
-    dbName = db_info.name
-    charSet = 'utf8mb4'
-    cursorType = pymysql.cursors.DictCursor
-    connectionObject = pymysql.connect(host=dbHost, user=dbUser, password=dbPassword, db=dbName, charset=charSet,
-                                       cursorclass=cursorType)
-    try:
-        db_cursor = connectionObject.cursor()
-        sql_query = 'CREATE TABLE ' + username + '_timeline(id int, post varchar(255))'
-        db_cursor.execute(sql_query)
-        print('success')
-    except Exception as e:
-        print(str(e))
-
-    finally:
-        connectionObject.close()
 
 
 def update_average_rating(is_tv_show: bool, media_id: int):
