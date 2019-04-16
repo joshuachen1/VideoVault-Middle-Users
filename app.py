@@ -647,7 +647,7 @@ def decline_friend_request():
 
 
 # returns true if user_id and friend_id is in the pending table
-# [url]/has-friend_request/user=[user_id]/friend=[friend_id]
+# [url]/has_friend_request/user=[user_id]/friend=[friend_id]
 @app.route('/has_friend_request/user=<int:user_id>/friend=<int:friend_id>', methods=['GET'])
 def has_friend_request(user_id=None, friend_id=None):
     try:
@@ -664,16 +664,19 @@ def has_friend_request(user_id=None, friend_id=None):
 # returns a list of all friend requests from a specific user
 # [url]/get_friend_requests/user=[user_id]
 @app.route('/get_friend_requests/user=<int:user_id>', methods=['GET'])
-def get_friend_requests(user_id=None):
+@app.route('/get_friend_requests/user=<int:user_id>/page=<int:page>', methods=['GET'])
+@app.route('/get_friend_requests/user=/page=', methods=['GET'])
+@app.route('/get_friend_requests/user=', methods=['GET'])
+def get_friend_requests(user_id=None, page = 1):
     try:
         if user_id is not None:
             pending_request_rel = PendingFriends.query.filter_by(user_id=user_id).all()
-            pending_request_list = list()
-
+            pending_friend_list = list()
             for request in pending_request_rel:
-                pending_request_list.append(request.pending_friend_id)
-        return jsonify({'user_id': user_id,
-                        'friend_requests': pending_request_list, })
+                pending_friend = User.query.filter_by(id=request.pending_friend_id).first()
+                pending_friend_list.append(pending_friend)
+
+        return paginated_json('pending_friend_requests', pending_friend_list, page)
     except Exception as e:
         return str(e)
 
