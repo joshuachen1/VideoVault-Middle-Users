@@ -111,5 +111,77 @@ class FlaskBookshelfTests(unittest.TestCase):
         self.assertEqual(expected['valid_movie'], True)
         self.assertEqual(expected['success'], True)
 
+    def test_user_tv_show_rating(self):
+        result = self.app.post('/user/tv_show/rating', json={'user_id': None,
+                                                             'tv_show_id': None,
+                                                             'rating': 5, })
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_tv_show'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/user/tv_show/rating', json={'user_id': None,
+                                                             'tv_show_id': 0,
+                                                             'rating': 5, })
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_tv_show'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/user/tv_show/rating', json={'user_id': 0,
+                                                             'tv_show_id': None,
+                                                             'rating': 5, })
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_tv_show'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/user/tv_show/rating', json={'user_id': 0,
+                                                             'tv_show_id': 0,
+                                                             'rating': 5, })
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_tv_show'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/user/tv_show/rating', json={'user_id': 1,
+                                                             'tv_show_id': None,
+                                                             'rating': 5, })
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_tv_show'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/user/tv_show/rating', json={'user_id': 1,
+                                                             'tv_show_id': 0,
+                                                             'rating': 5, })
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_tv_show'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/user/tv_show/rating', json={'user_id': None,
+                                                             'tv_show_id': 1,
+                                                             'rating': 5, })
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_tv_show'], True)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/user/tv_show/rating', json={'user_id': 0,
+                                                             'tv_show_id': 1,
+                                                             'rating': 5, })
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_tv_show'], True)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/user/tv_show/rating', json={'user_id': 1,
+                                                             'tv_show_id': 1,
+                                                             'rating': 5, })
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_tv_show'], True)
+        self.assertEqual(expected['success'], True)
 
 
