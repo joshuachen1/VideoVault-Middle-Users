@@ -1,9 +1,8 @@
 from app import app
 import unittest
-from flask import json, jsonify
 
 
-class FlaskBookshelfTests(unittest.TestCase):
+class UnitTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -184,4 +183,76 @@ class FlaskBookshelfTests(unittest.TestCase):
         self.assertEqual(expected['valid_tv_show'], True)
         self.assertEqual(expected['success'], True)
 
+    def test_movie_commenting(self):
+        result = self.app.post('/movie/comment', json={'user_id': None,
+                                                       'movie_id': None,
+                                                       'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_movie'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/movie/comment', json={'user_id': None,
+                                                       'movie_id': 0,
+                                                       'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_movie'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/movie/comment', json={'user_id': 0,
+                                                       'movie_id': None,
+                                                       'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_movie'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/movie/comment', json={'user_id': 0,
+                                                       'movie_id': 0,
+                                                       'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_movie'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/movie/comment', json={'user_id': 1,
+                                                       'movie_id': None,
+                                                       'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_movie'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/movie/comment', json={'user_id': 1,
+                                                       'movie_id': 0,
+                                                       'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_movie'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/movie/comment', json={'user_id': None,
+                                                       'movie_id': 1,
+                                                       'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_movie'], True)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/movie/comment', json={'user_id': 0,
+                                                       'movie_id': 1,
+                                                       'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_movie'], True)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/movie/comment', json={'user_id': 1,
+                                                       'movie_id': 1,
+                                                       'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_movie'], True)
+        self.assertEqual(expected['success'], True)
 
