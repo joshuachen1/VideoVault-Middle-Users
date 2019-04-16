@@ -1275,6 +1275,11 @@ def post_timeline():
         post = data['post']
         date_of_post = datetime.now()
 
+        if User.query.filter_by(id=user_id).first() is None:
+            return jsonify({'success': False,
+                            'valid_user': False,
+                            'valid_friend': False})
+
         # Can only post if friend
         if is_friend(user_id, post_user_id, True):
             timeline = TimeLine(user_id=user_id,
