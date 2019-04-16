@@ -1313,6 +1313,18 @@ def comment_on_post():
         date_of_comment = datetime.now()
         post_id = data['post_id']
 
+        if User.query.filter_by(id=user_id).first() is None:
+            return jsonify({'success': False,
+                            'valid_user': False,
+                            'valid_friend': False,
+                            'valid_post_id': False})
+
+        elif PostComments.query.filter_by(post_id=post_id).first() is None:
+            return jsonify({'success': False,
+                            'valid_user': True,
+                            'valid_friend': False,
+                            'valid_post_id': False})
+
         # Can only post if friend
         if is_friend(user_id, post_user_id, True) and is_friend(user_id, comment_user_id, True):
 
@@ -1327,11 +1339,13 @@ def comment_on_post():
 
             return jsonify({'success': True,
                             'valid_user': True,
-                            'valid_friend': True})
+                            'valid_friend': True,
+                            'valid_post_id': True})
         else:
             return jsonify({'success': False,
                             'valid_user': True,
-                            'valid_friend': False})
+                            'valid_friend': False,
+                            'valid_post_id': True})
 
     except Exception as e:
         return str(e)
