@@ -578,8 +578,8 @@ def send_friend_request():
         if check_user and check_friend_id and check_friendship:
             # add request to table
             new_friend_request = PendingFriends(
-                user_id=user_id,
-                pending_friend_id=pending_friend_id,
+                user_id=pending_friend_id,
+                pending_friend_id=user_id,
             )
             db.session.add(new_friend_request)
             db.session.commit()
