@@ -1,5 +1,6 @@
-from app import app
 import unittest
+
+from app import app
 
 
 class UnitTests(unittest.TestCase):
@@ -329,3 +330,66 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['valid_tv_show'], True)
         self.assertEqual(expected['success'], True)
 
+    def test_rent_movie(self):
+        result = self.app.post('/rent_movie', json={'user_id': None,
+                                                    'movie_id': None})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_movie'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/rent_movie', json={'user_id': None,
+                                                    'movie_id': 0})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_movie'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/rent_movie', json={'user_id': 0,
+                                                    'movie_id': None})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_movie'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/rent_movie', json={'user_id': 0,
+                                                    'movie_id': 0})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_movie'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/rent_movie', json={'user_id': 1,
+                                                    'movie_id': None})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_movie'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/rent_movie', json={'user_id': 1,
+                                                    'movie_id': 0})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_movie'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/rent_movie', json={'user_id': None,
+                                                    'movie_id': 1})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_movie'], True)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/rent_movie', json={'user_id': 0,
+                                                    'movie_id': 1})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_movie'], True)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/rent_movie', json={'user_id': 1,
+                                                    'movie_id': 1})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_movie'], True)
+        self.assertEqual(expected['success'], True)
