@@ -1135,7 +1135,7 @@ def rent_movie():
                         'valid_user': False,
                         'valid_movie': True})
     elif movie_check is None:
-        return jsonify({'success': True,
+        return jsonify({'success': False,
                         'valid_user': True,
                         'valid_movie': False})
 
