@@ -256,3 +256,76 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['valid_movie'], True)
         self.assertEqual(expected['success'], True)
 
+    def test_tv_show_commenting(self):
+        result = self.app.post('/tv_show/comment', json={'user_id': None,
+                                                         'tv_show_id': None,
+                                                         'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_tv_show'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/tv_show/comment', json={'user_id': None,
+                                                         'tv_show_id': 0,
+                                                         'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_tv_show'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/tv_show/comment', json={'user_id': 0,
+                                                         'tv_show_id': None,
+                                                         'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_tv_show'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/tv_show/comment', json={'user_id': 0,
+                                                         'tv_show_id': 0,
+                                                         'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_tv_show'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/tv_show/comment', json={'user_id': 1,
+                                                         'tv_show_id': None,
+                                                         'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_tv_show'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/tv_show/comment', json={'user_id': 1,
+                                                         'tv_show_id': 0,
+                                                         'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_tv_show'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/tv_show/comment', json={'user_id': None,
+                                                         'tv_show_id': 1,
+                                                         'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_tv_show'], True)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/tv_show/comment', json={'user_id': 0,
+                                                         'tv_show_id': 1,
+                                                         'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_tv_show'], True)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/tv_show/comment', json={'user_id': 1,
+                                                         'tv_show_id': 1,
+                                                         'comment': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_tv_show'], True)
+        self.assertEqual(expected['success'], True)
+
