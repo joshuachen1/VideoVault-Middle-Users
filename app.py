@@ -82,7 +82,8 @@ def login(email=None, attempted_pwd=None):
         return str(e)
 
 
-# [url]/signup
+# { name: [name], username: [username], email:[email], password: [password], card_num: [card_num] }
+# adds user to user table and creates 10 slots in user_slots
 @app.route('/signup', methods=['POST'])
 def signup():
     try:
@@ -163,6 +164,8 @@ def signup():
         return str(e)
 
 
+# { user_id: [user_id], tv_show_id: [tv_show_id_list] }
+# adds 10 tv shows into user_slots table
 @app.route('/resub', methods=['PUT'])
 def resub():
     data = request.get_json()
@@ -172,43 +175,54 @@ def resub():
     user_check = User.query.filter_by(id=user_id).first()
     tv_show_len = len(set(tv_show_id))
 
-    # return boolean for invalid inputs
-    if user_check is None and tv_show_len is not 10:
-        return jsonify({'success:': False,
-                        'valid_user': False,
-                        'valid_tv_shows': False})
-    elif user_check is None:
-        return jsonify({'success:': False,
-                        'valid_user': False,
-                        'valid_tv_shows': True})
-    elif tv_show_len is not 10:
-        return jsonify({'success': False,
-                        'valid_user': True,
-                        'valid_tv_shows': False})
+    # creating booleans
+    is_success = True
+    is_valid_user = True
+    is_valid_tv_show = True
+    is_valid_number_of_tv_shows = True
+    is_slots_exist = True
 
+    # return boolean for invalid inputs
+    if tv_show_len is not 10:
+        is_success = False
+        is_valid_number_of_tv_shows = False
+    if user_check is None:
+        is_success = False
+        is_valid_user = False
+    if is_success is False:
+        return jsonify({'success':is_success,
+                        'valid_user':is_valid_user,
+                        'valid_tv_shows':is_valid_tv_show,
+                        'valid_number_of_tv_shows': is_valid_number_of_tv_shows,
+                        'slots_exists':is_slots_exist})
     # add each entry to the user_slots table
     i = 1
     for tv_show_id in tv_show_id:
         tv_show_check = TVShows.query.filter_by(id=tv_show_id).first()
 
         # return boolean for invalid inputs
-        if user_check is None and tv_show_check is None:
-            return jsonify({'success:': False,
-                            'valid_user': False,
-                            'valid_tv_shows': False})
-        elif tv_show_check is None:
-            return jsonify({'success': False,
-                            'valid_user': True,
-                            'valid_tv_shows': False})
+        if tv_show_check is None:
+            is_success = False
+            is_valid_tv_show = False
 
         slot_num = i
-        add_tv_show(True, slot_num, tv_show_id, user_id)
+        is_slots_exist=add_tv_show(True, slot_num, tv_show_id, user_id)
+        if is_slots_exist is False:
+            is_success = False
         i = i + 1
+        if is_success is False:
+            return jsonify({'success': is_success,
+                            'valid_user': is_valid_user,
+                            'valid_tv_shows': is_valid_tv_show,
+                            'valid_number_of_tv_shows': is_valid_number_of_tv_shows,
+                            'slots_exists': is_slots_exist})
 
     db.session.commit()
-    return jsonify({'success:': True,
-                    'valid_user': True,
-                    'valid_tv_shows': True})
+    return jsonify({'success': is_success,
+                    'valid_user': is_valid_user,
+                    'valid_tv_shows': is_valid_tv_show,
+                    'valid_number_of_tv_shows': is_valid_number_of_tv_shows,
+                    'slots_exists': is_slots_exist})
 
 
 # Need User Id and Password
@@ -341,7 +355,8 @@ def is_tv_show_in_slot(user_id=None, tv_show_id=None):
         return str(e)
 
 
-# Json input: user_id, slot_num, tv_show_title
+# { user_id: [user_id], tv_show_id: [tv_show_id] }
+# creates a new slot in user_slots and adds tv show to that slot
 @app.route('/add_tv_show', methods=['PUT'])
 def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
     # only run this section of code to add tv show to newly added slot
@@ -396,9 +411,13 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
         else:
             data = request.get_json()
             user_slots = UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=new_slot_id).first()
+            if resub is True and user_slots is None:
+                return False
             user_slots.user_id = user_id,
             user_slots.slot_num = new_slot_id,
             user_slots.tv_show_id = tv_show_id,
+            if resub is True and user_slots is not None:
+                return True
 
         return jsonify({'success': True,
                         'valid_user': True,
@@ -408,8 +427,8 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
         return str(e)
 
 
+# { user_id: [user_id], tv_show_id: [tv_show_id] }
 # boolean to convert unsubscribe of user to true
-# [url]/unsubscribe
 @app.route('/unsubscribe', methods=['PUT'])
 def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
     try:
@@ -431,8 +450,8 @@ def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
         return str(e)
 
 
+# { user_id: [user_id], tv_show_id: [tv_show_id] }
 # boolean to convert unsubscribe of user to false
-# [url]/subscribe
 @app.route('/subscribe', methods=['PUT'])
 def subscribe(user_id=None, tv_show_id=None, function_call=False):
     try:
@@ -454,8 +473,8 @@ def subscribe(user_id=None, tv_show_id=None, function_call=False):
         return str(e)
 
 
+# { user_id: [user_id] }
 # route to clear all slots
-# [url]/clear_slots
 @app.route('/clear_slots', methods=['PUT'])
 def clear_slots():
     try:
@@ -473,8 +492,8 @@ def clear_slots():
         return str(e)
 
 
+# { user_id: [user_id] }
 # route to delete a slot only if top slot is empty
-# [url]/delete_slot
 @app.route('/delete_slot', methods=['PUT'])
 def delete_slot(user_id=None):
     try:
@@ -541,6 +560,8 @@ def get_users(page=1):
         return str(e)
 
 
+# { user_id: [user_id], pending_friend_id: [pending_friend_id] }
+# send a friend request to another user
 @app.route('/send_friend_request', methods=['POST'])
 def send_friend_request():
     try:
@@ -575,6 +596,8 @@ def send_friend_request():
         return str(e)
 
 
+# { user_id: [user_id], pending_friend_id: [pending_friend_id] }
+# accepts a friend request
 @app.route('/accept_friend_request', methods=['POST'])
 def accept_friend_request(function_call=False):
     try:
@@ -616,36 +639,41 @@ def accept_friend_request(function_call=False):
         return str(e)
 
 
+# { user_id: [user_id], pending_friend_id: [pending_friend_id] }
+# decline a friend request
 @app.route('/decline_friend_request', methods=['POST'])
 def decline_friend_request():
     return accept_friend_request(True)
 
 
 # returns a list of all friend requests from a specific user
+# [url]/get_friend_requests/user=[user_id]
 @app.route('/get_friend_requests/user=<int:user_id>', methods=['GET'])
 def get_friend_requests(user_id=None):
     try:
         if user_id is not None:
-            pending_request_rel=PendingFriends.query.filter_by(user_id=user_id).all()
+            pending_request_rel = PendingFriends.query.filter_by(user_id=user_id).all()
             pending_request_list = list()
 
             for request in pending_request_rel:
                 pending_request_list.append(request.pending_friend_id)
-        return jsonify({'user_id':user_id,
-                        'friend_requests': pending_request_list,})
+        return jsonify({'user_id': user_id,
+                        'friend_requests': pending_request_list, })
     except Exception as e:
         return str(e)
 
 
+# checks if there is at least 1 pending friend request and returns True if there is
+# [url]/is_friend_request/user=[user_id]
 @app.route('/is_friend_request/user=<int:user_id>', methods=['GET'])
 def is_friend_request(user_id=None):
     try:
-        friend_request_boolean=False
+        friend_request_boolean = False
         if user_id is not None:
             pending_request_rel = PendingFriends.query.filter_by(user_id=user_id).all()
             if pending_request_rel:
-                friend_request_boolean=True
-        return jsonify({'at_least_one_request':friend_request_boolean})
+                friend_request_boolean = True
+        return jsonify({'at_least_one_request': friend_request_boolean})
     except Exception as e:
         return str(e)
 
@@ -1085,6 +1113,8 @@ def get_user_rented_movies(user_id=None):
         return str(e)
 
 
+# { user_id: [user_id], movie_id: [movie_id] }
+# adds rented movie into user_rented_movies table
 @app.route('/rent_movie', methods=['POST'])
 def rent_movie():
     data = request.get_json()

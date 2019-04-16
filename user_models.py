@@ -150,11 +150,11 @@ class PostComments(db.Model):
     __tablename__ = 'post_comments'
 
     user_id = db.Column(db.Integer, primary_key=True)
-    post_user_id = db.Column(db.Integer, primary_key=True)
+    post_user_id = db.Column(db.Integer)
     comment_user_id = db.Column(db.Integer, primary_key=True)
     comment = db.Column(db.VARCHAR)
     date_of_comment = db.Column(db.DateTime, primary_key=True)
-    post_id = db.Column(db.Integer, unique=True)
+    post_id = db.Column(db.Integer)
 
     def __init__(self, user_id, post_user_id, comment_user_id, comment, date_of_comment, post_id):
         self.user_id = user_id
