@@ -393,3 +393,77 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['valid_user'], True)
         self.assertEqual(expected['valid_movie'], True)
         self.assertEqual(expected['success'], True)
+
+    def test_timeline_posting(self):
+        result = self.app.post('/timeline/post', json={'user_id': None,
+                                                       'post_user_id': None,
+                                                       'post': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post', json={'user_id': None,
+                                                       'post_user_id': 0,
+                                                       'post': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post', json={'user_id': 0,
+                                                       'post_user_id': None,
+                                                       'post': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post', json={'user_id': 0,
+                                                       'post_user_id': 0,
+                                                       'post': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post', json={'user_id': 1,
+                                                       'post_user_id': None,
+                                                       'post': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post', json={'user_id': 1,
+                                                       'post_user_id': 0,
+                                                       'post': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post', json={'user_id': None,
+                                                       'post_user_id': 1,
+                                                       'post': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post', json={'user_id': None,
+                                                       'post_user_id': 1,
+                                                       'post': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post', json={'user_id': 1,
+                                                       'post_user_id': 1,
+                                                       'post': 'Test'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_friend'], True)
+        self.assertEqual(expected['success'], True)
+
