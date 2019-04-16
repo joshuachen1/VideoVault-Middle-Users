@@ -849,7 +849,7 @@ def rate_movie():
 
 
 @app.route('/movie/comment', methods=['POST'])
-def comment_movie(json=None):
+def comment_movie():
     try:
         data = request.get_json()
         user_id = data['user_id']
