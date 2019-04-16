@@ -467,3 +467,158 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['valid_friend'], True)
         self.assertEqual(expected['success'], True)
 
+    def test_comment_on_posts(self):
+        result = self.app.post('/timeline/post/comment', json={'user_id': None,
+                                                               'post_user_id': None,
+                                                               'comment_user_id': None,
+                                                               'comment': 'Test',
+                                                               'post_id': None})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['valid_post_id'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post/comment', json={'user_id': 0,
+                                                               'post_user_id': None,
+                                                               'comment_user_id': None,
+                                                               'comment': 'Test',
+                                                               'post_id': None})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['valid_post_id'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post/comment', json={'user_id': None,
+                                                               'post_user_id': 0,
+                                                               'comment_user_id': None,
+                                                               'comment': 'Test',
+                                                               'post_id': None})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['valid_post_id'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post/comment', json={'user_id': None,
+                                                               'post_user_id': None,
+                                                               'comment_user_id': 0,
+                                                               'comment': 'Test',
+                                                               'post_id': None})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['valid_post_id'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post/comment', json={'user_id': 0,
+                                                               'post_user_id': 0,
+                                                               'comment_user_id': 0,
+                                                               'comment': 'Test',
+                                                               'post_id': 0})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], False)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['valid_post_id'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post/comment', json={'user_id': 1,
+                                                               'post_user_id': None,
+                                                               'comment_user_id': None,
+                                                               'comment': 'Test',
+                                                               'post_id': None})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['valid_post_id'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post/comment', json={'user_id': 1,
+                                                               'post_user_id': None,
+                                                               'comment_user_id': None,
+                                                               'comment': 'Test',
+                                                               'post_id': 0})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['valid_post_id'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post/comment', json={'user_id': 1,
+                                                               'post_user_id': 0,
+                                                               'comment_user_id': None,
+                                                               'comment': 'Test',
+                                                               'post_id': None})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['valid_post_id'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post/comment', json={'user_id': 1,
+                                                               'post_user_id': None,
+                                                               'comment_user_id': 0,
+                                                               'comment': 'Test',
+                                                               'post_id': None})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['valid_post_id'], False)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post/comment', json={'user_id': 1,
+                                                               'post_user_id': None,
+                                                               'comment_user_id': None,
+                                                               'comment': 'Test',
+                                                               'post_id': 1})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['valid_post_id'], True)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post/comment', json={'user_id': 1,
+                                                               'post_user_id': 0,
+                                                               'comment_user_id': None,
+                                                               'comment': 'Test',
+                                                               'post_id': 1})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['valid_post_id'], True)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post/comment', json={'user_id': 1,
+                                                               'post_user_id': None,
+                                                               'comment_user_id': 0,
+                                                               'comment': 'Test',
+                                                               'post_id': 1})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['valid_post_id'], True)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post/comment', json={'user_id': 1,
+                                                               'post_user_id': 0,
+                                                               'comment_user_id': 0,
+                                                               'comment': 'Test',
+                                                               'post_id': 1})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_friend'], False)
+        self.assertEqual(expected['valid_post_id'], True)
+        self.assertEqual(expected['success'], False)
+
+        result = self.app.post('/timeline/post/comment', json={'user_id': 1,
+                                                               'post_user_id': 1,
+                                                               'comment_user_id': 1,
+                                                               'comment': 'Test',
+                                                               'post_id': 1})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_friend'], True)
+        self.assertEqual(expected['valid_post_id'], True)
+        self.assertEqual(expected['success'], True)
+
