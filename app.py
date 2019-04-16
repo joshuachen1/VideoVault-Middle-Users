@@ -1332,29 +1332,6 @@ def comment_on_post():
         return str(e)
 
 
-# Creates a new table in the database for the new user
-def create_new_timeline(username: str):
-    db_info = DBInfo.query.filter_by(user='company48').first()
-    dbHost = db_info.host
-    dbUser = db_info.user
-    dbPassword = db_info.password
-    dbName = db_info.name
-    charSet = 'utf8mb4'
-    cursorType = pymysql.cursors.DictCursor
-    connectionObject = pymysql.connect(host=dbHost, user=dbUser, password=dbPassword, db=dbName, charset=charSet,
-                                       cursorclass=cursorType)
-    try:
-        db_cursor = connectionObject.cursor()
-        sql_query = 'CREATE TABLE ' + username + '_timeline(id int, post varchar(255))'
-        db_cursor.execute(sql_query)
-        print('success')
-    except Exception as e:
-        print(str(e))
-
-    finally:
-        connectionObject.close()
-
-
 def update_average_rating(is_tv_show: bool, media_id: int):
     try:
         if is_tv_show:
