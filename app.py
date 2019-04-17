@@ -150,12 +150,12 @@ def signup():
                 )
                 db.session.add(slot)
 
-                # Add self to friend_list
-                friend = Friends(
-                    user_id=new_user.id,
-                    friend_id=new_user.id,
-                )
-                db.session.add(friend)
+            # Add self to friend_list
+            friend = Friends(
+                user_id=new_user.id,
+                friend_id=new_user.id,
+            )
+            db.session.add(friend)
             db.session.commit()
             return jsonify(new_user.serialize())
         except Exception as e:
@@ -652,8 +652,7 @@ def decline_friend_request():
 def has_friend_request(user_id=None, friend_id=None):
     try:
         if user_id is not None and friend_id is not None:
-            is_friend_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(
-                pending_friend_id=friend_id).scalar()
+            is_friend_request=PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=friend_id).scalar()
             if is_friend_request is not None:
                 return jsonify({'has_friend_request': True})
             else:
@@ -734,7 +733,8 @@ def get_user_friend_list(user_id=None, page=1):
             # Create list of the user's friend's IDs
             friend_ids = list()
             for friend in friends:
-                friend_ids.append(friend.friend_id)
+                if friend.friend_id is not user_id:
+                    friend_ids.append(friend.friend_id)
 
             # Append the Users that match the friend IDs
             for friend_id in friend_ids:
@@ -1492,7 +1492,8 @@ def add_empty_slot(user_id, slot_num):
     user_slots = UserSlots(
         user_id=user_id,
         slot_num=slot_num,
-        tv_show_id=None
+        tv_show_id=None,
+        unsubscribe=False,
     )
     db.session.add(user_slots)
     db.session.commit()
@@ -1535,6 +1536,7 @@ def increment_slot(user_id) -> int:
     card_num = check_id.card_num
     num_slots = check_id.num_slots + 1
     sub_date = check_id.sub_date
+    profile_pic = check_id.profile_pic
 
     try:
         user = User.query.filter_by(id=user_id).first()
@@ -1546,6 +1548,7 @@ def increment_slot(user_id) -> int:
         user.card_num = card_num
         user.num_slots = num_slots
         user.sub_date = sub_date
+        user.profile_pic = profile_pic
 
         return num_slots
 
@@ -1565,6 +1568,7 @@ def decrement_slot(user_id) -> int:
     card_num = check_id.card_num
     num_slots = check_id.num_slots - 1
     sub_date = check_id.sub_date
+    profile_pic = check_id.profile_pic
 
     try:
         user = User.query.filter_by(id=user_id).first()
@@ -1576,6 +1580,7 @@ def decrement_slot(user_id) -> int:
         user.card_num = card_num
         user.num_slots = num_slots
         user.sub_date = sub_date
+        user.profile_pic = profile_pic
 
         return num_slots
 
