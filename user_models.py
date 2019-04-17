@@ -292,11 +292,11 @@ class UserSlots(db.Model):
     tv_show_id = db.Column(db.Integer)
     unsubscribe = db.Column(db.BOOLEAN)
 
-    def __init__(self, user_id, slot_num, tv_show_id, unsubscribe):
+    def __init__(self, user_id, slot_num, tv_show_id):
         self.user_id = user_id
         self.slot_num = slot_num
         self.tv_show_id = tv_show_id
-        self.unsubscribe = unsubscribe
+        self.unsubscribe = False
 
 
 class DisplayUserSlots:
