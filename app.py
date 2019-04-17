@@ -651,8 +651,7 @@ def decline_friend_request():
 def has_friend_request(user_id=None, friend_id=None):
     try:
         if user_id is not None and friend_id is not None:
-            is_friend_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(
-                pending_friend_id=friend_id).scalar()
+            is_friend_request=PendingFriends.query.filter_by(user_id=friend_id).filter_by(pending_friend_id=user_id).scalar()
             if is_friend_request is not None:
                 return jsonify({'has_friend_request': True})
             else:
