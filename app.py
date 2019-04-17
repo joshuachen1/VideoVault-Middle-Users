@@ -1490,7 +1490,8 @@ def add_empty_slot(user_id, slot_num):
     user_slots = UserSlots(
         user_id=user_id,
         slot_num=slot_num,
-        tv_show_id=None
+        tv_show_id=None,
+        unsubscribe=False,
     )
     db.session.add(user_slots)
     db.session.commit()
@@ -1533,6 +1534,7 @@ def increment_slot(user_id) -> int:
     card_num = check_id.card_num
     num_slots = check_id.num_slots + 1
     sub_date = check_id.sub_date
+    profile_pic = check_id.profile_pic
 
     try:
         user = User.query.filter_by(id=user_id).first()
@@ -1544,6 +1546,7 @@ def increment_slot(user_id) -> int:
         user.card_num = card_num
         user.num_slots = num_slots
         user.sub_date = sub_date
+        user.profile_pic = profile_pic
 
         return num_slots
 
@@ -1563,6 +1566,7 @@ def decrement_slot(user_id) -> int:
     card_num = check_id.card_num
     num_slots = check_id.num_slots - 1
     sub_date = check_id.sub_date
+    profile_pic = check_id.profile_pic
 
     try:
         user = User.query.filter_by(id=user_id).first()
@@ -1574,6 +1578,7 @@ def decrement_slot(user_id) -> int:
         user.card_num = card_num
         user.num_slots = num_slots
         user.sub_date = sub_date
+        user.profile_pic = profile_pic
 
         return num_slots
 
