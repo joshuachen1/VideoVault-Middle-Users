@@ -1,7 +1,12 @@
 import unittest
 
 from app import app
-
+from app import db
+from user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
+from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
+from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
+from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
+from user_media_models import Movie, MovieComment, TVShows, TVShowComment, Comment
 
 class UnitTests(unittest.TestCase):
 
@@ -40,6 +45,7 @@ class UnitTests(unittest.TestCase):
 
     def test_user_movie_rating(self):
         url = '/user/movie/rating'
+
         result = self.app.post(url, json={'user_id': None,
                                           'movie_id': None,
                                           'rating': 5, })
@@ -104,13 +110,21 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['valid_movie'], True)
         self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': 1,
-                                          'movie_id': 1,
+        user_id = 1
+        movie_id = 1
+        result = self.app.post(url, json={'user_id': user_id,
+                                          'movie_id': movie_id,
                                           'rating': 5, })
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
         self.assertEqual(expected['valid_movie'], True)
         self.assertEqual(expected['success'], True)
+
+        # Check if Movie Rating Exists, Remove From Database if it does
+        mr = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+        assert mr is not None
+        UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
+        db.session.commit()
 
     def test_user_tv_show_rating(self):
         url = '/user/tv_show/rating'

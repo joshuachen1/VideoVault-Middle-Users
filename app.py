@@ -25,7 +25,6 @@ port = int(os.environ.get('PORT', 33507))
 
 # Import Models
 from Email import Email
-from db_cursor import DBInfo
 from crypto_models import Key
 from user_models import Signup, Login
 from user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
@@ -190,11 +189,11 @@ def resub():
         is_success = False
         is_valid_user = False
     if is_success is False:
-        return jsonify({'success':is_success,
-                        'valid_user':is_valid_user,
-                        'valid_tv_shows':is_valid_tv_show,
+        return jsonify({'success': is_success,
+                        'valid_user': is_valid_user,
+                        'valid_tv_shows': is_valid_tv_show,
                         'valid_number_of_tv_shows': is_valid_number_of_tv_shows,
-                        'slots_exists':is_slots_exist})
+                        'slots_exists': is_slots_exist})
     # add each entry to the user_slots table
     i = 1
     for tv_show_id in tv_show_id:
@@ -206,7 +205,7 @@ def resub():
             is_valid_tv_show = False
 
         slot_num = i
-        is_slots_exist=add_tv_show(True, slot_num, tv_show_id, user_id)
+        is_slots_exist = add_tv_show(True, slot_num, tv_show_id, user_id)
         if is_slots_exist is False:
             is_success = False
         i = i + 1
@@ -652,11 +651,12 @@ def decline_friend_request():
 def has_friend_request(user_id=None, friend_id=None):
     try:
         if user_id is not None and friend_id is not None:
-            is_friend_request=PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=friend_id).scalar()
+            is_friend_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(
+                pending_friend_id=friend_id).scalar()
             if is_friend_request is not None:
-                return jsonify({'has_friend_request':True})
+                return jsonify({'has_friend_request': True})
             else:
-                return jsonify({'has_friend_request':False})
+                return jsonify({'has_friend_request': False})
     except Exception as e:
         str(e)
 
@@ -667,7 +667,7 @@ def has_friend_request(user_id=None, friend_id=None):
 @app.route('/get_friend_requests/user=<int:user_id>/page=<int:page>', methods=['GET'])
 @app.route('/get_friend_requests/user=/page=', methods=['GET'])
 @app.route('/get_friend_requests/user=', methods=['GET'])
-def get_friend_requests(user_id=None, page = 1):
+def get_friend_requests(user_id=None, page=1):
     try:
         if user_id is not None:
             pending_request_rel = PendingFriends.query.filter_by(user_id=user_id).all()
