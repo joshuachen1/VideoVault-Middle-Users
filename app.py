@@ -560,7 +560,7 @@ def get_users(page=1):
         return str(e)
 
 
-# { request_to: [user_id], request_from: [friend_id] }
+# { request_to: [user_id], request_from: [pending_friend_id] }
 # send a friend request to another user
 @app.route('/send_friend_request', methods=['POST'])
 def send_friend_request():
@@ -647,12 +647,12 @@ def decline_friend_request():
 
 
 # returns true if user_id and friend_id is in the pending table
-# [url]/has_friend_request/from=[user_id]/to=[friend_id]
-@app.route('/has_friend_request/user=<int:user_id>/from=<int:friend_id>', methods=['GET'])
-def has_friend_request(user_id=None, friend_id=None):
+# [url]/has_friend_request/user_id=[user_id]/request_from=[pending_friend_id]
+@app.route('/has_friend_request/user_id=<int:user_id>/request_from=<int:request_from>', methods=['GET'])
+def has_friend_request(user_id=None, request_from=None):
     try:
-        if user_id is not None and friend_id is not None:
-            is_friend_request=PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=friend_id).scalar()
+        if request_from is not None and user_id is not None:
+            is_friend_request=PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=request_from).scalar()
             if is_friend_request is not None:
                 return jsonify({'has_friend_request': True})
             else:
