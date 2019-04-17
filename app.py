@@ -20,6 +20,9 @@ CORS(app)
 # Start Database
 db = SQLAlchemy(app)
 
+# Force pymysql to be used as replacement for MySQLdb
+pymysql.install_as_MySQLdb()
+
 # Enable Variable Port for Heroku
 port = int(os.environ.get('PORT', 33507))
 
@@ -33,8 +36,6 @@ from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
 from user_media_models import Movie, MovieComment, TVShows, TVShowComment, Comment
 
-# Force pymysql to be used as replacement for MySQLdb
-pymysql.install_as_MySQLdb()
 
 # Set Up Email Server
 email_sender = Email(app.config['COMPANY_EMAIL'])
@@ -559,50 +560,50 @@ def get_users(page=1):
         return str(e)
 
 
-# { user_id: [user_id], pending_friend_id: [pending_friend_id] }
+# { request_to: [user_id], request_from: [pending_friend_id] }
 # send a friend request to another user
 @app.route('/send_friend_request', methods=['POST'])
 def send_friend_request():
     try:
         data = request.get_json()
-        user_id = data['user_id']
-        pending_friend_id = data['pending_friend_id']
+        request_to = data['request_to']
+        request_from = data['request_from']
 
-        check_user = User.query.filter_by(id=user_id).first()
-        check_user = check_user is not None
-        check_friend_id = User.query.filter_by(id=pending_friend_id).first()
-        check_friend_id = check_friend_id is not None
-        check_friendship = Friends.query.filter_by(user_id=user_id).filter_by(friend_id=pending_friend_id).first()
+        check_user_to = User.query.filter_by(id=request_to).first()
+        check_user_to = check_user_to is not None
+        check_user_from = User.query.filter_by(id=request_from)
+        check_user_from = check_user_from is not None
+        check_friendship = Friends.query.filter_by(user_id=request_from).filter_by(friend_id=request_to).first()
         check_friendship = check_friendship is None
-        if check_user and check_friend_id and check_friendship:
+        if check_user_to and check_user_from and check_friendship:
             # add request to table
             new_friend_request = PendingFriends(
-                user_id=pending_friend_id,
-                pending_friend_id=user_id,
+                user_id=request_to,
+                pending_friend_id=request_from,
             )
             db.session.add(new_friend_request)
             db.session.commit()
             return jsonify({'success': True,
-                            'valid_user_id': check_user,
-                            'valid_friend_id': check_friend_id,
+                            'valid_user_to': check_user_to,
+                            'valid_user_from': check_user_from,
                             'not_already_friends': check_friendship})
         else:
             return jsonify({'success': False,
-                            'valid_user_id': check_user,
-                            'valid_friend_id': check_friend_id,
+                            'valid_user_to': check_user_to,
+                            'valid_user_from': check_user_from,
                             'not_already_friends': check_friendship})
     except Exception as e:
         return str(e)
 
 
-# { user_id: [user_id], pending_friend_id: [pending_friend_id] }
+# { user_id: [user_id], request_from: [pending_friend_id] }
 # accepts a friend request
 @app.route('/accept_friend_request', methods=['POST'])
 def accept_friend_request(function_call=False):
     try:
         data = request.get_json()
-        user_id = data['user_id']
-        pending_friend_id = data['pending_friend_id']
+        user_id = data['request_to']
+        pending_friend_id = data['request_from']
         check_user_id = User.query.filter_by(id=user_id).first()
         check_user_id = check_user_id is not None
         check_friend_id = User.query.filter_by(id=pending_friend_id).first()
@@ -646,12 +647,12 @@ def decline_friend_request():
 
 
 # returns true if user_id and friend_id is in the pending table
-# [url]/has_friend_request/user=[user_id]/friend=[friend_id]
-@app.route('/has_friend_request/user=<int:user_id>/friend=<int:friend_id>', methods=['GET'])
-def has_friend_request(user_id=None, friend_id=None):
+# [url]/has_friend_request/user_id=[user_id]/request_from=[pending_friend_id]
+@app.route('/has_friend_request/user_id=<int:user_id>/request_from=<int:request_from>', methods=['GET'])
+def has_friend_request(user_id=None, request_from=None):
     try:
-        if user_id is not None and friend_id is not None:
-            is_friend_request=PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=friend_id).scalar()
+        if request_from is not None and user_id is not None:
+            is_friend_request=PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=request_from).scalar()
             if is_friend_request is not None:
                 return jsonify({'has_friend_request': True})
             else:
@@ -687,9 +688,7 @@ def is_friend_request(user_id=None):
     try:
         friend_request_boolean = False
         if user_id is not None:
-            pending_request_rel = PendingFriends.query.filter_by(user_id=user_id).all()
-            if pending_request_rel:
-                friend_request_boolean = True
+            friend_request_boolean = PendingFriends.query.filter_by(user_id=user_id).scalar()
         return jsonify({'at_least_one_request': friend_request_boolean})
     except Exception as e:
         return str(e)
