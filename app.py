@@ -20,6 +20,9 @@ CORS(app)
 # Start Database
 db = SQLAlchemy(app)
 
+# Force pymysql to be used as replacement for MySQLdb
+pymysql.install_as_MySQLdb()
+
 # Enable Variable Port for Heroku
 port = int(os.environ.get('PORT', 33507))
 
@@ -33,8 +36,6 @@ from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
 from user_media_models import Movie, MovieComment, TVShows, TVShowComment, Comment
 
-# Force pymysql to be used as replacement for MySQLdb
-pymysql.install_as_MySQLdb()
 
 # Set Up Email Server
 email_sender = Email(app.config['COMPANY_EMAIL'])

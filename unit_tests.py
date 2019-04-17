@@ -1,4 +1,5 @@
 import unittest
+import pytest
 
 from app import app
 from app import db
@@ -7,6 +8,7 @@ from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
 from user_media_models import Movie, MovieComment, TVShows, TVShowComment, Comment
+
 
 class UnitTests(unittest.TestCase):
 
@@ -192,13 +194,21 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['valid_tv_show'], True)
         self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': 1,
-                                          'tv_show_id': 1,
+        user_id = 1
+        tv_show_id= 1
+        result = self.app.post(url, json={'user_id': user_id,
+                                          'tv_show_id': tv_show_id,
                                           'rating': 5, })
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
         self.assertEqual(expected['valid_tv_show'], True)
         self.assertEqual(expected['success'], True)
+
+        # Check if TV_Show Rating Exists, Remove From Database if it does
+        tvr = UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+        assert tvr is not None
+        UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).delete()
+        db.session.commit()
 
     def test_movie_commenting(self):
         url = '/movie/comment'
@@ -266,13 +276,22 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['valid_movie'], True)
         self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': 1,
-                                          'movie_id': 1,
+        user_id = 1
+        movie_id = 1
+
+        result = self.app.post(url, json={'user_id': user_id,
+                                          'movie_id': movie_id,
                                           'comment': 'Test'})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
         self.assertEqual(expected['valid_movie'], True)
         self.assertEqual(expected['success'], True)
+
+        # Check if Movie Comment Exists, Remove From Database if it does
+        mc = MovieComment.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+        assert mc is not None
+        MovieComment.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
+        db.session.commit()
 
     def test_tv_show_commenting(self):
         url = '/tv_show/comment'
@@ -340,13 +359,22 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['valid_tv_show'], True)
         self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': 1,
-                                          'tv_show_id': 1,
+        user_id = 1
+        tv_show_id = 1
+
+        result = self.app.post(url, json={'user_id': user_id,
+                                          'tv_show_id': tv_show_id,
                                           'comment': 'Test'})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
         self.assertEqual(expected['valid_tv_show'], True)
         self.assertEqual(expected['success'], True)
+
+        # Check if TV_Show Comment Exists, Remove From Database if it does
+        tvc = TVShowComment.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+        assert tvc is not None
+        TVShowComment.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).delete()
+        db.session.commit()
 
     def test_rent_movie(self):
         url = '/rent_movie'
@@ -406,12 +434,21 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['valid_movie'], True)
         self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': 1,
-                                          'movie_id': 1})
+        user_id = 1
+        movie_id = 1
+
+        result = self.app.post(url, json={'user_id': user_id,
+                                          'movie_id': movie_id})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
         self.assertEqual(expected['valid_movie'], True)
         self.assertEqual(expected['success'], True)
+
+        # Check if Movie Rented Exists, Remove From Database if it does
+        rm = UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+        assert rm is not None
+        UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
+        db.session.commit()
 
     def test_timeline_posting(self):
         url = 'timeline/post'
@@ -479,8 +516,11 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['valid_friend'], False)
         self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': 1,
-                                          'post_user_id': 1,
+        user_id = 1
+        post_user_id = 1
+
+        result = self.app.post(url, json={'user_id': user_id,
+                                          'post_user_id': post_user_id,
                                           'post': 'Test'})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
@@ -632,9 +672,13 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['valid_post_id'], True)
         self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': 1,
-                                          'post_user_id': 1,
-                                          'comment_user_id': 1,
+        user_id = 1
+        post_user_id = 1
+        comment_user_id = 1
+
+        result = self.app.post(url, json={'user_id': user_id,
+                                          'post_user_id': post_user_id,
+                                          'comment_user_id': comment_user_id,
                                           'comment': 'Test',
                                           'post_id': 1})
         expected = result.get_json()
@@ -642,3 +686,4 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['valid_friend'], True)
         self.assertEqual(expected['valid_post_id'], True)
         self.assertEqual(expected['success'], True)
+
