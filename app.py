@@ -149,12 +149,12 @@ def signup():
                 )
                 db.session.add(slot)
 
-                # Add self to friend_list
-                friend = Friends(
-                    user_id=new_user.id,
-                    friend_id=new_user.id,
-                )
-                db.session.add(friend)
+            # Add self to friend_list
+            friend = Friends(
+                user_id=new_user.id,
+                friend_id=new_user.id,
+            )
+            db.session.add(friend)
             db.session.commit()
             return jsonify(new_user.serialize())
         except Exception as e:
@@ -732,7 +732,8 @@ def get_user_friend_list(user_id=None, page=1):
             # Create list of the user's friend's IDs
             friend_ids = list()
             for friend in friends:
-                friend_ids.append(friend.friend_id)
+                if friend.friend_id is not user_id:
+                    friend_ids.append(friend.friend_id)
 
             # Append the Users that match the friend IDs
             for friend_id in friend_ids:

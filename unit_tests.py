@@ -350,6 +350,7 @@ class UnitTests(unittest.TestCase):
 
     def test_rent_movie(self):
         url = '/rent_movie'
+
         result = self.app.post(url, json={'user_id': None,
                                           'movie_id': None})
         expected = result.get_json()
