@@ -2,7 +2,7 @@ import unittest
 
 from app import app
 from app import db
-from models.user_models import TimeLine
+from models.user_models import TimeLine, PostComments
 from models.user_models import UserRentedMovies
 from models.user_models import UserRatedMovieRel
 from models.user_models import UserRatedTVShowRel
@@ -529,9 +529,9 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['success'], True)
 
         # Check if Timeline Post Exists, Remove From Database if it does
-        tl = TimeLine.query.filter_by(user_id=user_id).filter_by(post_user_id=post_user_id).filter_by(post=post).first()
+        tl = TimeLine.query.filter_by(post_id=expected['post_id']).first()
         assert tl is not None
-        TimeLine.query.filter_by(post_id=tl.post_id).delete()
+        TimeLine.query.filter_by(post_id=expected['post_id']).delete()
         db.session.commit()
 
     def test_comment_on_posts(self):
@@ -688,16 +688,16 @@ class UnitTests(unittest.TestCase):
                                           'post_user_id': post_user_id,
                                           'comment_user_id': comment_user_id,
                                           'comment': 'Test',
-                                          'post_id': 1})
+                                          'post_id': post_id})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
         self.assertEqual(expected['valid_friend'], True)
         self.assertEqual(expected['valid_post_id'], True)
         self.assertEqual(expected['success'], True)
 
-        # Check if Timeline Post Exists, Remove From Database if it does
-        tl = TimeLine.query.filter_by(user_id=user_id).filter_by(post_user_id=post_user_id).filter_by(post=post).first()
-        assert tl is not None
-        TimeLine.query.filter_by(post_id=tl.post_id).delete()
+        # Check if Post Comment  Exists, Remove From Database if it does
+        pc = PostComments.query.filter_by(comment_id=expected['comment_id']).first()
+        assert pc is not None
+        PostComments.query.filter_by(comment_id=expected['comment_id']).delete()
         db.session.commit()
 
