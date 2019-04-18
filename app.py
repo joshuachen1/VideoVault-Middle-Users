@@ -602,7 +602,7 @@ def send_friend_request():
 def accept_friend_request(function_call=False):
     try:
         data = request.get_json()
-        user_id = data['request_to']
+        user_id = data['user_id']
         pending_friend_id = data['request_from']
         check_user_id = User.query.filter_by(id=user_id).first()
         check_user_id = check_user_id is not None
