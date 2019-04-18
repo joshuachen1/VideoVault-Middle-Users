@@ -47,75 +47,60 @@ class UnitTests(unittest.TestCase):
     def test_user_movie_rating(self):
         url = '/user/movie/rating'
 
-        result = self.app.post(url, json={'user_id': None,
-                                          'movie_id': None,
-                                          'rating': 5, })
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_movie'], False)
-        self.assertEqual(expected['success'], False)
+        # Should Return
+        # 'valid_user': False
+        # 'valid_movie': False
+        # 'success': False
+        test_jsons = [{'user_id': None, 'movie_id': None, 'rating': 5},
+                   {'user_id': 0, 'movie_id': None, 'rating': 5},
+                   {'user_id': None, 'movie_id': 0, 'rating': 5},
+                   {'user_id': 0, 'movie_id': 0, 'rating': 5}
+                   ]
 
-        result = self.app.post(url, json={'user_id': 0,
-                                          'movie_id': None,
-                                          'rating': 5, })
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_movie'], False)
-        self.assertEqual(expected['success'], False)
+        for test_json in test_jsons:
+            result = self.app.post(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_movie'], False)
+            self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': None,
-                                          'movie_id': 0,
-                                          'rating': 5, })
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_movie'], False)
-        self.assertEqual(expected['success'], False)
+        # Should Return
+        # 'valid_user': True
+        # 'valid_movie': False
+        # 'success': False
+        test_jsons = [{'user_id': 1, 'movie_id': None, 'rating': 5},
+                      {'user_id': 1, 'movie_id': 0, 'rating': 5}
+                      ]
 
-        result = self.app.post(url, json={'user_id': 0,
-                                          'movie_id': 0,
-                                          'rating': 5, })
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_movie'], False)
-        self.assertEqual(expected['success'], False)
+        for test_json in test_jsons:
+            result = self.app.post(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_movie'], False)
+            self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': 1,
-                                          'movie_id': None,
-                                          'rating': 5, })
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_movie'], False)
-        self.assertEqual(expected['success'], False)
+        # Should Return
+        # 'valid_user': False
+        # 'valid_movie': True
+        # 'success': False
+        test_jsons = [{'user_id': None, 'movie_id': 1, 'rating': 5},
+                      {'user_id': 0, 'movie_id': 1, 'rating': 5}
+                      ]
 
-        result = self.app.post(url, json={'user_id': 1,
-                                          'movie_id': 0,
-                                          'rating': 5, })
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_movie'], False)
-        self.assertEqual(expected['success'], False)
+        for test_json in test_jsons:
+            result = self.app.post(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_movie'], True)
+            self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': None,
-                                          'movie_id': 1,
-                                          'rating': 5, })
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_movie'], True)
-        self.assertEqual(expected['success'], False)
-
-        result = self.app.post(url, json={'user_id': 0,
-                                          'movie_id': 1,
-                                          'rating': 5, })
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_movie'], True)
-        self.assertEqual(expected['success'], False)
-
+        # Should Return
+        # 'valid_user': True
+        # 'valid_movie': True
+        # 'success': True
         user_id = 1
         movie_id = 1
-        result = self.app.post(url, json={'user_id': user_id,
-                                          'movie_id': movie_id,
-                                          'rating': 5, })
+        result = self.app.post(url, json={'user_id': user_id, 'movie_id': movie_id, 'rating': 5})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
         self.assertEqual(expected['valid_movie'], True)
