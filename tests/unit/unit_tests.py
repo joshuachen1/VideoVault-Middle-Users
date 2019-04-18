@@ -683,6 +683,7 @@ class UnitTests(unittest.TestCase):
         user_id = 1
         post_user_id = 1
         comment_user_id = 1
+        post_id = 1
 
         result = self.app.post(url, json={'user_id': user_id,
                                           'post_user_id': post_user_id,
@@ -694,4 +695,10 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['valid_friend'], True)
         self.assertEqual(expected['valid_post_id'], True)
         self.assertEqual(expected['success'], True)
+
+        # Check if Timeline Post Exists, Remove From Database if it does
+        tl = TimeLine.query.filter_by(user_id=user_id).filter_by(post_user_id=post_user_id).filter_by(post=post).first()
+        assert tl is not None
+        TimeLine.query.filter_by(post_id=tl.post_id).delete()
+        db.session.commit()
 
