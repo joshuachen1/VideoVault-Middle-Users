@@ -1309,7 +1309,8 @@ def post_timeline():
 
             return jsonify({'success': True,
                             'valid_user': True,
-                            'valid_friend': True})
+                            'valid_friend': True,
+                            'post_id': timeline.post_id})
         else:
             return jsonify({'success': False,
                             'valid_user': True,
@@ -1358,7 +1359,8 @@ def comment_on_post():
             return jsonify({'success': True,
                             'valid_user': True,
                             'valid_friend': True,
-                            'valid_post_id': True})
+                            'valid_post_id': True,
+                            'comment_id': post_comment.comment_id})
         else:
             return jsonify({'success': False,
                             'valid_user': True,
