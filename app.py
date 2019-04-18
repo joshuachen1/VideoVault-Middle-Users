@@ -30,12 +30,12 @@ port = int(os.environ.get('PORT', 33507))
 # Import Models
 from Email import Email
 from crypto_models import Key
-from user_models import Signup, Login
-from user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
-from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
-from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
-from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
-from user_media_models import Movie, MovieComment, TVShows, TVShowComment, Comment
+from models.user_models import Signup, Login
+from models.user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
+from models.user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
+from models.user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
+from models.user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
+from models.user_media_models import Movie, MovieComment, TVShows, TVShowComment, Comment
 
 
 # Set Up Email Server

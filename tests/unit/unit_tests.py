@@ -1,13 +1,12 @@
 import unittest
-import pytest
 
 from app import app
 from app import db
-from user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
-from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
-from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
-from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
-from user_media_models import Movie, MovieComment, TVShows, TVShowComment, Comment
+from models.user_models import TimeLine
+from models.user_models import UserRentedMovies
+from models.user_models import UserRatedMovieRel
+from models.user_models import UserRatedTVShowRel
+from models.user_media_models import MovieComment, TVShowComment
 
 
 class UnitTests(unittest.TestCase):
