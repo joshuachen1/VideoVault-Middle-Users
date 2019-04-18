@@ -9,9 +9,11 @@ from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 
+
 # Setup App
 app = Flask(__name__)
-app.config.from_object(os.environ['APP_SETTINGS'])  # Should change based on is in Development or Production
+app.config.from_object('config.TestingConfig')  # Should change based on is in Development or Production
+# app.config.from_object(os.environ['APP_SETTINGS'])  # Should change based on is in Development or Production
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Enable CORS

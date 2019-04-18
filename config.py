@@ -10,7 +10,8 @@ class Config(object):
     CSRF_ENABLED = True
     SECRET_KEY = 'key'
     COMPANY_EMAIL = 'videovault.company48'
-    SQLALCHEMY_DATABASE_URI = os.environ['AWS_RDS_URL']
+    SQLALCHEMY_DATABASE_URI = 'mysql://company48:cs4800Video@c48data.cnl6uuurbzty.us-east-1.rds.amazonaws.com:3306/videodata'
+    # SQLALCHEMY_DATABASE_URI = os.environ['AWS_RDS_URL']
     POSTS_PER_PAGE = 5  # How many items to display per page (for pagination)
 
 
