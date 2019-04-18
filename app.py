@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import math
 import os
 import re
@@ -30,13 +31,12 @@ port = int(os.environ.get('PORT', 33507))
 # Import Models
 from Email import Email
 from crypto_models import Key
-from models.user_models import Signup, Login
+from models.user_models import Login
 from models.user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
 from models.user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from models.user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from models.user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
 from models.user_media_models import Movie, MovieComment, TVShows, TVShowComment, Comment
-
 
 # Set Up Email Server
 email_sender = Email(app.config['COMPANY_EMAIL'])
@@ -54,31 +54,109 @@ def hello_world():
 def signup():
     try:
         data = request.get_json()
-        name = str(data['name'])
-        username = str(data['username'])
-        email = str(data['email'])
-        password = str(data['password'])
-        card_num = str(data['card_num'])
+        name = data['name']
+        username = data['username']
+        email = data['email']
+        password = data['password']
+        card_num = data['card_num']
         num_slots = 10
         sub_date = str(date.today())
         profile_pic = "https://upload.wikimedia.org/wikipedia/en/1/13/Stick_figure.png"
 
+        if (name is None or name is '') and \
+                (username is None or username is '') and \
+                (email is None or email is '') and \
+                (password is None or password is '') and \
+                (card_num is None or not isinstance(card_num, int)):
+            return jsonify({
+                'valid_name': False,
+                'valid_username': False,
+                'username_taken': False,
+                'valid_email': False,
+                'email_taken': False,
+                'valid_password': False,
+                'valid_card_num': False,
+                'success': False
+            })
+
+        if name is None or name is '' or not isEnglish(name):
+            return jsonify({
+                'valid_name': False,
+                'valid_username': False,
+                'username_taken': False,
+                'valid_email': False,
+                'email_taken': False,
+                'valid_password': False,
+                'valid_card_num': False,
+                'success': False
+            })
+
+        if username is None or username is '' or not isEnglish(username):
+            # Check if username exists
+            check_unique = User.query.filter_by(username=username).first()
+            if check_unique is not None:
+                return jsonify({
+                    'valid_name': True,
+                    'valid_username': True,
+                    'username_taken': True,
+                    'valid_email': False,
+                    'email_taken': False,
+                    'valid_password': False,
+                    'valid_card_num': False,
+                    'success': False
+                })
+
         # Check if @ sign and period after @ sign
         email_pattern = re.compile("[^@]+@[^@]+\.[^@]+")
-        if email_pattern.match(email) is None:
-            return jsonify({'valid_email': False})
+        if email is None or email is '' or email_pattern.match(email) is None:
+            return jsonify({
+                'valid_name': True,
+                'valid_username': True,
+                'username_taken': True,
+                'valid_email': False,
+                'email_taken': False,
+                'valid_password': False,
+                'valid_card_num': False,
+                'success': False
+            })
 
         # Check if email exists
         check_unique = User.query.filter_by(email=email).first()
-        if check_unique is not None:
-            result = Signup(True, False, False)
-            return jsonify(result.serialize())
+        if email is None or email is '' or check_unique is not None:
+            return jsonify({
+                'valid_name': True,
+                'valid_username': True,
+                'username_taken': True,
+                'valid_email': True,
+                'email_taken': True,
+                'valid_password': False,
+                'valid_card_num': False,
+                'success': False
+            })
 
-        # Check if username exists
-        check_unique = User.query.filter_by(username=username).first()
-        if check_unique is not None:
-            result = Signup(False, True, False)
-            return jsonify(result.serialize())
+        if password is None or password is '' or not isEnglish(password):
+            return jsonify({
+                'valid_name': True,
+                'valid_username': True,
+                'username_taken': True,
+                'valid_email': True,
+                'email_taken': True,
+                'valid_password': False,
+                'valid_card_num': False,
+                'success': False
+            })
+
+        if card_num is None or not isinstance(card_num, int):
+            return jsonify({
+                'valid_name': True,
+                'valid_username': True,
+                'username_taken': True,
+                'valid_email': True,
+                'email_taken': True,
+                'valid_password': True,
+                'valid_card_num': False,
+                'success': False
+            })
 
         # Get Key
         key = Key.query.filter_by(id=1).first().key
@@ -90,6 +168,7 @@ def signup():
         encrypted_pwd = cipher.encrypt(password)
 
         # Encrypt User Credit Card Number
+        card_num = str(card_num)
         card_num = card_num.encode('utf-8')
         encrypted_cn = cipher.encrypt(card_num)
 
@@ -653,7 +732,8 @@ def decline_friend_request():
 def has_friend_request(user_id=None, request_from=None):
     try:
         if request_from is not None and user_id is not None:
-            is_friend_request=PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=request_from).scalar()
+            is_friend_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(
+                pending_friend_id=request_from).scalar()
             if is_friend_request is not None:
                 return jsonify({'has_friend_request': True})
             else:
@@ -1647,6 +1727,15 @@ def paginated_json(json_name: str, queried_results: [], page: int):
 # Return max pages for specified query
 def max_pages(queried_list: []):
     return int(math.ceil(len(queried_list) / app.config['POSTS_PER_PAGE']))
+
+
+def isEnglish(s):
+    try:
+        s.encode(encoding='utf-8').decode('ascii')
+    except UnicodeDecodeError:
+        return False
+    else:
+        return True
 
 
 if __name__ == '__main__':
