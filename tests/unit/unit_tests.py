@@ -44,6 +44,18 @@ class UnitTests(unittest.TestCase):
         # assert the response data
         self.assertEqual(result.data, b'Home Page')
 
+
+    def test_signup(self):
+        url = '/signup'
+
+        # Should Be Successful Signup
+        test_json = {'name': 'Unit Test',
+                       'username': 'unittest',
+                       'email': 'unit@test.com',
+                       'password': 'pythonunittest',
+                       'card_num': 123}
+
+
     def test_user_movie_rating(self):
         url = '/user/movie/rating'
 
