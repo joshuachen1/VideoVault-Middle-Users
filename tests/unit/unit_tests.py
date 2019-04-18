@@ -48,6 +48,12 @@ class UnitTests(unittest.TestCase):
     def test_signup(self):
         url = '/signup'
 
+        name = 'Unit Test'
+        username = 'unittest'
+        email = 'unit@test.com'
+        password = 'pythonunittest'
+        card_num = 123
+
         # Should Return
         # 'valid_name': False,
         # 'valid_username': False,
@@ -74,6 +80,128 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['valid_email'], False)
             self.assertEqual(expected['email_taken'], False)
             self.assertEqual(expected['valid_password'], False)
+            self.assertEqual(expected['valid_card_num'], False)
+            self.assertEqual(expected['success'], False)
+
+        # Should Return
+        # 'valid_name': True,
+        # 'valid_username': True,
+        # 'username_taken': True,
+        # 'valid_email': False,
+        # 'email_taken': False,
+        # 'valid_password': False,
+        # 'valid_card_num': False,
+        # 'success': False
+        test_jsons = [{'name': name, 'username': 'joshuachen1', 'email': None, 'password': None, 'card_num': None},
+                      {'name': name, 'username': 'gant', 'email': None, 'password': None, 'card_num': None},
+                      ]
+
+        for test_json in test_jsons:
+            result = self.app.post(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_name'], True)
+            self.assertEqual(expected['valid_username'], True)
+            self.assertEqual(expected['username_taken'], True)
+            self.assertEqual(expected['valid_email'], False)
+            self.assertEqual(expected['email_taken'], False)
+            self.assertEqual(expected['valid_password'], False)
+            self.assertEqual(expected['valid_card_num'], False)
+            self.assertEqual(expected['success'], False)
+
+        # Should Return
+        # 'valid_name': True,
+        # 'valid_username': True,
+        # 'username_taken': False,
+        # 'valid_email': False,
+        # 'email_taken': False,
+        # 'valid_password': False,
+        # 'valid_card_num': False,
+        # 'success': False
+        test_jsons = [{'name': name, 'username': username, 'email': 'blah', 'password': None, 'card_num': None},
+                      {'name': name, 'username': username, 'email': ' ', 'password': None, 'card_num': None},
+                      ]
+
+        for test_json in test_jsons:
+            result = self.app.post(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_name'], True)
+            self.assertEqual(expected['valid_username'], True)
+            self.assertEqual(expected['username_taken'], False)
+            self.assertEqual(expected['valid_email'], False)
+            self.assertEqual(expected['email_taken'], False)
+            self.assertEqual(expected['valid_password'], False)
+            self.assertEqual(expected['valid_card_num'], False)
+            self.assertEqual(expected['success'], False)
+
+        # Should Return
+        # 'valid_name': True,
+        # 'valid_username': True,
+        # 'username_taken': False,
+        # 'valid_email': True,
+        # 'email_taken': True,
+        # 'valid_password': False,
+        # 'valid_card_num': False,
+        # 'success': False
+        test_jsons = [{'name': name, 'username': username, 'email': 'joshuachen1@cpp.edu', 'password': None, 'card_num': None},
+                      ]
+
+        for test_json in test_jsons:
+            result = self.app.post(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_name'], True)
+            self.assertEqual(expected['valid_username'], True)
+            self.assertEqual(expected['username_taken'], False)
+            self.assertEqual(expected['valid_email'], True)
+            self.assertEqual(expected['email_taken'], True)
+            self.assertEqual(expected['valid_password'], False)
+            self.assertEqual(expected['valid_card_num'], False)
+            self.assertEqual(expected['success'], False)
+
+        # Should Return
+        # 'valid_name': True,
+        # 'valid_username': True,
+        # 'username_taken': False,
+        # 'valid_email': True,
+        # 'email_taken': False,
+        # 'valid_password': False,
+        # 'valid_card_num': False,
+        # 'success': False
+        test_jsons = [{'name': name, 'username': username, 'email': email, 'password': None, 'card_num': None},
+                      ]
+
+        for test_json in test_jsons:
+            result = self.app.post(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_name'], True)
+            self.assertEqual(expected['valid_username'], True)
+            self.assertEqual(expected['username_taken'], False)
+            self.assertEqual(expected['valid_email'], True)
+            self.assertEqual(expected['email_taken'], False)
+            self.assertEqual(expected['valid_password'], False)
+            self.assertEqual(expected['valid_card_num'], False)
+            self.assertEqual(expected['success'], False)
+
+        # Should Return
+        # 'valid_name': True,
+        # 'valid_username': True,
+        # 'username_taken': False,
+        # 'valid_email': True,
+        # 'email_taken': False,
+        # 'valid_password': True,
+        # 'valid_card_num': False,
+        # 'success': False
+        test_jsons = [{'name': name, 'username': username, 'email': email, 'password': password, 'card_num': None},
+                      ]
+
+        for test_json in test_jsons:
+            result = self.app.post(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_name'], True)
+            self.assertEqual(expected['valid_username'], True)
+            self.assertEqual(expected['username_taken'], False)
+            self.assertEqual(expected['valid_email'], True)
+            self.assertEqual(expected['email_taken'], False)
+            self.assertEqual(expected['valid_password'], True)
             self.assertEqual(expected['valid_card_num'], False)
             self.assertEqual(expected['success'], False)
 
