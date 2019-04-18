@@ -1283,30 +1283,35 @@ def display_wall(user_id=None):
         wall_posts = TimeLine.query.filter_by(user_id=user.id).order_by(TimeLine.date_of_post)
 
         for post in wall_posts:
-            username = User.query.filter_by(id=post.user_id).first().username
-            post_username = User.query.filter_by(id=post.post_user_id).first().username
+            user = User.query.filter_by(id=post.user_id).first()
+            post_user = User.query.filter_by(id=post.post_user_id).first()
 
             comments = list()
             comment_list = PostComments.query.filter_by(user_id=post.user_id).filter_by(
                 post_user_id=post.post_user_id).filter_by(post_id=post.post_id)
             for comment in comment_list:
-                comment_username = User.query.filter_by(id=comment.comment_user_id).first().username
+                comment_user = User.query.filter_by(id=comment.comment_user_id).first()
                 comments.append(PostComment(
-                    username=username,
-                    post_username=post_username,
-                    comment_username=comment_username,
+                    user_id=user.id,
+                    username=user.username,
+                    post_user_id=post_user.id,
+                    post_username=post_user.username,
+                    comment_user_id=comment_user.id,
+                    comment_username=comment_user.username,
                     comment=comment.comment,
                     date_of_comment=comment.date_of_comment,
                 ))
 
             wall.append(Post(
-                username=username,
-                post_username=post_username,
+                post_id=post.post_id,
+                user_id=user.id,
+                username=user.username,
+                post_user_id=post_user.id,
+                post_username=post_user.username,
                 post=post.post,
                 date_of_post=post.date_of_post,
                 comments=reversed(comments),
             ))
-
         wall.sort(key=lambda w: w.date_of_post)
         wall = reversed(wall)
 
@@ -1329,25 +1334,31 @@ def display_timeline(user_id=None):
             friend_wall = TimeLine.query.filter_by(user_id=friend.friend_id).order_by(TimeLine.date_of_post)
 
             for post in friend_wall:
-                username = User.query.filter_by(id=post.user_id).first().username
-                post_username = User.query.filter_by(id=post.post_user_id).first().username
+                user = User.query.filter_by(id=post.user_id).first()
+                post_user = User.query.filter_by(id=post.post_user_id).first()
 
                 comments = list()
                 comment_list = PostComments.query.filter_by(user_id=post.user_id).filter_by(
                     post_user_id=post.post_user_id).filter_by(post_id=post.post_id)
                 for comment in comment_list:
-                    comment_username = User.query.filter_by(id=comment.comment_user_id).first().username
+                    comment_user = User.query.filter_by(id=comment.comment_user_id).first()
                     comments.append(PostComment(
-                        username=username,
-                        post_username=post_username,
-                        comment_username=comment_username,
+                        user_id=user.id,
+                        username=user.username,
+                        post_user_id=post_user.id,
+                        post_username=post_user.username,
+                        comment_user_id=comment_user.id,
+                        comment_username=comment_user.username,
                         comment=comment.comment,
                         date_of_comment=comment.date_of_comment,
                     ))
 
                 timeline.append(Post(
-                    username=username,
-                    post_username=post_username,
+                    post_id=post.post_id,
+                    user_id=user.id,
+                    username=user.username,
+                    post_user_id=post_user.id,
+                    post_username=post_user.username,
                     post=post.post,
                     date_of_post=post.date_of_post,
                     comments=reversed(comments),
@@ -1418,7 +1429,7 @@ def comment_on_post():
                             'valid_friend': False,
                             'valid_post_id': False})
 
-        elif PostComments.query.filter_by(post_id=post_id).first() is None:
+        elif TimeLine.query.filter_by(post_id=post_id).first() is None:
             return jsonify({'success': False,
                             'valid_user': True,
                             'valid_friend': False,
