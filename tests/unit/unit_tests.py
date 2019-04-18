@@ -2,6 +2,7 @@ import unittest
 
 from app import app
 from app import db
+from models.user_models import User
 from models.user_models import TimeLine, PostComments
 from models.user_models import UserRentedMovies
 from models.user_models import UserRatedMovieRel
@@ -44,17 +45,58 @@ class UnitTests(unittest.TestCase):
         # assert the response data
         self.assertEqual(result.data, b'Home Page')
 
-
     def test_signup(self):
         url = '/signup'
 
+        # Should Return
+        # 'valid_name': False,
+        # 'valid_username': False,
+        # 'username_taken': False,
+        # 'valid_email': False,
+        # 'email_taken': False,
+        # 'valid_password': False,
+        # 'valid_card_num': False,
+        # 'success': False
+        test_jsons = [{'name': None, 'username': None, 'email': None, 'password': None, 'card_num': None},
+                      {'name': '',   'username': None, 'email': None, 'password': None, 'card_num': None},
+                      {'name': None, 'username': '',   'email': None, 'password': None, 'card_num': None},
+                      {'name': None, 'username': None, 'email': '',   'password': None, 'card_num': None},
+                      {'name': None, 'username': None, 'email': None, 'password': '',   'card_num': None},
+                      {'name': None, 'username': None, 'email': None, 'password': None, 'card_num': ''},
+                      ]
+
+        for test_json in test_jsons:
+            result = self.app.post(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_name'], False)
+            self.assertEqual(expected['valid_username'], False)
+            self.assertEqual(expected['username_taken'], False)
+            self.assertEqual(expected['valid_email'], False)
+            self.assertEqual(expected['email_taken'], False)
+            self.assertEqual(expected['valid_password'], False)
+            self.assertEqual(expected['valid_card_num'], False)
+            self.assertEqual(expected['success'], False)
+
         # Should Be Successful Signup
-        test_json = {'name': 'Unit Test',
+        new_user = {'name': 'Unit Test',
                        'username': 'unittest',
                        'email': 'unit@test.com',
                        'password': 'pythonunittest',
                        'card_num': 123}
 
+        result = self.app.post(url, json=new_user)
+        expected = result.get_json()
+        self.assertEqual(expected['name'], 'Unit Test')
+        self.assertEqual(expected['username'], 'unittest')
+        self.assertEqual(expected['email'], 'unit@test.com')
+        self.assertEqual(expected['num_slots'], 10)
+        self.assertEqual(expected['profile_pic'], "https://upload.wikimedia.org/wikipedia/en/1/13/Stick_figure.png")
+
+        # Check if User Exists, Remove From Database if it does
+        user = User.query.filter_by(name='Unit Test').filter_by(username='unittest').first()
+        assert user is not None
+        User.query.filter_by(name='Unit Test').filter_by(username='unittest').delete()
+        db.session.commit()
 
     def test_user_movie_rating(self):
         url = '/user/movie/rating'
