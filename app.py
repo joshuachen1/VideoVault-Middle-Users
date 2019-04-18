@@ -48,41 +48,6 @@ def hello_world():
     return 'Home Page'
 
 
-# [url]/login/email=[email]/password=[password]
-@app.route('/login/email=<email>/password=<attempted_pwd>', methods=['GET'])
-@app.route('/login/email=<email>/password=', methods=['GET'])
-@app.route('/login/email=/password=<attempted_pwd>', methods=['GET'])
-@app.route('/login/email=/password=', methods=['GET'])
-def login(email=None, attempted_pwd=None):
-    try:
-        user_info = User.query.filter_by(email=email).first()
-
-        if email is None or user_info is None:
-            result = Login(True, False, False)
-            return jsonify(result.serialize())
-
-        # Get Key
-        key = Key.query.filter_by(id=1).first().key
-        key = key.encode('utf-8')
-        cipher = Fernet(key)
-
-        # Get Decrypted User Password
-        saved_pwd = user_info.password
-        saved_pwd = saved_pwd.encode('utf-8')
-        decrypted_saved_pwd = cipher.decrypt(saved_pwd)
-        decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
-
-        if decrypted_saved_pwd == attempted_pwd:
-            delete_expired_movies()
-            delete_expired_tv_shows()
-            return jsonify(user_info.serialize())
-        else:
-            result = Login(False, True, False)
-            return jsonify(result.serialize())
-    except Exception as e:
-        return str(e)
-
-
 # { name: [name], username: [username], email:[email], password: [password], card_num: [card_num] }
 # adds user to user table and creates 10 slots in user_slots
 @app.route('/signup', methods=['POST'])
@@ -161,6 +126,41 @@ def signup():
             return jsonify(new_user.serialize())
         except Exception as e:
             return str(e)
+    except Exception as e:
+        return str(e)
+
+
+# [url]/login/email=[email]/password=[password]
+@app.route('/login/email=<email>/password=<attempted_pwd>', methods=['GET'])
+@app.route('/login/email=<email>/password=', methods=['GET'])
+@app.route('/login/email=/password=<attempted_pwd>', methods=['GET'])
+@app.route('/login/email=/password=', methods=['GET'])
+def login(email=None, attempted_pwd=None):
+    try:
+        user_info = User.query.filter_by(email=email).first()
+
+        if email is None or user_info is None:
+            result = Login(True, False, False)
+            return jsonify(result.serialize())
+
+        # Get Key
+        key = Key.query.filter_by(id=1).first().key
+        key = key.encode('utf-8')
+        cipher = Fernet(key)
+
+        # Get Decrypted User Password
+        saved_pwd = user_info.password
+        saved_pwd = saved_pwd.encode('utf-8')
+        decrypted_saved_pwd = cipher.decrypt(saved_pwd)
+        decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
+
+        if decrypted_saved_pwd == attempted_pwd:
+            delete_expired_movies()
+            delete_expired_tv_shows()
+            return jsonify(user_info.serialize())
+        else:
+            result = Login(False, True, False)
+            return jsonify(result.serialize())
     except Exception as e:
         return str(e)
 
