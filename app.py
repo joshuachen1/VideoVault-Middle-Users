@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import math
 import os
 import re
@@ -30,13 +31,12 @@ port = int(os.environ.get('PORT', 33507))
 # Import Models
 from Email import Email
 from crypto_models import Key
-from models.user_models import Signup, Login
+from models.user_models import Login
 from models.user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
 from models.user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from models.user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from models.user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
 from models.user_media_models import Movie, MovieComment, TVShows, TVShowComment, Comment
-
 
 # Set Up Email Server
 email_sender = Email(app.config['COMPANY_EMAIL'])
@@ -48,72 +48,115 @@ def hello_world():
     return 'Home Page'
 
 
-# [url]/login/email=[email]/password=[password]
-@app.route('/login/email=<email>/password=<attempted_pwd>', methods=['GET'])
-@app.route('/login/email=<email>/password=', methods=['GET'])
-@app.route('/login/email=/password=<attempted_pwd>', methods=['GET'])
-@app.route('/login/email=/password=', methods=['GET'])
-def login(email=None, attempted_pwd=None):
-    try:
-        user_info = User.query.filter_by(email=email).first()
-
-        if email is None or user_info is None:
-            result = Login(True, False, False)
-            return jsonify(result.serialize())
-
-        # Get Key
-        key = Key.query.filter_by(id=1).first().key
-        key = key.encode('utf-8')
-        cipher = Fernet(key)
-
-        # Get Decrypted User Password
-        saved_pwd = user_info.password
-        saved_pwd = saved_pwd.encode('utf-8')
-        decrypted_saved_pwd = cipher.decrypt(saved_pwd)
-        decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
-
-        if decrypted_saved_pwd == attempted_pwd:
-            delete_expired_movies()
-            delete_expired_tv_shows()
-            return jsonify(user_info.serialize())
-        else:
-            result = Login(False, True, False)
-            return jsonify(result.serialize())
-    except Exception as e:
-        return str(e)
-
-
 # { name: [name], username: [username], email:[email], password: [password], card_num: [card_num] }
 # adds user to user table and creates 10 slots in user_slots
 @app.route('/signup', methods=['POST'])
 def signup():
     try:
         data = request.get_json()
-        name = str(data['name'])
-        username = str(data['username'])
-        email = str(data['email'])
-        password = str(data['password'])
-        card_num = str(data['card_num'])
+        name = data['name']
+        username = data['username']
+        email = data['email']
+        password = data['password']
+        card_num = data['card_num']
         num_slots = 10
         sub_date = str(date.today())
         profile_pic = "https://upload.wikimedia.org/wikipedia/en/1/13/Stick_figure.png"
 
+        if (name is None or name is '') and \
+                (username is None or username is '') and \
+                (email is None or email is '') and \
+                (password is None or password is '') and \
+                (card_num is None or not isinstance(card_num, int)):
+            return jsonify({
+                'valid_name': False,
+                'valid_username': False,
+                'username_taken': False,
+                'valid_email': False,
+                'email_taken': False,
+                'valid_password': False,
+                'valid_card_num': False,
+                'success': False
+            })
+
+        if name is None or name is '' or not isEnglish(name):
+            return jsonify({
+                'valid_name': False,
+                'valid_username': False,
+                'username_taken': False,
+                'valid_email': False,
+                'email_taken': False,
+                'valid_password': False,
+                'valid_card_num': False,
+                'success': False
+            })
+
+        if username is not None or username is '':
+            # Check if username exists
+            check_unique = User.query.filter_by(username=username).first()
+            if check_unique is not None:
+                return jsonify({
+                    'valid_name': True,
+                    'valid_username': True,
+                    'username_taken': True,
+                    'valid_email': False,
+                    'email_taken': False,
+                    'valid_password': False,
+                    'valid_card_num': False,
+                    'success': False
+                })
+
         # Check if @ sign and period after @ sign
         email_pattern = re.compile("[^@]+@[^@]+\.[^@]+")
-        if email_pattern.match(email) is None:
-            return jsonify({'valid_email': False})
+        if email is None or email is '' or email_pattern.match(email) is None:
+            return jsonify({
+                'valid_name': True,
+                'valid_username': True,
+                'username_taken': False,
+                'valid_email': False,
+                'email_taken': False,
+                'valid_password': False,
+                'valid_card_num': False,
+                'success': False
+            })
 
         # Check if email exists
         check_unique = User.query.filter_by(email=email).first()
-        if check_unique is not None:
-            result = Signup(True, False, False)
-            return jsonify(result.serialize())
+        if email is None or email is '' or check_unique is not None:
+            return jsonify({
+                'valid_name': True,
+                'valid_username': True,
+                'username_taken': False,
+                'valid_email': True,
+                'email_taken': True,
+                'valid_password': False,
+                'valid_card_num': False,
+                'success': False
+            })
 
-        # Check if username exists
-        check_unique = User.query.filter_by(username=username).first()
-        if check_unique is not None:
-            result = Signup(False, True, False)
-            return jsonify(result.serialize())
+        if password is None or password is '' or not isEnglish(password):
+            return jsonify({
+                'valid_name': True,
+                'valid_username': True,
+                'username_taken': False,
+                'valid_email': True,
+                'email_taken': False,
+                'valid_password': False,
+                'valid_card_num': False,
+                'success': False
+            })
+
+        if card_num is None or not isinstance(card_num, int):
+            return jsonify({
+                'valid_name': True,
+                'valid_username': True,
+                'username_taken': False,
+                'valid_email': True,
+                'email_taken': False,
+                'valid_password': True,
+                'valid_card_num': False,
+                'success': False
+            })
 
         # Get Key
         key = Key.query.filter_by(id=1).first().key
@@ -125,6 +168,7 @@ def signup():
         encrypted_pwd = cipher.encrypt(password)
 
         # Encrypt User Credit Card Number
+        card_num = str(card_num)
         card_num = card_num.encode('utf-8')
         encrypted_cn = cipher.encrypt(card_num)
 
@@ -161,6 +205,41 @@ def signup():
             return jsonify(new_user.serialize())
         except Exception as e:
             return str(e)
+    except Exception as e:
+        return str(e)
+
+
+# [url]/login/email=[email]/password=[password]
+@app.route('/login/email=<email>/password=<attempted_pwd>', methods=['GET'])
+@app.route('/login/email=<email>/password=', methods=['GET'])
+@app.route('/login/email=/password=<attempted_pwd>', methods=['GET'])
+@app.route('/login/email=/password=', methods=['GET'])
+def login(email=None, attempted_pwd=None):
+    try:
+        user_info = User.query.filter_by(email=email).first()
+
+        if email is None or user_info is None:
+            result = Login(True, False, False)
+            return jsonify(result.serialize())
+
+        # Get Key
+        key = Key.query.filter_by(id=1).first().key
+        key = key.encode('utf-8')
+        cipher = Fernet(key)
+
+        # Get Decrypted User Password
+        saved_pwd = user_info.password
+        saved_pwd = saved_pwd.encode('utf-8')
+        decrypted_saved_pwd = cipher.decrypt(saved_pwd)
+        decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
+
+        if decrypted_saved_pwd == attempted_pwd:
+            delete_expired_movies()
+            delete_expired_tv_shows()
+            return jsonify(user_info.serialize())
+        else:
+            result = Login(False, True, False)
+            return jsonify(result.serialize())
     except Exception as e:
         return str(e)
 
@@ -653,7 +732,8 @@ def decline_friend_request():
 def has_friend_request(user_id=None, request_from=None):
     try:
         if request_from is not None and user_id is not None:
-            is_friend_request=PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=request_from).scalar()
+            is_friend_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(
+                pending_friend_id=request_from).scalar()
             if is_friend_request is not None:
                 return jsonify({'has_friend_request': True})
             else:
@@ -1203,30 +1283,35 @@ def display_wall(user_id=None):
         wall_posts = TimeLine.query.filter_by(user_id=user.id).order_by(TimeLine.date_of_post)
 
         for post in wall_posts:
-            username = User.query.filter_by(id=post.user_id).first().username
-            post_username = User.query.filter_by(id=post.post_user_id).first().username
+            user = User.query.filter_by(id=post.user_id).first()
+            post_user = User.query.filter_by(id=post.post_user_id).first()
 
             comments = list()
             comment_list = PostComments.query.filter_by(user_id=post.user_id).filter_by(
                 post_user_id=post.post_user_id).filter_by(post_id=post.post_id)
             for comment in comment_list:
-                comment_username = User.query.filter_by(id=comment.comment_user_id).first().username
+                comment_user = User.query.filter_by(id=comment.comment_user_id).first()
                 comments.append(PostComment(
-                    username=username,
-                    post_username=post_username,
-                    comment_username=comment_username,
+                    user_id=user.id,
+                    username=user.username,
+                    post_user_id=post_user.id,
+                    post_username=post_user.username,
+                    comment_user_id=comment_user.id,
+                    comment_username=comment_user.username,
                     comment=comment.comment,
                     date_of_comment=comment.date_of_comment,
                 ))
 
             wall.append(Post(
-                username=username,
-                post_username=post_username,
+                post_id=post.post_id,
+                user_id=user.id,
+                username=user.username,
+                post_user_id=post_user.id,
+                post_username=post_user.username,
                 post=post.post,
                 date_of_post=post.date_of_post,
                 comments=reversed(comments),
             ))
-
         wall.sort(key=lambda w: w.date_of_post)
         wall = reversed(wall)
 
@@ -1249,25 +1334,31 @@ def display_timeline(user_id=None):
             friend_wall = TimeLine.query.filter_by(user_id=friend.friend_id).order_by(TimeLine.date_of_post)
 
             for post in friend_wall:
-                username = User.query.filter_by(id=post.user_id).first().username
-                post_username = User.query.filter_by(id=post.post_user_id).first().username
+                user = User.query.filter_by(id=post.user_id).first()
+                post_user = User.query.filter_by(id=post.post_user_id).first()
 
                 comments = list()
                 comment_list = PostComments.query.filter_by(user_id=post.user_id).filter_by(
                     post_user_id=post.post_user_id).filter_by(post_id=post.post_id)
                 for comment in comment_list:
-                    comment_username = User.query.filter_by(id=comment.comment_user_id).first().username
+                    comment_user = User.query.filter_by(id=comment.comment_user_id).first()
                     comments.append(PostComment(
-                        username=username,
-                        post_username=post_username,
-                        comment_username=comment_username,
+                        user_id=user.id,
+                        username=user.username,
+                        post_user_id=post_user.id,
+                        post_username=post_user.username,
+                        comment_user_id=comment_user.id,
+                        comment_username=comment_user.username,
                         comment=comment.comment,
                         date_of_comment=comment.date_of_comment,
                     ))
 
                 timeline.append(Post(
-                    username=username,
-                    post_username=post_username,
+                    post_id=post.post_id,
+                    user_id=user.id,
+                    username=user.username,
+                    post_user_id=post_user.id,
+                    post_username=post_user.username,
                     post=post.post,
                     date_of_post=post.date_of_post,
                     comments=reversed(comments),
@@ -1338,7 +1429,7 @@ def comment_on_post():
                             'valid_friend': False,
                             'valid_post_id': False})
 
-        elif PostComments.query.filter_by(post_id=post_id).first() is None:
+        elif TimeLine.query.filter_by(post_id=post_id).first() is None:
             return jsonify({'success': False,
                             'valid_user': True,
                             'valid_friend': False,
@@ -1647,6 +1738,15 @@ def paginated_json(json_name: str, queried_results: [], page: int):
 # Return max pages for specified query
 def max_pages(queried_list: []):
     return int(math.ceil(len(queried_list) / app.config['POSTS_PER_PAGE']))
+
+
+def isEnglish(s):
+    try:
+        s.encode(encoding='utf-8').decode('ascii')
+    except UnicodeDecodeError:
+        return False
+    else:
+        return True
 
 
 if __name__ == '__main__':
