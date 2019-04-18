@@ -126,7 +126,7 @@ class UnitTests(unittest.TestCase):
         mr = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
         assert mr is not None
         UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
-        db.session.commit()
+        db.session.flush()
 
     def test_user_tv_show_rating(self):
         url = '/user/tv_show/rating'
@@ -208,7 +208,7 @@ class UnitTests(unittest.TestCase):
         tvr = UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
         assert tvr is not None
         UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).delete()
-        db.session.commit()
+        db.session.flush()
 
     def test_movie_commenting(self):
         url = '/movie/comment'
@@ -291,7 +291,7 @@ class UnitTests(unittest.TestCase):
         mc = MovieComment.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
         assert mc is not None
         MovieComment.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
-        db.session.commit()
+        db.session.flush()
 
     def test_tv_show_commenting(self):
         url = '/tv_show/comment'
@@ -374,7 +374,7 @@ class UnitTests(unittest.TestCase):
         tvc = TVShowComment.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
         assert tvc is not None
         TVShowComment.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).delete()
-        db.session.commit()
+        db.session.flush()
 
     def test_rent_movie(self):
         url = '/rent_movie'
@@ -449,7 +449,7 @@ class UnitTests(unittest.TestCase):
         rm = UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
         assert rm is not None
         UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
-        db.session.commit()
+        db.session.flush()
 
     def test_timeline_posting(self):
         url = 'timeline/post'
@@ -519,14 +519,21 @@ class UnitTests(unittest.TestCase):
 
         user_id = 1
         post_user_id = 1
+        post = 'Test'
 
         result = self.app.post(url, json={'user_id': user_id,
                                           'post_user_id': post_user_id,
-                                          'post': 'Test'})
+                                          'post': post})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
         self.assertEqual(expected['valid_friend'], True)
         self.assertEqual(expected['success'], True)
+
+        # Check if Timeline Post Exists, Remove From Database if it does
+        tl = TimeLine.query.filter_by(user_id=user_id).filter_by(post_user_id=post_user_id).filter_by(post=post).first()
+        assert tl is not None
+        TimeLine.query.filter_by(post_id=tl.post_id).delete()
+        db.session.commit()
 
     def test_comment_on_posts(self):
         url = '/timeline/post/comment'
