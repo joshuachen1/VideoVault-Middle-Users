@@ -91,7 +91,7 @@ def signup():
                 'success': False
             })
 
-        if username is None or username is '' or not isEnglish(username):
+        if username is not None or username is '':
             # Check if username exists
             check_unique = User.query.filter_by(username=username).first()
             if check_unique is not None:
@@ -112,7 +112,7 @@ def signup():
             return jsonify({
                 'valid_name': True,
                 'valid_username': True,
-                'username_taken': True,
+                'username_taken': False,
                 'valid_email': False,
                 'email_taken': False,
                 'valid_password': False,
@@ -126,7 +126,7 @@ def signup():
             return jsonify({
                 'valid_name': True,
                 'valid_username': True,
-                'username_taken': True,
+                'username_taken': False,
                 'valid_email': True,
                 'email_taken': True,
                 'valid_password': False,
@@ -138,9 +138,9 @@ def signup():
             return jsonify({
                 'valid_name': True,
                 'valid_username': True,
-                'username_taken': True,
+                'username_taken': False,
                 'valid_email': True,
-                'email_taken': True,
+                'email_taken': False,
                 'valid_password': False,
                 'valid_card_num': False,
                 'success': False
@@ -150,9 +150,9 @@ def signup():
             return jsonify({
                 'valid_name': True,
                 'valid_username': True,
-                'username_taken': True,
+                'username_taken': False,
                 'valid_email': True,
-                'email_taken': True,
+                'email_taken': False,
                 'valid_password': True,
                 'valid_card_num': False,
                 'success': False
