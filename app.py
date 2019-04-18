@@ -11,7 +11,8 @@ from flask_sqlalchemy import SQLAlchemy
 
 # Setup App
 app = Flask(__name__)
-app.config.from_object(os.environ['APP_SETTINGS'])  # Should change based on is in Development or Production
+app.config.from_object('config.TestingConfig')  # Should change based on is in Development or Production
+# app.config.from_object(os.environ['APP_SETTINGS'])  # Should change based on is in Development or Production
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Enable CORS
@@ -29,12 +30,12 @@ port = int(os.environ.get('PORT', 33507))
 # Import Models
 from Email import Email
 from crypto_models import Key
-from user_models import Signup, Login
-from user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
-from user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
-from user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
-from user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
-from user_media_models import Movie, MovieComment, TVShows, TVShowComment, Comment
+from models.user_models import Signup, Login
+from models.user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
+from models.user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
+from models.user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
+from models.user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
+from models.user_media_models import Movie, MovieComment, TVShows, TVShowComment, Comment
 
 
 # Set Up Email Server
@@ -1308,7 +1309,8 @@ def post_timeline():
 
             return jsonify({'success': True,
                             'valid_user': True,
-                            'valid_friend': True})
+                            'valid_friend': True,
+                            'post_id': timeline.post_id})
         else:
             return jsonify({'success': False,
                             'valid_user': True,
@@ -1357,7 +1359,8 @@ def comment_on_post():
             return jsonify({'success': True,
                             'valid_user': True,
                             'valid_friend': True,
-                            'valid_post_id': True})
+                            'valid_post_id': True,
+                            'comment_id': post_comment.comment_id})
         else:
             return jsonify({'success': False,
                             'valid_user': True,
