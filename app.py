@@ -171,40 +171,37 @@ def signup():
         card_num = str(card_num)
         card_num = card_num.encode('utf-8')
         encrypted_cn = cipher.encrypt(card_num)
+        user = User(
+            name=name,
+            username=username,
+            email=email,
+            password=encrypted_pwd,
+            card_num=encrypted_cn,
+            num_slots=num_slots,
+            sub_date=sub_date,
+            profile_pic=profile_pic,
+        )
+        db.session.add(user)
+        email_sender.welcome_email(username=username, user_email=email)
 
-        try:
-            user = User(
-                name=name,
-                username=username,
-                email=email,
-                password=encrypted_pwd,
-                card_num=encrypted_cn,
-                num_slots=num_slots,
-                sub_date=sub_date,
-                profile_pic=profile_pic,
-            )
-            db.session.add(user)
-            email_sender.welcome_email(username=username, user_email=email)
-
-            new_user = User.query.filter_by(username=username).first()
-            for i in range(num_slots):
-                slot = UserSlots(
-                    user_id=new_user.id,
-                    slot_num=(i + 1),
-                    tv_show_id=None,
-                )
-                db.session.add(slot)
-
-            # Add self to friend_list
-            friend = Friends(
+        new_user = User.query.filter_by(username=username).first()
+        for i in range(num_slots):
+            slot = UserSlots(
                 user_id=new_user.id,
-                friend_id=new_user.id,
+                slot_num=(i + 1),
+                tv_show_id=None,
             )
-            db.session.add(friend)
-            db.session.commit()
-            return jsonify(new_user.serialize())
-        except Exception as e:
-            return str(e)
+            db.session.add(slot)
+
+        # Add self to friend_list
+        friend = Friends(
+            user_id=new_user.id,
+            friend_id=new_user.id,
+        )
+        db.session.add(friend)
+        db.session.commit()
+        return jsonify(new_user.serialize())
+
     except Exception as e:
         return str(e)
 

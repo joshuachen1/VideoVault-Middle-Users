@@ -48,6 +48,8 @@ class UnitTests(unittest.TestCase):
     def test_signup(self):
         url = '/signup'
 
+        self.assertRaises(Exception, self.app.post(url, json={}))
+
         name = 'Unit Test'
         username = 'unittest'
         email = 'unit@test.com'
@@ -69,6 +71,7 @@ class UnitTests(unittest.TestCase):
                       {'name': None, 'username': None, 'email': '',   'password': None, 'card_num': None},
                       {'name': None, 'username': None, 'email': None, 'password': '',   'card_num': None},
                       {'name': None, 'username': None, 'email': None, 'password': None, 'card_num': ''},
+                      {'name': None, 'username': 'blah', 'email': None, 'password': None, 'card_num': ''},
                       ]
 
         for test_json in test_jsons:
@@ -210,7 +213,7 @@ class UnitTests(unittest.TestCase):
                        'username': 'unittest',
                        'email': 'unit@test.com',
                        'password': 'pythonunittest',
-                       'card_num': 123}
+                       'card_num': card_num}
 
         result = self.app.post(url, json=new_user)
         expected = result.get_json()
@@ -933,4 +936,3 @@ class UnitTests(unittest.TestCase):
         assert pc is not None
         PostComments.query.filter_by(comment_id=expected['comment_id']).delete()
         db.session.commit()
-
