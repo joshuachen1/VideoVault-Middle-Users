@@ -1271,11 +1271,8 @@ def display_wall(user_id=None):
             for comment in comment_list:
                 comment_user = User.query.filter_by(id=comment.comment_user_id).first()
                 comments.append(PostComment(
-                    user_id=user.id,
                     username=user.username,
-                    post_user_id=post_user.id,
                     post_username=post_user.username,
-                    comment_user_id=comment_user.id,
                     comment_username=comment_user.username,
                     comment=comment.comment,
                     date_of_comment=comment.date_of_comment,
@@ -1283,9 +1280,7 @@ def display_wall(user_id=None):
 
             wall.append(Post(
                 post_id=post.post_id,
-                user_id=user.id,
                 username=user.username,
-                post_user_id=post_user.id,
                 post_username=post_user.username,
                 post=post.post,
                 date_of_post=post.date_of_post,
@@ -1322,11 +1317,8 @@ def display_timeline(user_id=None):
                 for comment in comment_list:
                     comment_user = User.query.filter_by(id=comment.comment_user_id).first()
                     comments.append(PostComment(
-                        user_id=user.id,
                         username=user.username,
-                        post_user_id=post_user.id,
                         post_username=post_user.username,
-                        comment_user_id=comment_user.id,
                         comment_username=comment_user.username,
                         comment=comment.comment,
                         date_of_comment=comment.date_of_comment,
@@ -1334,9 +1326,7 @@ def display_timeline(user_id=None):
 
                 timeline.append(Post(
                     post_id=post.post_id,
-                    user_id=user.id,
                     username=user.username,
-                    post_user_id=post_user.id,
                     post_username=post_user.username,
                     post=post.post,
                     date_of_post=post.date_of_post,
@@ -1417,9 +1407,7 @@ def comment_on_post():
         # Can only post if friend
         if is_friend(user_id, post_user_id, True) and is_friend(user_id, comment_user_id, True):
 
-            post_comment = PostComments(user_id=user_id,
-                                        post_user_id=post_user_id,
-                                        comment_user_id=comment_user_id,
+            post_comment = PostComments(
                                         comment=comment,
                                         date_of_comment=date_of_comment,
                                         post_id=post_id)
