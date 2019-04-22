@@ -218,8 +218,14 @@ def login(email=None, attempted_pwd=None):
     try:
         user_info = User.query.filter_by(email=email).first()
 
-        if email is None or user_info is None:
+        if (email is None or email is '') and (user_info is None) and (attempted_pwd is None or attempted_pwd is ''):
+            result = Login(True, True, False)
+            return jsonify(result.serialize())
+        elif email is None or email is '':
             result = Login(True, False, False)
+            return jsonify(result.serialize())
+        elif attempted_pwd is None or attempted_pwd is '':
+            result = Login(False, True, False)
             return jsonify(result.serialize())
 
         # Get Key

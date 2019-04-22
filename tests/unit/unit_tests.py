@@ -226,6 +226,71 @@ class UnitTests(unittest.TestCase):
         User.query.filter_by(name='Unit Test').filter_by(username='unittest').delete()
         db.session.commit()
 
+    def test_login(self):
+
+        # Should Return
+        # 'invalid_email': True
+        # 'invalid_password': True
+        # 'login_successful': False
+
+        test_values = [['', '']]
+
+        for i in range(len(test_values)):
+            url = '/login/email={email}/password={password}'.format(email=test_values[i][0], password=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['invalid_email'], True)
+            self.assertEqual(expected['invalid_password'], True)
+            self.assertEqual(expected['login_successful'], False)
+
+        # Should Return
+        # 'invalid_email': True
+        # 'invalid_password': False
+        # 'login_successful': False
+
+        test_values = [['', 'test']]
+
+        for i in range(len(test_values)):
+            url = '/login/email={email}/password={password}'.format(email=test_values[i][0], password=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['invalid_email'], True)
+            self.assertEqual(expected['invalid_password'], False)
+            self.assertEqual(expected['login_successful'], False)
+
+        # Should Return
+        # 'invalid_email': False
+        # 'invalid_password': True
+        # 'login_successful': False
+
+        test_values = [['test@gmail.com', '']]
+
+        for i in range(len(test_values)):
+            url = '/login/email={email}/password={password}'.format(email=test_values[i][0], password=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['invalid_email'], False)
+            self.assertEqual(expected['invalid_password'], True)
+            self.assertEqual(expected['login_successful'], False)
+
+        # Should Return
+        # 'invalid_email': False
+        # 'invalid_password': True
+        # 'login_successful': False
+
+        test_values = [['josh526chen@gmail.com', 'test']]
+
+        for i in range(len(test_values)):
+            url = '/login/email={email}/password={password}'.format(email=test_values[i][0], password=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['id'], 75)
+            self.assertEqual(expected['name'], "josh")
+            self.assertEqual(expected['username'], "jchen")
+            self.assertEqual(expected['email'], "josh526chen@gmail.com")
+            self.assertEqual(expected['num_slots'], 10)
+            self.assertEqual(expected['profile_pic'], "https://upload.wikimedia.org/wikipedia/en/1/13/Stick_figure.png")
+
     def test_rate_movie(self):
         url = '/user/movie/rating'
 
