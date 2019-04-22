@@ -159,7 +159,10 @@ class PostComments(db.Model):
     date_of_comment = db.Column(db.DateTime)
     post_id = db.Column(db.Integer)
 
-    def __init__(self, comment, date_of_comment, post_id):
+    def __init__(self, user_id, post_user_id, comment_user_id, comment, date_of_comment, post_id):
+        self.user_id = user_id
+        self.post_user_id = post_user_id
+        self.comment_user_id = comment_user_id
         self.comment = comment
         self.date_of_comment = date_of_comment
         self.post_id = post_id

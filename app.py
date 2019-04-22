@@ -1413,7 +1413,9 @@ def comment_on_post():
         # Can only post if friend
         if is_friend(user_id, post_user_id, True) and is_friend(user_id, comment_user_id, True):
 
-            post_comment = PostComments(
+            post_comment = PostComments(user_id=user_id,
+                                        post_user_id=post_user_id,
+                                        comment_user_id=comment_user_id,
                                         comment=comment,
                                         date_of_comment=date_of_comment,
                                         post_id=post_id)
