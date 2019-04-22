@@ -244,7 +244,6 @@ def login(email=None, attempted_pwd=None):
         return jsonify(result.serialize())
 
 
-
 # { user_id: [user_id], tv_show_id: [tv_show_id_list] }
 # adds 10 tv shows into user_slots table
 @app.route('/resub', methods=['PUT'])
@@ -1272,8 +1271,11 @@ def display_wall(user_id=None):
             for comment in comment_list:
                 comment_user = User.query.filter_by(id=comment.comment_user_id).first()
                 comments.append(PostComment(
+                    user_id=user.id,
                     username=user.username,
+                    post_user_id=post_user.id,
                     post_username=post_user.username,
+                    comment_user_id=comment_user.id,
                     comment_username=comment_user.username,
                     comment=comment.comment,
                     date_of_comment=comment.date_of_comment,
@@ -1281,7 +1283,9 @@ def display_wall(user_id=None):
 
             wall.append(Post(
                 post_id=post.post_id,
+                user_id=user.id,
                 username=user.username,
+                post_user_id=post_user.id,
                 post_username=post_user.username,
                 post=post.post,
                 date_of_post=post.date_of_post,
@@ -1318,8 +1322,11 @@ def display_timeline(user_id=None):
                 for comment in comment_list:
                     comment_user = User.query.filter_by(id=comment.comment_user_id).first()
                     comments.append(PostComment(
+                        user_id=user.id,
                         username=user.username,
+                        post_user_id=post_user.id,
                         post_username=post_user.username,
+                        comment_user_id=comment_user.id,
                         comment_username=comment_user.username,
                         comment=comment.comment,
                         date_of_comment=comment.date_of_comment,
@@ -1327,7 +1334,9 @@ def display_timeline(user_id=None):
 
                 timeline.append(Post(
                     post_id=post.post_id,
+                    user_id=user.id,
                     username=user.username,
+                    post_user_id=post_user.id,
                     post_username=post_user.username,
                     post=post.post,
                     date_of_post=post.date_of_post,
