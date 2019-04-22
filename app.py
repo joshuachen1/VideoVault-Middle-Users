@@ -508,29 +508,6 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
 
 
 # { user_id: [user_id], tv_show_id: [tv_show_id] }
-# boolean to convert unsubscribe of user to true
-@app.route('/unsubscribe', methods=['PUT'])
-def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
-    try:
-        if function_call is False:
-            data = request.get_json()
-            user_id = data['user_id']
-            tv_show_id = data['tv_show_id']
-        check_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
-
-        if check_slot is not None:
-            change_subscription_status(user_id, tv_show_id, True)
-            db.session.commit()
-            return jsonify({'is_success': True,
-                            'is_slot_exist': True})
-        else:
-            return jsonify({'is_success': False,
-                            'is_slot_exist:': False})
-    except Exception as e:
-        return str(e)
-
-
-# { user_id: [user_id], tv_show_id: [tv_show_id] }
 # boolean to convert unsubscribe of user to false
 @app.route('/subscribe', methods=['PUT'])
 def subscribe(user_id=None, tv_show_id=None, function_call=False):
@@ -543,6 +520,29 @@ def subscribe(user_id=None, tv_show_id=None, function_call=False):
 
         if check_slot is not None:
             change_subscription_status(user_id, tv_show_id, False)
+            db.session.commit()
+            return jsonify({'is_success': True,
+                            'is_slot_exist': True})
+        else:
+            return jsonify({'is_success': False,
+                            'is_slot_exist:': False})
+    except Exception as e:
+        return str(e)
+
+
+# { user_id: [user_id], tv_show_id: [tv_show_id] }
+# boolean to convert unsubscribe of user to true
+@app.route('/unsubscribe', methods=['PUT'])
+def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
+    try:
+        if function_call is False:
+            data = request.get_json()
+            user_id = data['user_id']
+            tv_show_id = data['tv_show_id']
+        check_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+
+        if check_slot is not None:
+            change_subscription_status(user_id, tv_show_id, True)
             db.session.commit()
             return jsonify({'is_success': True,
                             'is_slot_exist': True})
@@ -1028,6 +1028,39 @@ def get_movie_comments(title=None, reverse=False):
         return str(e)
 
 
+# [url]/users=[user_id]/tv_show_list
+@app.route('/user=<int:user_id>/tv_show_list', methods=['GET'])
+def get_user_tv_show_list(user_id=None):
+    try:
+        user_rated_tv_shows = list()
+
+        # Ensure Valid User ID
+        user = User.query.filter_by(id=user_id).first()
+        if user is not None:
+            rated_tv_shows = list()
+
+            # Get list of all entries with the User's ID
+            rated_tv_show_entry = UserRatedTVShowRel.query.filter_by(user_id=user_id)
+
+            # Append the User Rated TV Shows
+            for rts_entry in rated_tv_show_entry:
+                tv_show = TVShows.query.filter_by(id=rts_entry.tv_show_id).first()
+                tv_id = tv_show.id
+                title = tv_show.title
+                image_url = tv_show.image_url
+                rating = rts_entry.user_rating
+
+                rts = RatedTVShow(tv_id, title, image_url, rating)
+                rated_tv_shows.append(rts)
+
+            user_rated_tv_shows = DisplayRatedTVShow(user.id, rated_tv_shows)
+
+        return jsonify({'tv_show_list': user_rated_tv_shows.serialize()})
+
+    except Exception as e:
+        return str(e)
+
+
 # [url]/user=[user_id]/tv_show=[tv_show_id]/rating
 @app.route('/user=<user_id>/tv_show=<tv_show_id>/rating', methods=['GET'])
 def get_user_tv_show_rating(user_id=None, tv_show_id=None):
@@ -1151,39 +1184,6 @@ def get_tv_show_comments(title=None, reverse=False):
         return str(e)
 
 
-# [url]/users=[user_id]/tv_show_list
-@app.route('/user=<int:user_id>/tv_show_list', methods=['GET'])
-def get_user_tv_show_list(user_id=None):
-    try:
-        user_rated_tv_shows = list()
-
-        # Ensure Valid User ID
-        user = User.query.filter_by(id=user_id).first()
-        if user is not None:
-            rated_tv_shows = list()
-
-            # Get list of all entries with the User's ID
-            rated_tv_show_entry = UserRatedTVShowRel.query.filter_by(user_id=user_id)
-
-            # Append the User Rated TV Shows
-            for rts_entry in rated_tv_show_entry:
-                tv_show = TVShows.query.filter_by(id=rts_entry.tv_show_id).first()
-                tv_id = tv_show.id
-                title = tv_show.title
-                image_url = tv_show.image_url
-                rating = rts_entry.user_rating
-
-                rts = RatedTVShow(tv_id, title, image_url, rating)
-                rated_tv_shows.append(rts)
-
-            user_rated_tv_shows = DisplayRatedTVShow(user.id, rated_tv_shows)
-
-        return jsonify({'tv_show_list': user_rated_tv_shows.serialize()})
-
-    except Exception as e:
-        return str(e)
-
-
 # [url]/user=[user_id]/movie=[movie_id]/is_movie_rented
 @app.route('/user=<user_id>/movie=<movie_id>/is_movie_rented', methods=['GET'])
 @app.route('/user=/movie=/is_movie_rented', methods=['GET'])
@@ -1252,27 +1252,6 @@ def rent_movie():
         return str(e)
 
 
-# add friend friend and friend adds back
-def add_friend(user_id, friend_id):
-    try:
-        # Add friend to database
-        friend = Friends(
-            user_id=user_id,
-            friend_id=friend_id
-        )
-        db.session.add(friend)
-
-        # Friend adds back
-        friend_back = Friends(
-            user_id=friend_id,
-            friend_id=user_id
-        )
-        db.session.add(friend_back)
-        return 'success'
-    except Exception as e:
-        return str(e)
-
-
 # [url]/user=[user_id]/wall
 @app.route('/user=<user_id>/wall', methods=['GET'])
 def display_wall(user_id=None):
@@ -1327,7 +1306,7 @@ def display_timeline(user_id=None):
     try:
         timeline = list()
         user = User.query.filter_by(id=user_id).first()
-        friend_list = Friends.query.filter_by(user_id=user_id)
+        friend_list = Friends.query.filter_by(user_id=user.id)
 
         # View All Self and Friend Walls
         for friend in friend_list:
@@ -1462,6 +1441,27 @@ def comment_on_post():
         return str(e)
 
 
+# add friend friend and friend adds back
+def add_friend(user_id, friend_id):
+    try:
+        # Add friend to database
+        friend = Friends(
+            user_id=user_id,
+            friend_id=friend_id
+        )
+        db.session.add(friend)
+
+        # Friend adds back
+        friend_back = Friends(
+            user_id=friend_id,
+            friend_id=user_id
+        )
+        db.session.add(friend_back)
+        return 'success'
+    except Exception as e:
+        return str(e)
+
+
 def update_average_rating(is_tv_show: bool, media_id: int):
     try:
         if is_tv_show:
@@ -1585,7 +1585,6 @@ def add_empty_slot(user_id, slot_num):
         user_id=user_id,
         slot_num=slot_num,
         tv_show_id=None,
-        unsubscribe=False,
     )
     db.session.add(user_slots)
     db.session.commit()

@@ -226,7 +226,7 @@ class UnitTests(unittest.TestCase):
         User.query.filter_by(name='Unit Test').filter_by(username='unittest').delete()
         db.session.commit()
 
-    def test_user_movie_rating(self):
+    def test_rate_movie(self):
         url = '/user/movie/rating'
 
         # Should Return
@@ -294,7 +294,8 @@ class UnitTests(unittest.TestCase):
         UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
         db.session.flush()
 
-    def test_user_tv_show_rating(self):
+
+    def test_rate_tv_show(self):
         url = '/user/tv_show/rating'
         result = self.app.post(url, json={'user_id': None,
                                           'tv_show_id': None,
@@ -376,7 +377,7 @@ class UnitTests(unittest.TestCase):
         UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).delete()
         db.session.flush()
 
-    def test_movie_commenting(self):
+    def test_comment_movie(self):
         url = '/movie/comment'
         result = self.app.post(url, json={'user_id': None,
                                           'movie_id': None,
@@ -617,7 +618,7 @@ class UnitTests(unittest.TestCase):
         UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
         db.session.flush()
 
-    def test_timeline_posting(self):
+    def test_post_timeline(self):
         url = 'timeline/post'
         result = self.app.post(url, json={'user_id': None,
                                           'post_user_id': None,
@@ -701,7 +702,7 @@ class UnitTests(unittest.TestCase):
         TimeLine.query.filter_by(post_id=expected['post_id']).delete()
         db.session.commit()
 
-    def test_comment_on_posts(self):
+    def test_comment_on_post(self):
         url = '/timeline/post/comment'
         result = self.app.post(url, json={'user_id': None,
                                           'post_user_id': None,
