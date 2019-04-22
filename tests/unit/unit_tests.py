@@ -230,7 +230,6 @@ class UnitTests(unittest.TestCase):
         db.session.commit()
 
     def test_login(self):
-
         # Should Return
         # 'invalid_email': True
         # 'invalid_password': True
@@ -296,6 +295,8 @@ class UnitTests(unittest.TestCase):
 
     def test_rate_movie(self):
         url = '/user/movie/rating'
+
+        self.assertRaises(Exception, self.app.post(url, json={}))
 
         # Should Return
         # 'valid_user': False
@@ -365,6 +366,9 @@ class UnitTests(unittest.TestCase):
 
     def test_rate_tv_show(self):
         url = '/user/tv_show/rating'
+
+        self.assertRaises(Exception, self.app.post(url, json={}))
+
         result = self.app.post(url, json={'user_id': None,
                                           'tv_show_id': None,
                                           'rating': 5, })
@@ -447,6 +451,8 @@ class UnitTests(unittest.TestCase):
 
     def test_comment_movie(self):
         url = '/movie/comment'
+
+        self.assertRaises(Exception, self.app.post(url, json={}))
         result = self.app.post(url, json={'user_id': None,
                                           'movie_id': None,
                                           'comment': 'Test'})
@@ -530,6 +536,8 @@ class UnitTests(unittest.TestCase):
 
     def test_tv_show_commenting(self):
         url = '/tv_show/comment'
+
+        self.assertRaises(Exception, self.app.post(url, json={}))
         result = self.app.post(url, json={'user_id': None,
                                           'tv_show_id': None,
                                           'comment': 'Test'})
@@ -614,6 +622,7 @@ class UnitTests(unittest.TestCase):
     def test_rent_movie(self):
         url = '/rent_movie'
 
+        self.assertRaises(Exception, self.app.post(url, json={}))
         result = self.app.post(url, json={'user_id': None,
                                           'movie_id': None})
         expected = result.get_json()
@@ -688,6 +697,8 @@ class UnitTests(unittest.TestCase):
 
     def test_post_timeline(self):
         url = 'timeline/post'
+
+        self.assertRaises(Exception, self.app.post(url, json={}))
         result = self.app.post(url, json={'user_id': None,
                                           'post_user_id': None,
                                           'post': 'Test'})
@@ -772,6 +783,8 @@ class UnitTests(unittest.TestCase):
 
     def test_comment_on_post(self):
         url = '/timeline/post/comment'
+
+        self.assertRaises(Exception, self.app.post(url, json={}))
         result = self.app.post(url, json={'user_id': None,
                                           'post_user_id': None,
                                           'comment_user_id': None,

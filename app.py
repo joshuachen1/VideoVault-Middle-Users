@@ -212,39 +212,37 @@ def signup():
 @app.route('/login/email=/password=<attempted_pwd>', methods=['GET'])
 @app.route('/login/email=/password=', methods=['GET'])
 def login(email=None, attempted_pwd=None):
-    try:
-        user_info = User.query.filter_by(email=email).first()
+    user_info = User.query.filter_by(email=email).first()
 
-        if (email is None or email is '') and (user_info is None) and (attempted_pwd is None or attempted_pwd is ''):
-            result = Login(True, True, False)
-            return jsonify(result.serialize())
-        elif email is None or email is '':
-            result = Login(True, False, False)
-            return jsonify(result.serialize())
-        elif attempted_pwd is None or attempted_pwd is '':
-            result = Login(False, True, False)
-            return jsonify(result.serialize())
+    if (email is None or email is '') and (user_info is None) and (attempted_pwd is None or attempted_pwd is ''):
+        result = Login(True, True, False)
+        return jsonify(result.serialize())
+    elif email is None or email is '':
+        result = Login(True, False, False)
+        return jsonify(result.serialize())
+    elif attempted_pwd is None or attempted_pwd is '':
+        result = Login(False, True, False)
+        return jsonify(result.serialize())
 
-        # Get Key
-        key = Key.query.filter_by(id=1).first().key
-        key = key.encode('utf-8')
-        cipher = Fernet(key)
+    # Get Key
+    key = Key.query.filter_by(id=1).first().key
+    key = key.encode('utf-8')
+    cipher = Fernet(key)
 
-        # Get Decrypted User Password
-        saved_pwd = user_info.password
-        saved_pwd = saved_pwd.encode('utf-8')
-        decrypted_saved_pwd = cipher.decrypt(saved_pwd)
-        decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
+    # Get Decrypted User Password
+    saved_pwd = user_info.password
+    saved_pwd = saved_pwd.encode('utf-8')
+    decrypted_saved_pwd = cipher.decrypt(saved_pwd)
+    decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
 
-        if decrypted_saved_pwd == attempted_pwd:
-            delete_expired_movies()
-            delete_expired_tv_shows()
-            return jsonify(user_info.serialize())
-        else:
-            result = Login(False, True, False)
-            return jsonify(result.serialize())
-    except Exception as e:
-        return str(e)
+    if decrypted_saved_pwd == attempted_pwd:
+        delete_expired_movies()
+        delete_expired_tv_shows()
+        return jsonify(user_info.serialize())
+    else:
+        result = Login(False, True, False)
+        return jsonify(result.serialize())
+
 
 
 # { user_id: [user_id], tv_show_id: [tv_show_id_list] }
