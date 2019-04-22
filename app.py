@@ -171,40 +171,37 @@ def signup():
         card_num = str(card_num)
         card_num = card_num.encode('utf-8')
         encrypted_cn = cipher.encrypt(card_num)
+        user = User(
+            name=name,
+            username=username,
+            email=email,
+            password=encrypted_pwd,
+            card_num=encrypted_cn,
+            num_slots=num_slots,
+            sub_date=sub_date,
+            profile_pic=profile_pic,
+        )
+        db.session.add(user)
+        email_sender.welcome_email(username=username, user_email=email)
 
-        try:
-            user = User(
-                name=name,
-                username=username,
-                email=email,
-                password=encrypted_pwd,
-                card_num=encrypted_cn,
-                num_slots=num_slots,
-                sub_date=sub_date,
-                profile_pic=profile_pic,
-            )
-            db.session.add(user)
-            email_sender.welcome_email(username=username, user_email=email)
-
-            new_user = User.query.filter_by(username=username).first()
-            for i in range(num_slots):
-                slot = UserSlots(
-                    user_id=new_user.id,
-                    slot_num=(i + 1),
-                    tv_show_id=None,
-                )
-                db.session.add(slot)
-
-            # Add self to friend_list
-            friend = Friends(
+        new_user = User.query.filter_by(username=username).first()
+        for i in range(num_slots):
+            slot = UserSlots(
                 user_id=new_user.id,
-                friend_id=new_user.id,
+                slot_num=(i + 1),
+                tv_show_id=None,
             )
-            db.session.add(friend)
-            db.session.commit()
-            return jsonify(new_user.serialize())
-        except Exception as e:
-            return str(e)
+            db.session.add(slot)
+
+        # Add self to friend_list
+        friend = Friends(
+            user_id=new_user.id,
+            friend_id=new_user.id,
+        )
+        db.session.add(friend)
+        db.session.commit()
+        return jsonify(new_user.serialize())
+
     except Exception as e:
         return str(e)
 
@@ -215,33 +212,37 @@ def signup():
 @app.route('/login/email=/password=<attempted_pwd>', methods=['GET'])
 @app.route('/login/email=/password=', methods=['GET'])
 def login(email=None, attempted_pwd=None):
-    try:
-        user_info = User.query.filter_by(email=email).first()
+    user_info = User.query.filter_by(email=email).first()
 
-        if email is None or user_info is None:
-            result = Login(True, False, False)
-            return jsonify(result.serialize())
+    if (email is None or email is '') and (user_info is None) and (attempted_pwd is None or attempted_pwd is ''):
+        result = Login(True, True, False)
+        return jsonify(result.serialize())
+    elif email is None or email is '':
+        result = Login(True, False, False)
+        return jsonify(result.serialize())
+    elif attempted_pwd is None or attempted_pwd is '':
+        result = Login(False, True, False)
+        return jsonify(result.serialize())
 
-        # Get Key
-        key = Key.query.filter_by(id=1).first().key
-        key = key.encode('utf-8')
-        cipher = Fernet(key)
+    # Get Key
+    key = Key.query.filter_by(id=1).first().key
+    key = key.encode('utf-8')
+    cipher = Fernet(key)
 
-        # Get Decrypted User Password
-        saved_pwd = user_info.password
-        saved_pwd = saved_pwd.encode('utf-8')
-        decrypted_saved_pwd = cipher.decrypt(saved_pwd)
-        decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
+    # Get Decrypted User Password
+    saved_pwd = user_info.password
+    saved_pwd = saved_pwd.encode('utf-8')
+    decrypted_saved_pwd = cipher.decrypt(saved_pwd)
+    decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
 
-        if decrypted_saved_pwd == attempted_pwd:
-            delete_expired_movies()
-            delete_expired_tv_shows()
-            return jsonify(user_info.serialize())
-        else:
-            result = Login(False, True, False)
-            return jsonify(result.serialize())
-    except Exception as e:
-        return str(e)
+    if decrypted_saved_pwd == attempted_pwd:
+        delete_expired_movies()
+        delete_expired_tv_shows()
+        return jsonify(user_info.serialize())
+    else:
+        result = Login(False, True, False)
+        return jsonify(result.serialize())
+
 
 
 # { user_id: [user_id], tv_show_id: [tv_show_id_list] }
@@ -508,29 +509,6 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
 
 
 # { user_id: [user_id], tv_show_id: [tv_show_id] }
-# boolean to convert unsubscribe of user to true
-@app.route('/unsubscribe', methods=['PUT'])
-def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
-    try:
-        if function_call is False:
-            data = request.get_json()
-            user_id = data['user_id']
-            tv_show_id = data['tv_show_id']
-        check_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
-
-        if check_slot is not None:
-            change_subscription_status(user_id, tv_show_id, True)
-            db.session.commit()
-            return jsonify({'is_success': True,
-                            'is_slot_exist': True})
-        else:
-            return jsonify({'is_success': False,
-                            'is_slot_exist:': False})
-    except Exception as e:
-        return str(e)
-
-
-# { user_id: [user_id], tv_show_id: [tv_show_id] }
 # boolean to convert unsubscribe of user to false
 @app.route('/subscribe', methods=['PUT'])
 def subscribe(user_id=None, tv_show_id=None, function_call=False):
@@ -543,6 +521,29 @@ def subscribe(user_id=None, tv_show_id=None, function_call=False):
 
         if check_slot is not None:
             change_subscription_status(user_id, tv_show_id, False)
+            db.session.commit()
+            return jsonify({'is_success': True,
+                            'is_slot_exist': True})
+        else:
+            return jsonify({'is_success': False,
+                            'is_slot_exist:': False})
+    except Exception as e:
+        return str(e)
+
+
+# { user_id: [user_id], tv_show_id: [tv_show_id] }
+# boolean to convert unsubscribe of user to true
+@app.route('/unsubscribe', methods=['PUT'])
+def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
+    try:
+        if function_call is False:
+            data = request.get_json()
+            user_id = data['user_id']
+            tv_show_id = data['tv_show_id']
+        check_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+
+        if check_slot is not None:
+            change_subscription_status(user_id, tv_show_id, True)
             db.session.commit()
             return jsonify({'is_success': True,
                             'is_slot_exist': True})
@@ -1028,6 +1029,39 @@ def get_movie_comments(title=None, reverse=False):
         return str(e)
 
 
+# [url]/users=[user_id]/tv_show_list
+@app.route('/user=<int:user_id>/tv_show_list', methods=['GET'])
+def get_user_tv_show_list(user_id=None):
+    try:
+        user_rated_tv_shows = list()
+
+        # Ensure Valid User ID
+        user = User.query.filter_by(id=user_id).first()
+        if user is not None:
+            rated_tv_shows = list()
+
+            # Get list of all entries with the User's ID
+            rated_tv_show_entry = UserRatedTVShowRel.query.filter_by(user_id=user_id)
+
+            # Append the User Rated TV Shows
+            for rts_entry in rated_tv_show_entry:
+                tv_show = TVShows.query.filter_by(id=rts_entry.tv_show_id).first()
+                tv_id = tv_show.id
+                title = tv_show.title
+                image_url = tv_show.image_url
+                rating = rts_entry.user_rating
+
+                rts = RatedTVShow(tv_id, title, image_url, rating)
+                rated_tv_shows.append(rts)
+
+            user_rated_tv_shows = DisplayRatedTVShow(user.id, rated_tv_shows)
+
+        return jsonify({'tv_show_list': user_rated_tv_shows.serialize()})
+
+    except Exception as e:
+        return str(e)
+
+
 # [url]/user=[user_id]/tv_show=[tv_show_id]/rating
 @app.route('/user=<user_id>/tv_show=<tv_show_id>/rating', methods=['GET'])
 def get_user_tv_show_rating(user_id=None, tv_show_id=None):
@@ -1151,39 +1185,6 @@ def get_tv_show_comments(title=None, reverse=False):
         return str(e)
 
 
-# [url]/users=[user_id]/tv_show_list
-@app.route('/user=<int:user_id>/tv_show_list', methods=['GET'])
-def get_user_tv_show_list(user_id=None):
-    try:
-        user_rated_tv_shows = list()
-
-        # Ensure Valid User ID
-        user = User.query.filter_by(id=user_id).first()
-        if user is not None:
-            rated_tv_shows = list()
-
-            # Get list of all entries with the User's ID
-            rated_tv_show_entry = UserRatedTVShowRel.query.filter_by(user_id=user_id)
-
-            # Append the User Rated TV Shows
-            for rts_entry in rated_tv_show_entry:
-                tv_show = TVShows.query.filter_by(id=rts_entry.tv_show_id).first()
-                tv_id = tv_show.id
-                title = tv_show.title
-                image_url = tv_show.image_url
-                rating = rts_entry.user_rating
-
-                rts = RatedTVShow(tv_id, title, image_url, rating)
-                rated_tv_shows.append(rts)
-
-            user_rated_tv_shows = DisplayRatedTVShow(user.id, rated_tv_shows)
-
-        return jsonify({'tv_show_list': user_rated_tv_shows.serialize()})
-
-    except Exception as e:
-        return str(e)
-
-
 # [url]/user=[user_id]/movie=[movie_id]/is_movie_rented
 @app.route('/user=<user_id>/movie=<movie_id>/is_movie_rented', methods=['GET'])
 @app.route('/user=/movie=/is_movie_rented', methods=['GET'])
@@ -1252,27 +1253,6 @@ def rent_movie():
         return str(e)
 
 
-# add friend friend and friend adds back
-def add_friend(user_id, friend_id):
-    try:
-        # Add friend to database
-        friend = Friends(
-            user_id=user_id,
-            friend_id=friend_id
-        )
-        db.session.add(friend)
-
-        # Friend adds back
-        friend_back = Friends(
-            user_id=friend_id,
-            friend_id=user_id
-        )
-        db.session.add(friend_back)
-        return 'success'
-    except Exception as e:
-        return str(e)
-
-
 # [url]/user=[user_id]/wall
 @app.route('/user=<user_id>/wall', methods=['GET'])
 def display_wall(user_id=None):
@@ -1292,11 +1272,8 @@ def display_wall(user_id=None):
             for comment in comment_list:
                 comment_user = User.query.filter_by(id=comment.comment_user_id).first()
                 comments.append(PostComment(
-                    user_id=user.id,
                     username=user.username,
-                    post_user_id=post_user.id,
                     post_username=post_user.username,
-                    comment_user_id=comment_user.id,
                     comment_username=comment_user.username,
                     comment=comment.comment,
                     date_of_comment=comment.date_of_comment,
@@ -1304,9 +1281,7 @@ def display_wall(user_id=None):
 
             wall.append(Post(
                 post_id=post.post_id,
-                user_id=user.id,
                 username=user.username,
-                post_user_id=post_user.id,
                 post_username=post_user.username,
                 post=post.post,
                 date_of_post=post.date_of_post,
@@ -1327,7 +1302,7 @@ def display_timeline(user_id=None):
     try:
         timeline = list()
         user = User.query.filter_by(id=user_id).first()
-        friend_list = Friends.query.filter_by(user_id=user_id)
+        friend_list = Friends.query.filter_by(user_id=user.id)
 
         # View All Self and Friend Walls
         for friend in friend_list:
@@ -1343,11 +1318,8 @@ def display_timeline(user_id=None):
                 for comment in comment_list:
                     comment_user = User.query.filter_by(id=comment.comment_user_id).first()
                     comments.append(PostComment(
-                        user_id=user.id,
                         username=user.username,
-                        post_user_id=post_user.id,
                         post_username=post_user.username,
-                        comment_user_id=comment_user.id,
                         comment_username=comment_user.username,
                         comment=comment.comment,
                         date_of_comment=comment.date_of_comment,
@@ -1355,9 +1327,7 @@ def display_timeline(user_id=None):
 
                 timeline.append(Post(
                     post_id=post.post_id,
-                    user_id=user.id,
                     username=user.username,
-                    post_user_id=post_user.id,
                     post_username=post_user.username,
                     post=post.post,
                     date_of_post=post.date_of_post,
@@ -1458,6 +1428,27 @@ def comment_on_post():
                             'valid_friend': False,
                             'valid_post_id': True})
 
+    except Exception as e:
+        return str(e)
+
+
+# add friend friend and friend adds back
+def add_friend(user_id, friend_id):
+    try:
+        # Add friend to database
+        friend = Friends(
+            user_id=user_id,
+            friend_id=friend_id
+        )
+        db.session.add(friend)
+
+        # Friend adds back
+        friend_back = Friends(
+            user_id=friend_id,
+            friend_id=user_id
+        )
+        db.session.add(friend_back)
+        return 'success'
     except Exception as e:
         return str(e)
 
@@ -1585,7 +1576,6 @@ def add_empty_slot(user_id, slot_num):
         user_id=user_id,
         slot_num=slot_num,
         tv_show_id=None,
-        unsubscribe=False,
     )
     db.session.add(user_slots)
     db.session.commit()

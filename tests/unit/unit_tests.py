@@ -48,6 +48,8 @@ class UnitTests(unittest.TestCase):
     def test_signup(self):
         url = '/signup'
 
+        self.assertRaises(Exception, self.app.post(url, json={}))
+
         name = 'Unit Test'
         username = 'unittest'
         email = 'unit@test.com'
@@ -69,6 +71,7 @@ class UnitTests(unittest.TestCase):
                       {'name': None, 'username': None, 'email': '',   'password': None, 'card_num': None},
                       {'name': None, 'username': None, 'email': None, 'password': '',   'card_num': None},
                       {'name': None, 'username': None, 'email': None, 'password': None, 'card_num': ''},
+                      {'name': None, 'username': 'blah', 'email': None, 'password': None, 'card_num': ''},
                       ]
 
         for test_json in test_jsons:
@@ -210,7 +213,7 @@ class UnitTests(unittest.TestCase):
                        'username': 'unittest',
                        'email': 'unit@test.com',
                        'password': 'pythonunittest',
-                       'card_num': 123}
+                       'card_num': card_num}
 
         result = self.app.post(url, json=new_user)
         expected = result.get_json()
@@ -226,8 +229,74 @@ class UnitTests(unittest.TestCase):
         User.query.filter_by(name='Unit Test').filter_by(username='unittest').delete()
         db.session.commit()
 
-    def test_user_movie_rating(self):
+    def test_login(self):
+        # Should Return
+        # 'invalid_email': True
+        # 'invalid_password': True
+        # 'login_successful': False
+
+        test_values = [['', '']]
+
+        for i in range(len(test_values)):
+            url = '/login/email={email}/password={password}'.format(email=test_values[i][0], password=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['invalid_email'], True)
+            self.assertEqual(expected['invalid_password'], True)
+            self.assertEqual(expected['login_successful'], False)
+
+        # Should Return
+        # 'invalid_email': True
+        # 'invalid_password': False
+        # 'login_successful': False
+
+        test_values = [['', 'test']]
+
+        for i in range(len(test_values)):
+            url = '/login/email={email}/password={password}'.format(email=test_values[i][0], password=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['invalid_email'], True)
+            self.assertEqual(expected['invalid_password'], False)
+            self.assertEqual(expected['login_successful'], False)
+
+        # Should Return
+        # 'invalid_email': False
+        # 'invalid_password': True
+        # 'login_successful': False
+
+        test_values = [['test@gmail.com', '']]
+
+        for i in range(len(test_values)):
+            url = '/login/email={email}/password={password}'.format(email=test_values[i][0], password=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['invalid_email'], False)
+            self.assertEqual(expected['invalid_password'], True)
+            self.assertEqual(expected['login_successful'], False)
+
+        # Should Return
+        # 'invalid_email': False
+        # 'invalid_password': True
+        # 'login_successful': False
+
+        test_values = [['josh526chen@gmail.com', 'test']]
+
+        for i in range(len(test_values)):
+            url = '/login/email={email}/password={password}'.format(email=test_values[i][0], password=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['id'], 75)
+            self.assertEqual(expected['name'], "josh")
+            self.assertEqual(expected['username'], "jchen")
+            self.assertEqual(expected['email'], "josh526chen@gmail.com")
+            self.assertEqual(expected['num_slots'], 10)
+            self.assertEqual(expected['profile_pic'], "https://upload.wikimedia.org/wikipedia/en/1/13/Stick_figure.png")
+
+    def test_rate_movie(self):
         url = '/user/movie/rating'
+
+        self.assertRaises(Exception, self.app.post(url, json={}))
 
         # Should Return
         # 'valid_user': False
@@ -294,8 +363,12 @@ class UnitTests(unittest.TestCase):
         UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
         db.session.flush()
 
-    def test_user_tv_show_rating(self):
+
+    def test_rate_tv_show(self):
         url = '/user/tv_show/rating'
+
+        self.assertRaises(Exception, self.app.post(url, json={}))
+
         result = self.app.post(url, json={'user_id': None,
                                           'tv_show_id': None,
                                           'rating': 5, })
@@ -376,8 +449,10 @@ class UnitTests(unittest.TestCase):
         UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).delete()
         db.session.flush()
 
-    def test_movie_commenting(self):
+    def test_comment_movie(self):
         url = '/movie/comment'
+
+        self.assertRaises(Exception, self.app.post(url, json={}))
         result = self.app.post(url, json={'user_id': None,
                                           'movie_id': None,
                                           'comment': 'Test'})
@@ -461,6 +536,8 @@ class UnitTests(unittest.TestCase):
 
     def test_tv_show_commenting(self):
         url = '/tv_show/comment'
+
+        self.assertRaises(Exception, self.app.post(url, json={}))
         result = self.app.post(url, json={'user_id': None,
                                           'tv_show_id': None,
                                           'comment': 'Test'})
@@ -545,6 +622,7 @@ class UnitTests(unittest.TestCase):
     def test_rent_movie(self):
         url = '/rent_movie'
 
+        self.assertRaises(Exception, self.app.post(url, json={}))
         result = self.app.post(url, json={'user_id': None,
                                           'movie_id': None})
         expected = result.get_json()
@@ -617,8 +695,10 @@ class UnitTests(unittest.TestCase):
         UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
         db.session.flush()
 
-    def test_timeline_posting(self):
+    def test_post_timeline(self):
         url = 'timeline/post'
+
+        self.assertRaises(Exception, self.app.post(url, json={}))
         result = self.app.post(url, json={'user_id': None,
                                           'post_user_id': None,
                                           'post': 'Test'})
@@ -701,8 +781,10 @@ class UnitTests(unittest.TestCase):
         TimeLine.query.filter_by(post_id=expected['post_id']).delete()
         db.session.commit()
 
-    def test_comment_on_posts(self):
+    def test_comment_on_post(self):
         url = '/timeline/post/comment'
+
+        self.assertRaises(Exception, self.app.post(url, json={}))
         result = self.app.post(url, json={'user_id': None,
                                           'post_user_id': None,
                                           'comment_user_id': None,
@@ -867,4 +949,3 @@ class UnitTests(unittest.TestCase):
         assert pc is not None
         PostComments.query.filter_by(comment_id=expected['comment_id']).delete()
         db.session.commit()
-
