@@ -264,10 +264,10 @@ def login(email=None, attempted_pwd=None):
 def resub():
     data = request.get_json()
     user_id = data['user_id']
-    tv_show_id = data['tv_show_id']
+    tv_show_ids = data['tv_show_id']
 
     user_check = User.query.filter_by(id=user_id).first()
-    tv_show_len = len(set(tv_show_id))
+    tv_show_len = len(set(tv_show_ids))
 
     # creating booleans
     is_success = True
@@ -277,7 +277,7 @@ def resub():
     is_slots_exist = True
 
     # return boolean for invalid inputs
-    if tv_show_len is not 10:
+    if tv_show_len < 10:
         is_success = False
         is_valid_number_of_tv_shows = False
     if user_check is None:
@@ -291,7 +291,7 @@ def resub():
                         'slots_exists': is_slots_exist})
     # add each entry to the user_slots table
     i = 1
-    for tv_show_id in tv_show_id:
+    for tv_show_id in tv_show_ids:
         tv_show_check = TVShows.query.filter_by(id=tv_show_id).first()
 
         # return boolean for invalid inputs
@@ -566,6 +566,12 @@ def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
     except Exception as e:
         return str(e)
 
+@app.route('/is_unsubscribed/user_id=<user_id>/tv_show_id=<tv_show_id>', methods=['GET'])
+def is_unsubscribe(user_id=None,tv_show_id=None):
+    unsubscribe_boolean=UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+    if unsubscribe_boolean is not None and unsubscribe_boolean.unsubscribe is True:
+        return jsonify({"is_unsubscribed":True})
+    return jsonify({"is_unsubscribed":False})
 
 # { user_id: [user_id] }
 # route to clear all slots
