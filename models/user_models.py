@@ -41,6 +41,7 @@ class User(db.Model):
     num_slots = db.Column(db.Integer)
     sub_date = db.Column(db.Date)
     profile_pic = db.Column(db.VARCHAR)
+    slots_to_delete = db.Column(db.Integer)
 
     def __init__(self, name, username, email, password, card_num, num_slots, sub_date, profile_pic):
         self.name = name
@@ -51,6 +52,7 @@ class User(db.Model):
         self.num_slots = num_slots
         self.sub_date = sub_date
         self.profile_pic = profile_pic
+        self.slots_to_delete = 0
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
@@ -64,6 +66,7 @@ class User(db.Model):
             'num_slots': self.num_slots,
             'sub_date': self.sub_date,
             'profile_pic': self.profile_pic,
+            'slots_to_delete': self.slots_to_delete
         }
 
 
@@ -309,12 +312,14 @@ class UserSlots(db.Model):
     slot_num = db.Column(db.Integer, primary_key=True)
     tv_show_id = db.Column(db.Integer)
     unsubscribe = db.Column(db.BOOLEAN)
+    delete_slot = db.Column(db.BOOLEAN)
 
     def __init__(self, user_id, slot_num, tv_show_id):
         self.user_id = user_id
         self.slot_num = slot_num
         self.tv_show_id = tv_show_id
         self.unsubscribe = False
+        self.delete_slot = False
 
 
 class DisplayUserSlots:

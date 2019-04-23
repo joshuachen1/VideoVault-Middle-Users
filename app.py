@@ -573,6 +573,40 @@ def is_unsubscribe(user_id=None,tv_show_id=None):
         return jsonify({"is_unsubscribed":True})
     return jsonify({"is_unsubscribed":False})
 
+
+# increment number of slots to delete by 1
+@app.route('/delete_slot_increment', methods=['PUT'])
+def delete_slot_increment(user_id=None):
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        user = User.query.filter_by(id=user_id).first()
+        # can delete slot
+        if user.num_slots - user.slots_to_delete >= 10:
+            increment_slots_to_delete(user_id)
+            return jsonify({'success':True})
+        else:
+            return jsonify({'success':False})
+    except Exception as e:
+        return str(e)
+
+# decrement number of slots to delete by 1
+@app.route('/delete_slot_decrement', methods=['PUT'])
+def delete_slot_decrement(user_id=None):
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        user = User.query.filter_by(id=user_id).first()
+        # can delete slot
+        if user.num_slots - user.slots_to_delete >= 10:
+            decrement_slots_to_delete(user_id)
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False})
+    except Exception as e:
+        return str(e)
+
+
 # { user_id: [user_id] }
 # route to clear all slots
 @app.route('/clear_slots', methods=['PUT'])
@@ -588,35 +622,6 @@ def clear_slots():
             return jsonify({'slots_cleared': True})
         else:
             return jsonify({'slots_cleared': False})
-    except Exception as e:
-        return str(e)
-
-
-# { user_id: [user_id] }
-# route to delete a slot only if top slot is empty
-@app.route('/delete_slot', methods=['PUT'])
-def delete_slot(user_id=None):
-    try:
-        data = request.get_json()
-        user_id = data['user_id']
-
-        user = User.query.filter_by(id=user_id).first()
-        top_user_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).first()
-        empty_slot = top_user_slot.tv_show_id is None
-        more_than_ten_slots = user.num_slots > 10
-
-        if empty_slot and more_than_ten_slots:
-            UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).delete()
-            decrement_slot(user_id)
-            db.session.commit()
-            return jsonify({'success': True,
-                            'more_than_ten_slots': more_than_ten_slots,
-                            'empty_slot': empty_slot})
-        else:
-            return jsonify({'success': False,
-                            'more_than_ten_slots': more_than_ten_slots,
-                            'empty_slot': empty_slot})
-
     except Exception as e:
         return str(e)
 
@@ -1602,6 +1607,33 @@ def delete_expired_tv_shows(func_call=False, user_id=None):
         return str(e)
 
 
+def delete_expired_slots(func_call=False, user_id=None):
+    try:
+        month_ago_date = (datetime.now() - timedelta(30)).date()
+        # ensures list is not empty
+        if func_call is True and user_id is not None:
+            expired_users = User.query.filter_by(user_id=user_id).filter(User.sub_date <= month_ago_date)
+        else:
+            expired_users = User.query.filter(User.sub_date <= month_ago_date)
+
+        if expired_users:
+            for user in expired_users:
+                remove_list = UserSlots.query.filter_by(user_id=user.id).filter_by(delete_slot=True)
+                update_sub_date(user.id)
+                for slots_to_remove in remove_list:
+                    subscribe(user.id, slots_to_remove.tv_show_id, True)
+                    #set flag back to false
+                    delete_slot(user.id)
+
+            db.session.commit()
+            return jsonify({'expired_slots_removed': True})
+        else:
+            return jsonify({'expired_slots_removed': False})
+
+    except Exception as e:
+        return str(e)
+
+
 # updates user's resub date by adding 30 days
 def update_sub_date(user_id=None):
     # increment slot number in users
@@ -1663,6 +1695,26 @@ def remove_tv_show(user_id=None, tv_show_id=None):
             if slot.slot_num == len(user_slots):
                 clear_individual_slot(user_id, slot.slot_num)
         return jsonify({'tv_show_deleted': True})
+
+    except Exception as e:
+        return str(e)
+
+
+# function to delete a slot only if top slot is empty
+def delete_slot(func_call=False, user_id=None):
+    try:
+        user = User.query.filter_by(id=user_id).first()
+        top_user_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).first()
+        empty_slot = top_user_slot.tv_show_id is None
+        more_than_ten_slots = user.num_slots > 10
+
+        if empty_slot and more_than_ten_slots:
+            UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).delete()
+            decrement_slot(user_id)
+            db.session.commit()
+            return 'success'
+        else:
+            return 'failure'
 
     except Exception as e:
         return str(e)
@@ -1730,6 +1782,51 @@ def decrement_slot(user_id) -> int:
 
     except Exception as e:
         return str(e)
+
+
+def increment_slots_to_delete(user_id=None):
+    adjust_slot(user_id, True)
+
+
+def decrement_slots_to_delete(user_id=None):
+    adjust_slot(user_id, False)
+
+
+def adjust_slot(user_id, is_increment):
+    # increment slot number in users
+    check_id = User.query.filter_by(id=user_id).first()
+
+    name = check_id.name
+    username = check_id.username
+    email = check_id.email
+    password = check_id.password
+    card_num = check_id.card_num
+    num_slots = check_id.num_slots
+    sub_date = check_id.sub_date
+    profile_pic = check_id.profile_pic
+    if is_increment:
+        slots_to_delete = check_id.slots_to_delete + 1
+    else:
+        slots_to_delete = check_id.slots_to_delete - 1
+
+    try:
+        user = User.query.filter_by(id=user_id).first()
+        user.id = user_id
+        user.name = name
+        user.username = username
+        user.email = email
+        user.password = password
+        user.card_num = card_num
+        user.num_slots = num_slots
+        user.sub_date = sub_date
+        user.profile_pic = profile_pic
+        user.slots_to_delete = slots_to_delete
+
+        return num_slots
+
+    except Exception as e:
+        return str(e)
+
 
 
 def clear_individual_slot(user_id, slot_num):
