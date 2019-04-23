@@ -206,6 +206,22 @@ def signup():
         return str(e)
 
 
+#[url]/server_update
+@app.route('/database_update', methods=['DELETE'])
+def database_update():
+    data = request.get_json()
+    user_id = data['user_id']
+
+    if User.query.filter_by(id=user_id).scalar() is not None:
+        delete_expired_movies(True, user_id)
+        delete_expired_tv_shows(True, user_id)
+        return jsonify({'success': True,
+                        'valid_user_id': True})
+    else:
+        return jsonify({'success':False,
+                        'valid_user_id':False})
+
+
 # [url]/login/email=[email]/password=[password]
 @app.route('/login/email=<email>/password=<attempted_pwd>', methods=['GET'])
 @app.route('/login/email=<email>/password=', methods=['GET'])
@@ -236,8 +252,6 @@ def login(email=None, attempted_pwd=None):
     decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
 
     if decrypted_saved_pwd == attempted_pwd:
-        delete_expired_movies()
-        delete_expired_tv_shows()
         return jsonify(user_info.serialize())
     else:
         result = Login(False, True, False)
@@ -1508,29 +1522,36 @@ def get_average_rating(is_tv_show: bool, media_id: int):
 
 
 # checks database if movies are past rented due date and deletes them
-def delete_expired_movies():
+def delete_expired_movies(func_call=False, user_id=None):
     try:
-        yesterday_datetime = datetime.now() - timedelta(1)
 
-        # ensures list is not empty
-        check_not_empty = UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
-        if check_not_empty:
-            UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
-            db.session.commit()
-            return 'success'
-        else:
-            return 'no movies to delete'
+            yesterday_datetime = datetime.now() - timedelta(1)
+
+            # ensures list is not empty
+            if func_call is True and user_id is not None:
+                check_not_empty = UserRentedMovies.query.filter_by(user_id=user_id).filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
+            else:
+                check_not_empty = UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
+            if check_not_empty:
+                UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
+                db.session.commit()
+                return 'success'
+            else:
+                return 'no movies to delete'
 
     except Exception as e:
         return str(e)
 
 
 # need to add to login function and need to add check to not allow deleting slots past 10
-def delete_expired_tv_shows():
+def delete_expired_tv_shows(func_call=False, user_id=None):
     try:
         month_ago_date = (datetime.now() - timedelta(30)).date()
         # ensures list is not empty
-        expired_users = User.query.filter(User.sub_date <= month_ago_date)
+        if func_call is True and user_id is not None:
+            expired_users = User.query.filter_by(user_id=user_id).filter(User.sub_date <= month_ago_date)
+        else:
+            expired_users = User.query.filter(User.sub_date <= month_ago_date)
 
         if expired_users:
             for user in expired_users:
