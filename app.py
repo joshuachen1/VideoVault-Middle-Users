@@ -206,6 +206,22 @@ def signup():
         return str(e)
 
 
+#[url]/server_update
+@app.route('/database_update', methods=['DELETE'])
+def database_update():
+    data = request.get_json()
+    user_id = data['user_id']
+
+    if User.query.filter_by(id=user_id).scalar() is not None:
+        delete_expired_movies(True, user_id)
+        delete_expired_tv_shows(True, user_id)
+        return jsonify({'success': True,
+                        'valid_user_id': True})
+    else:
+        return jsonify({'success':False,
+                        'valid_user_id':False})
+
+
 # [url]/login/email=[email]/password=[password]
 @app.route('/login/email=<email>/password=<attempted_pwd>', methods=['GET'])
 @app.route('/login/email=<email>/password=', methods=['GET'])
@@ -236,8 +252,6 @@ def login(email=None, attempted_pwd=None):
     decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
 
     if decrypted_saved_pwd == attempted_pwd:
-        delete_expired_movies()
-        delete_expired_tv_shows()
         return jsonify(user_info.serialize())
     else:
         result = Login(False, True, False)
@@ -250,10 +264,10 @@ def login(email=None, attempted_pwd=None):
 def resub():
     data = request.get_json()
     user_id = data['user_id']
-    tv_show_id = data['tv_show_id']
+    tv_show_ids = data['tv_show_id']
 
     user_check = User.query.filter_by(id=user_id).first()
-    tv_show_len = len(set(tv_show_id))
+    tv_show_len = len(set(tv_show_ids))
 
     # creating booleans
     is_success = True
@@ -263,7 +277,7 @@ def resub():
     is_slots_exist = True
 
     # return boolean for invalid inputs
-    if tv_show_len is not 10:
+    if tv_show_len < 10:
         is_success = False
         is_valid_number_of_tv_shows = False
     if user_check is None:
@@ -277,7 +291,7 @@ def resub():
                         'slots_exists': is_slots_exist})
     # add each entry to the user_slots table
     i = 1
-    for tv_show_id in tv_show_id:
+    for tv_show_id in tv_show_ids:
         tv_show_check = TVShows.query.filter_by(id=tv_show_id).first()
 
         # return boolean for invalid inputs
@@ -552,6 +566,12 @@ def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
     except Exception as e:
         return str(e)
 
+@app.route('/is_unsubscribed/user_id=<user_id>/tv_show_id=<tv_show_id>', methods=['GET'])
+def is_unsubscribe(user_id=None,tv_show_id=None):
+    unsubscribe_boolean=UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+    if unsubscribe_boolean is not None and unsubscribe_boolean.unsubscribe is True:
+        return jsonify({"is_unsubscribed":True})
+    return jsonify({"is_unsubscribed":False})
 
 # { user_id: [user_id] }
 # route to clear all slots
@@ -1310,17 +1330,17 @@ def display_timeline(user_id=None):
 
         # View All Self and Friend Walls
         for friend in friend_list:
-            friend_wall = TimeLine.query.filter_by(user_id=friend.friend_id).order_by(TimeLine.date_of_post)
+            friend_wall = TimeLine.query.filter_by(wall_id=friend.friend_id).order_by(TimeLine.date_of_post)
 
             for post in friend_wall:
-                user = User.query.filter_by(id=post.user_id).first()
-                post_user = User.query.filter_by(id=post.post_user_id).first()
+                user = User.query.filter_by(id=post.wall_id).first()
+                post_user = User.query.filter_by(id=post.user_id).first()
 
                 comments = list()
-                comment_list = PostComments.query.filter_by(user_id=post.user_id).filter_by(
-                    post_user_id=post.post_user_id).filter_by(post_id=post.post_id)
+                comment_list = PostComments.query.filter_by(user_id=post.wall_id).filter_by(
+                    post_user_id=post.user_id).filter_by(post_id=post.post_id)
                 for comment in comment_list:
-                    comment_user = User.query.filter_by(id=comment.comment_user_id).first()
+                    comment_user = User.query.filter_by(id=comment.user_id).first()
                     comments.append(PostComment(
                         user_id=user.id,
                         username=user.username,
@@ -1358,20 +1378,20 @@ def display_timeline(user_id=None):
 def post_timeline():
     try:
         data = request.get_json()
+        wall_id = data['wall_id']
         user_id = data['user_id']
-        post_user_id = data['post_user_id']
         post = data['post']
         date_of_post = datetime.now()
 
-        if User.query.filter_by(id=user_id).first() is None:
+        if User.query.filter_by(id=wall_id).first() is None:
             return jsonify({'success': False,
                             'valid_user': False,
                             'valid_friend': False})
 
         # Can only post if friend
-        if is_friend(user_id, post_user_id, True):
-            timeline = TimeLine(user_id=user_id,
-                                post_user_id=post_user_id,
+        if is_friend(user_id, wall_id, True):
+            timeline = TimeLine(wall_id=wall_id,
+                                user_id=user_id,
                                 post=post,
                                 date_of_post=date_of_post)
             db.session.add(timeline)
@@ -1389,18 +1409,16 @@ def post_timeline():
         return str(e)
 
 
-# { "user_id": [user_id], "post_user_id": [post_user_id], "comment_user_id": [comment_user_id', "comment": [comment_text] }
+# { "post_id": [post_id], "user_id": [user_id], "comment": [comment_text] }
 # [url]/timeline/post/comment
 @app.route('/timeline/post/comment', methods=['POST'])
 def comment_on_post():
     try:
         data = request.get_json()
+        post_id = data['post_id']
         user_id = data['user_id']
-        post_user_id = data['post_user_id']
-        comment_user_id = data['comment_user_id']
         comment = data['comment']
         date_of_comment = datetime.now()
-        post_id = data['post_id']
 
         if User.query.filter_by(id=user_id).first() is None:
             return jsonify({'success': False,
@@ -1414,12 +1432,14 @@ def comment_on_post():
                             'valid_friend': False,
                             'valid_post_id': False})
 
+        wall_id = TimeLine.query.filter_by(post_id=post_id).first().wall_id
+        post_user_id = TimeLine.query.filter_by(post_id=post_id).first().user_id
         # Can only post if friend
-        if is_friend(user_id, post_user_id, True) and is_friend(user_id, comment_user_id, True):
+        if is_friend(user_id, wall_id, True):
 
-            post_comment = PostComments(user_id=user_id,
+            post_comment = PostComments(wall_id=wall_id,
                                         post_user_id=post_user_id,
-                                        comment_user_id=comment_user_id,
+                                        user_id=user_id,
                                         comment=comment,
                                         date_of_comment=date_of_comment,
                                         post_id=post_id)
@@ -1508,29 +1528,49 @@ def get_average_rating(is_tv_show: bool, media_id: int):
 
 
 # checks database if movies are past rented due date and deletes them
-def delete_expired_movies():
+def delete_expired_movies(func_call=False, user_id=None):
     try:
-        yesterday_datetime = datetime.now() - timedelta(1)
 
-        # ensures list is not empty
-        check_not_empty = UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
-        if check_not_empty:
-            UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
-            db.session.commit()
-            return 'success'
-        else:
-            return 'no movies to delete'
+            yesterday_datetime = datetime.now() - timedelta(1)
+            users_list = list()
+            # ensures list is not empty
+            if func_call is True and user_id is not None:
+                check_not_empty = UserRentedMovies.query.filter_by(user_id=user_id).filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
+                user = User.query.filter_by(id=user_id).first()
+                users_list.append(user)
+            else:
+                check_not_empty = UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
+                users_id_list = list()
+                # get all user ids and remove duplicates
+                for user_movie_rel in check_not_empty:
+                    users_id_list.append(user_movie_rel.user_id)
+
+                users_id_list = list(dict.fromkeys(users_list))
+                for user_id in users_id_list:
+                    users_list = User.query.filter_by(id=user_id).first()
+
+            if check_not_empty:
+                UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
+                db.session.commit()
+                for user in users_list:
+                    email_sender.movie_return_email(user.username, user.email)
+                return 'success'
+            else:
+                return 'no movies to delete'
 
     except Exception as e:
         return str(e)
 
 
 # need to add to login function and need to add check to not allow deleting slots past 10
-def delete_expired_tv_shows():
+def delete_expired_tv_shows(func_call=False, user_id=None):
     try:
         month_ago_date = (datetime.now() - timedelta(30)).date()
         # ensures list is not empty
-        expired_users = User.query.filter(User.sub_date <= month_ago_date)
+        if func_call is True and user_id is not None:
+            expired_users = User.query.filter_by(user_id=user_id).filter(User.sub_date <= month_ago_date)
+        else:
+            expired_users = User.query.filter(User.sub_date <= month_ago_date)
 
         if expired_users:
             for user in expired_users:

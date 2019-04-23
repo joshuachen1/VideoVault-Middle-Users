@@ -48,6 +48,7 @@ class UnitTests(unittest.TestCase):
     def test_signup(self):
         url = '/signup'
 
+        # Check Exception
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         name = 'Unit Test'
@@ -296,6 +297,7 @@ class UnitTests(unittest.TestCase):
     def test_rate_movie(self):
         url = '/user/movie/rating'
 
+        # Check Exception
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         # Should Return
@@ -367,6 +369,7 @@ class UnitTests(unittest.TestCase):
     def test_rate_tv_show(self):
         url = '/user/tv_show/rating'
 
+        # Check Exception
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         result = self.app.post(url, json={'user_id': None,
@@ -452,7 +455,9 @@ class UnitTests(unittest.TestCase):
     def test_comment_movie(self):
         url = '/movie/comment'
 
+        # Check Exception
         self.assertRaises(Exception, self.app.post(url, json={}))
+
         result = self.app.post(url, json={'user_id': None,
                                           'movie_id': None,
                                           'comment': 'Test'})
@@ -537,7 +542,9 @@ class UnitTests(unittest.TestCase):
     def test_tv_show_commenting(self):
         url = '/tv_show/comment'
 
+        # Check Exception
         self.assertRaises(Exception, self.app.post(url, json={}))
+
         result = self.app.post(url, json={'user_id': None,
                                           'tv_show_id': None,
                                           'comment': 'Test'})
@@ -622,7 +629,9 @@ class UnitTests(unittest.TestCase):
     def test_rent_movie(self):
         url = '/rent_movie'
 
+        # Check Exception
         self.assertRaises(Exception, self.app.post(url, json={}))
+
         result = self.app.post(url, json={'user_id': None,
                                           'movie_id': None})
         expected = result.get_json()
@@ -698,78 +707,49 @@ class UnitTests(unittest.TestCase):
     def test_post_timeline(self):
         url = 'timeline/post'
 
+        # Check Exception
         self.assertRaises(Exception, self.app.post(url, json={}))
-        result = self.app.post(url, json={'user_id': None,
-                                          'post_user_id': None,
-                                          'post': 'Test'})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': None,
-                                          'post_user_id': 0,
-                                          'post': 'Test'})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['success'], False)
+        # Should Return
+        # 'valid_user': False,
+        # 'valid_friend': False,
+        # 'success': False
+        test_jsons = [{'wall_id': None, 'user_id': None, 'post': None},
+                      {'wall_id': None, 'user_id': '', 'post': None},
+                      {'wall_id': '', 'user_id': None, 'post': None},
+                      {'wall_id': '', 'user_id': '', 'post': None},
+                      ]
 
-        result = self.app.post(url, json={'user_id': 0,
-                                          'post_user_id': None,
-                                          'post': 'Test'})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['success'], False)
+        for test_json in test_jsons:
+            result = self.app.post(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_friend'], False)
+            self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': 0,
-                                          'post_user_id': 0,
-                                          'post': 'Test'})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['success'], False)
+        # Should Return
+        # 'valid_user': True,
+        # 'valid_friend': False,
+        # 'success': False
+        test_jsons = [{'wall_id': 1, 'user_id': 4, 'post': None},
+                      {'wall_id': 1, 'user_id': 5, 'post': None},
+                      ]
 
-        result = self.app.post(url, json={'user_id': 1,
-                                          'post_user_id': None,
-                                          'post': 'Test'})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['success'], False)
+        for test_json in test_jsons:
+            result = self.app.post(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_friend'], False)
+            self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': 1,
-                                          'post_user_id': 0,
-                                          'post': 'Test'})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['success'], False)
-
-        result = self.app.post(url, json={'user_id': None,
-                                          'post_user_id': 1,
-                                          'post': 'Test'})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['success'], False)
-
-        result = self.app.post(url, json={'user_id': None,
-                                          'post_user_id': 1,
-                                          'post': 'Test'})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['success'], False)
-
+        # Should be successful
+        wall_id = 1
         user_id = 1
-        post_user_id = 1
         post = 'Test'
 
-        result = self.app.post(url, json={'user_id': user_id,
-                                          'post_user_id': post_user_id,
-                                          'post': post})
+        test_json = {'wall_id': wall_id, 'user_id': user_id, 'post': post}
+
+        result = self.app.post(url, json=test_json)
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
         self.assertEqual(expected['valid_friend'], True)
@@ -784,158 +764,66 @@ class UnitTests(unittest.TestCase):
     def test_comment_on_post(self):
         url = '/timeline/post/comment'
 
+        # Check Exception
         self.assertRaises(Exception, self.app.post(url, json={}))
-        result = self.app.post(url, json={'user_id': None,
-                                          'post_user_id': None,
-                                          'comment_user_id': None,
-                                          'comment': 'Test',
-                                          'post_id': None})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['valid_post_id'], False)
-        self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': 0,
-                                          'post_user_id': None,
-                                          'comment_user_id': None,
-                                          'comment': 'Test',
-                                          'post_id': None})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['valid_post_id'], False)
-        self.assertEqual(expected['success'], False)
+        # Should Return
+        # 'valid_user': False,
+        # 'valid_friend': False,
+        # 'valid_post_id': False,
+        # 'success': False
+        test_jsons = [{'post_id': None, 'user_id': None, 'comment': None},
+                      {'post_id': None, 'user_id': '', 'comment': None},
+                      {'post_id': '', 'user_id': None, 'comment': None},
+                      {'post_id': '', 'user_id': '', 'comment': None},
+                      ]
 
-        result = self.app.post(url, json={'user_id': None,
-                                          'post_user_id': 0,
-                                          'comment_user_id': None,
-                                          'comment': 'Test',
-                                          'post_id': None})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['valid_post_id'], False)
-        self.assertEqual(expected['success'], False)
+        for test_json in test_jsons:
+            result = self.app.post(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_friend'], False)
+            self.assertEqual(expected['valid_post_id'], False)
+            self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': None,
-                                          'post_user_id': None,
-                                          'comment_user_id': 0,
-                                          'comment': 'Test',
-                                          'post_id': None})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['valid_post_id'], False)
-        self.assertEqual(expected['success'], False)
+        # Should Return
+        # 'valid_user': True,
+        # 'valid_friend': False,
+        # 'valid_post_id': False,
+        # 'success': False
+        test_jsons = [{'post_id': None, 'user_id': 1, 'comment': None},
+                      {'post_id': '', 'user_id': 1, 'comment': None},
+                      ]
 
-        result = self.app.post(url, json={'user_id': 0,
-                                          'post_user_id': 0,
-                                          'comment_user_id': 0,
-                                          'comment': 'Test',
-                                          'post_id': 0})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['valid_post_id'], False)
-        self.assertEqual(expected['success'], False)
+        for test_json in test_jsons:
+            result = self.app.post(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_friend'], False)
+            self.assertEqual(expected['valid_post_id'], False)
+            self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': 1,
-                                          'post_user_id': None,
-                                          'comment_user_id': None,
-                                          'comment': 'Test',
-                                          'post_id': None})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['valid_post_id'], False)
-        self.assertEqual(expected['success'], False)
+        # Should Return
+        # 'valid_user': True,
+        # 'valid_friend': False,
+        # 'valid_post_id': True,
+        # 'success': False
+        test_jsons = [{'post_id': 1, 'user_id': 75, 'comment': None},
+                      {'post_id': 2, 'user_id': 75, 'comment': None},
+                      ]
 
-        result = self.app.post(url, json={'user_id': 1,
-                                          'post_user_id': None,
-                                          'comment_user_id': None,
-                                          'comment': 'Test',
-                                          'post_id': 0})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['valid_post_id'], False)
-        self.assertEqual(expected['success'], False)
+        for test_json in test_jsons:
+            result = self.app.post(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_friend'], False)
+            self.assertEqual(expected['valid_post_id'], True)
+            self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': 1,
-                                          'post_user_id': 0,
-                                          'comment_user_id': None,
-                                          'comment': 'Test',
-                                          'post_id': None})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['valid_post_id'], False)
-        self.assertEqual(expected['success'], False)
-
-        result = self.app.post(url, json={'user_id': 1,
-                                          'post_user_id': None,
-                                          'comment_user_id': 0,
-                                          'comment': 'Test',
-                                          'post_id': None})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['valid_post_id'], False)
-        self.assertEqual(expected['success'], False)
-
-        result = self.app.post(url, json={'user_id': 1,
-                                          'post_user_id': None,
-                                          'comment_user_id': None,
-                                          'comment': 'Test',
-                                          'post_id': 1})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['valid_post_id'], True)
-        self.assertEqual(expected['success'], False)
-
-        result = self.app.post(url, json={'user_id': 1,
-                                          'post_user_id': 0,
-                                          'comment_user_id': None,
-                                          'comment': 'Test',
-                                          'post_id': 1})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['valid_post_id'], True)
-        self.assertEqual(expected['success'], False)
-
-        result = self.app.post(url, json={'user_id': 1,
-                                          'post_user_id': None,
-                                          'comment_user_id': 0,
-                                          'comment': 'Test',
-                                          'post_id': 1})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['valid_post_id'], True)
-        self.assertEqual(expected['success'], False)
-
-        result = self.app.post(url, json={'user_id': 1,
-                                          'post_user_id': 0,
-                                          'comment_user_id': 0,
-                                          'comment': 'Test',
-                                          'post_id': 1})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_friend'], False)
-        self.assertEqual(expected['valid_post_id'], True)
-        self.assertEqual(expected['success'], False)
-
-        user_id = 1
-        post_user_id = 1
-        comment_user_id = 1
         post_id = 1
+        user_id = 1
 
         result = self.app.post(url, json={'user_id': user_id,
-                                          'post_user_id': post_user_id,
-                                          'comment_user_id': comment_user_id,
                                           'comment': 'Test',
                                           'post_id': post_id})
         expected = result.get_json()
