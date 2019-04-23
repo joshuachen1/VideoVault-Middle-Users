@@ -1048,7 +1048,7 @@ def get_movie_comments(title=None, reverse=False):
         return str(e)
 
 
-# [url]/users=[user_id]/tv_show_list
+# [url]/user=[user_id]/tv_show_list
 @app.route('/user=<int:user_id>/tv_show_list', methods=['GET'])
 def get_user_tv_show_list(user_id=None):
     try:
@@ -1077,6 +1077,19 @@ def get_user_tv_show_list(user_id=None):
 
         return jsonify({'tv_show_list': user_rated_tv_shows.serialize()})
 
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/user=<user_id>/subscriptions', methods=['GET'])
+def get_user_subscriptions(user_id=None):
+    try:
+        subscriptions = UserSlots.query.filter_by(user_id=user_id).all()
+        subscriptions_id_list = list()
+        for subscription in subscriptions:
+            if subscription.tv_show_id is not None:
+                subscriptions_id_list.append(subscription.tv_show_id)
+        return jsonify({"subscriptions":subscriptions_id_list})
     except Exception as e:
         return str(e)
 
