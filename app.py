@@ -1087,7 +1087,8 @@ def get_user_subscriptions(user_id=None):
         subscriptions = UserSlots.query.filter_by(user_id=user_id).all()
         subscriptions_id_list = list()
         for subscription in subscriptions:
-            subscriptions_id_list.append(subscription.tv_show_id)
+            if subscription.tv_show_id is not None:
+                subscriptions_id_list.append(subscription.tv_show_id)
         return jsonify({"subscriptions":subscriptions_id_list})
     except Exception as e:
         return str(e)
