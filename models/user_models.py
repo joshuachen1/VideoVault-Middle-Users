@@ -108,21 +108,21 @@ class TimeLine(db.Model):
     __tablename__ = 'user_timeline'
 
     post_id = db.Column(db.Integer, primary_key=True)
+    wall_id = db.Column(db.Integer)
     user_id = db.Column(db.Integer)
-    post_user_id = db.Column(db.Integer)
     post = db.Column(db.VARCHAR)
     date_of_post = db.Column(db.DateTime)
 
-    def __init__(self, user_id, post_user_id, post, date_of_post):
+    def __init__(self, wall_id, user_id, post, date_of_post):
+        self.wall_id = wall_id
         self.user_id = user_id
-        self.post_user_id = post_user_id
         self.post = post
         self.date_of_post = date_of_post
 
     def serialize(self):
         return {
+            'wall_id': self.wall_id,
             'user_id': self.user_id,
-            'post_user_id': self.post_user_id,
             'post': self.post,
             'date_of_post': self.date_of_post,
         }
@@ -156,28 +156,28 @@ class PostComments(db.Model):
     __tablename__ = 'post_comments'
 
     comment_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer)
+    wall_id = db.Column(db.Integer)
     post_user_id = db.Column(db.Integer)
-    comment_user_id = db.Column(db.Integer)
+    user_id = db.Column(db.Integer)
     comment = db.Column(db.VARCHAR)
     date_of_comment = db.Column(db.DateTime)
     post_id = db.Column(db.Integer)
 
-    def __init__(self, user_id, post_user_id, comment_user_id, comment, date_of_comment, post_id):
-        self.user_id = user_id
+    def __init__(self, wall_id, post_user_id, user_id, comment, date_of_comment, post_id):
+        self.wall_id = wall_id
         self.post_user_id = post_user_id
-        self.comment_user_id = comment_user_id
+        self.user_id = user_id
         self.comment = comment
         self.date_of_comment = date_of_comment
         self.post_id = post_id
 
     def serialize(self):
         return {
-            'user_id': self.user_id,
-            'username': self.username,
+            'wall_id': self.wall_id,
+            'wall_username': self.username,
             'post_user_id': self.post_user_id,
-            'comment_user_id': self.comment_user_id,
-            'comment_username': self.comment_username,
+            'user_id': self.user_id,
+            'username': self.comment_username,
             'comment': self.comment,
             'date_of_comment': self.date_of_comment,
         }
