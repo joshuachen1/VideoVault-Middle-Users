@@ -1526,15 +1526,28 @@ def delete_expired_movies(func_call=False, user_id=None):
     try:
 
             yesterday_datetime = datetime.now() - timedelta(1)
-
+            users_list = list()
             # ensures list is not empty
             if func_call is True and user_id is not None:
                 check_not_empty = UserRentedMovies.query.filter_by(user_id=user_id).filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
+                user = User.query.filter_by(id=user_id).first()
+                users_list.append(user)
             else:
                 check_not_empty = UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
+                users_id_list = list()
+                # get all user ids and remove duplicates
+                for user_movie_rel in check_not_empty:
+                    users_id_list.append(user_movie_rel.user_id)
+
+                users_id_list = list(dict.fromkeys(users_list))
+                for user_id in users_id_list:
+                    users_list = User.query.filter_by(id=user_id).first()
+
             if check_not_empty:
                 UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
                 db.session.commit()
+                for user in users_list:
+                    email_sender.movie_return_email(user.username, user.email)
                 return 'success'
             else:
                 return 'no movies to delete'
