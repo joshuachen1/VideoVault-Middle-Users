@@ -828,6 +828,25 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['has_friend_request'], False)
 
+    def test_get_friend_requests(self):
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.get('/get_friend_requests/user=$@$@'))
+
+        # Should Return
+        # 'pending_friend_requests': []
+
+        test_values = [None, '', -1, 0]
+        for i in range(len(test_values)):
+            result = self.app.get('/get_friend_requests/user={}'.format(test_values[i]))
+            expected = result.get_json()
+            self.assertEqual(expected['pending_friend_requests'], [])
+            self.assertEqual(len(expected['pending_friend_requests']), 0)
+
+        # Should be Successful
+        result = self.app.get('/get_friend_requests/user=20')
+        expected = result.get_json()
+        self.assertEqual(len(expected['pending_friend_requests']), 1)
+
     def test_rate_movie(self):
         url = '/user/movie/rating'
 
