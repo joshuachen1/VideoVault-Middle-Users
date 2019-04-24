@@ -1588,7 +1588,7 @@ def delete_expired_tv_shows(user_id=None):
                 if UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True).scalar() is not None:
                     remove_list = UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True).all()
                     update_sub_date(user.id)
-                # email_sender.subscription_renew_email(user.username, user.email, user.sub_date + timedelta(30))
+                email_sender.subscription_renew_email(user.username, user.email, user.sub_date + timedelta(30))
                 if remove_list:
                     for tv_show_to_remove in remove_list:
                         subscribe(user.id, tv_show_to_remove.tv_show_id, True)
