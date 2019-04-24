@@ -579,7 +579,6 @@ def is_unsubscribe(user_id=None, tv_show_id=None):
     return jsonify({"is_unsubscribed": False})
 
 
-
 # increment number of slots to delete by 1
 @app.route('/delete_slot_increment', methods=['PUT'])
 def delete_slot_increment(user_id=None):
@@ -590,11 +589,12 @@ def delete_slot_increment(user_id=None):
         # can delete slot
         if user.num_slots - user.slots_to_delete >= 10:
             increment_slots_to_delete(user_id)
-            return jsonify({'success':True})
+            return jsonify({'success': True})
         else:
-            return jsonify({'success':False})
+            return jsonify({'success': False})
     except Exception as e:
         return str(e)
+
 
 # decrement number of slots to delete by 1
 @app.route('/delete_slot_decrement', methods=['PUT'])
@@ -1587,7 +1587,8 @@ def delete_expired_movies(func_call=False, user_id=None):
     except Exception as e:
         return str(e)
 
-@app.route('/test/user=<user_id>',methods=['GET'])
+
+@app.route('/test/user=<user_id>', methods=['GET'])
 # need to add to login function and need to add check to not allow deleting slots past 10
 def delete_expired_tv_shows(user_id=None):
     try:
@@ -1607,7 +1608,7 @@ def delete_expired_tv_shows(user_id=None):
                         remove_tv_show(user.id, tv_show_to_remove.tv_show_id)
                 if user.slots_to_delete > 0:
                     for i in range(user.slots_to_delete):
-                        delete_slot(user_id) # look at this function
+                        delete_slot(user_id)  # look at this function
                         update_slots_to_delete(user.id, 0)
             db.session.commit()
             return jsonify({'expired_tv_shows_removed': True})
@@ -1845,7 +1846,6 @@ def adjust_slot(user_id, is_increment):
 
     except Exception as e:
         return str(e)
-
 
 
 def clear_individual_slot(user_id, slot_num):
