@@ -48,7 +48,7 @@ class UnitTests(unittest.TestCase):
     def test_signup(self):
         url = '/signup'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         name = 'Unit Test'
@@ -412,10 +412,17 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['is_tv_show_in_slot'], True)
 
+    def test_subscribe(self):
+        url = '/subscribe'
+
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.post(url, json={}))
+
+
     def test_rate_movie(self):
         url = '/user/movie/rating'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         # Should Return
@@ -486,7 +493,7 @@ class UnitTests(unittest.TestCase):
     def test_rate_tv_show(self):
         url = '/user/tv_show/rating'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         result = self.app.post(url, json={'user_id': None,
@@ -572,7 +579,7 @@ class UnitTests(unittest.TestCase):
     def test_comment_movie(self):
         url = '/movie/comment'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         result = self.app.post(url, json={'user_id': None,
@@ -659,7 +666,7 @@ class UnitTests(unittest.TestCase):
     def test_tv_show_commenting(self):
         url = '/tv_show/comment'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         result = self.app.post(url, json={'user_id': None,
@@ -746,7 +753,7 @@ class UnitTests(unittest.TestCase):
     def test_rent_movie(self):
         url = '/rent_movie'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         result = self.app.post(url, json={'user_id': None,
@@ -824,7 +831,7 @@ class UnitTests(unittest.TestCase):
     def test_post_timeline(self):
         url = 'timeline/post'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         # Should Return
@@ -881,7 +888,7 @@ class UnitTests(unittest.TestCase):
     def test_comment_on_post(self):
         url = '/timeline/post/comment'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         # Should Return
