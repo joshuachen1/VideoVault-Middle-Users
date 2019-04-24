@@ -294,6 +294,89 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['num_slots'], 10)
             self.assertEqual(expected['profile_pic'], "https://upload.wikimedia.org/wikipedia/en/1/13/Stick_figure.png")
 
+    def test_update_profile_pic(self):
+        url = '/update/profile_pic'
+
+        self.assertRaises(Exception, self.app.post(url, json={}))
+
+        # Should Return
+        # 'valid_user': False
+        # 'valid_pic': False
+        # 'success': False
+        test_jsons = [{'user_id': None, 'profile_pic': None},
+                      {'user_id': '', 'profile_pic': None},
+                      {'user_id': None, 'profile_pic': ''},
+                      {'user_id': '', 'profile_pic': ''}
+                      ]
+        for test_json in test_jsons:
+            result = self.app.put(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_pic'], False)
+            self.assertEqual(expected['success'], False)
+
+        # Should Return
+        # 'valid_user': False
+        # 'valid_pic': True
+        # 'success': False
+        test_jsons = [{'user_id': None, 'profile_pic': 'blank.png'},
+                      {'user_id': '', 'profile_pic': 'blank.png'}
+                      ]
+        for test_json in test_jsons:
+            result = self.app.put(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_pic'], True)
+            self.assertEqual(expected['success'], False)
+
+        # Should Return
+        # 'valid_user': True
+        # 'valid_pic': False
+        # 'success': False
+        test_jsons = [{'user_id': 2, 'profile_pic': None},
+                      {'user_id': 2, 'profile_pic': ''}
+                      ]
+        for test_json in test_jsons:
+            result = self.app.put(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_pic'], False)
+            self.assertEqual(expected['success'], False)
+
+        # Should be Successful
+        test_json = {'user_id': 2, 'profile_pic': 'blank.png'}
+        result = self.app.put(url, json=test_json)
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_pic'], True)
+        self.assertEqual(expected['success'], True)
+
+    def test_is_slots_full(self):
+        # Should Return
+        # 'is_slots_full: False
+
+        test_values = [[None],
+                       ['']
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/is_slots_full'.format(user_id=test_values[i][0])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['is_slots_full'], False)
+
+        # Should Return
+        # 'is_slots_full: False
+
+        test_values = [[2], [3]]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/is_slots_full'.format(user_id=test_values[i][0])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['is_slots_full'], True)
+
+
     def test_rate_movie(self):
         url = '/user/movie/rating'
 

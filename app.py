@@ -30,7 +30,7 @@ port = int(os.environ.get('PORT', 33507))
 
 # Import Models
 from Email import Email
-from crypto_models import Key
+from models.crypto_models import Key
 from models.user_models import Login
 from models.user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
 from models.user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
@@ -206,7 +206,7 @@ def signup():
         return str(e)
 
 
-#[url]/server_update
+# [url]/server_update
 @app.route('/database_update', methods=['DELETE'])
 def database_update():
     data = request.get_json()
@@ -218,8 +218,8 @@ def database_update():
         return jsonify({'success': True,
                         'valid_user_id': True})
     else:
-        return jsonify({'success':False,
-                        'valid_user_id':False})
+        return jsonify({'success': False,
+                        'valid_user_id': False})
 
 
 # [url]/login/email=[email]/password=[password]
@@ -394,15 +394,15 @@ def update_profile_pic():
         profile_pic_pattern = re.compile("[^@]+\.png")
         user = User.query.filter_by(id=user_id).first()
 
-        if user is None and profile_pic_pattern.match(profile_pic) is None:
+        if (user is None or user_id is '' or user_id is None) and (profile_pic is '' or profile_pic is None):
             return jsonify({'success': False,
                             'valid_user': False,
                             'valid_pic': False})
-        elif user is None:
+        elif user is None or user_id is None or user_id is '':
             return jsonify({'success': False,
                             'valid_user': False,
                             'valid_pic': True})
-        elif profile_pic_pattern.match(profile_pic) is None:
+        elif profile_pic is None or profile_pic is '':
             return jsonify({'success': False,
                             'valid_user': True,
                             'valid_pic': False})
@@ -420,6 +420,9 @@ def update_profile_pic():
 @app.route('/user=<user_id>/is_slots_full', methods=['GET'])
 @app.route('/user=/is_slots_full', methods=['GET'])
 def is_slots_full(user_id=None):
+    if user_id is None or not isinstance(user_id, int):
+        return jsonify({'is_slots_full': False})
+
     # Gets list of user slots to get length
     user_slots = UserSlots.query.filter_by(user_id=user_id).all()
     # Gets list of tv show ids to check for null entries later
@@ -566,12 +569,14 @@ def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
     except Exception as e:
         return str(e)
 
+
 @app.route('/is_unsubscribed/user_id=<user_id>/tv_show_id=<tv_show_id>', methods=['GET'])
-def is_unsubscribe(user_id=None,tv_show_id=None):
-    unsubscribe_boolean=UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+def is_unsubscribe(user_id=None, tv_show_id=None):
+    unsubscribe_boolean = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
     if unsubscribe_boolean is not None and unsubscribe_boolean.unsubscribe is True:
-        return jsonify({"is_unsubscribed":True})
-    return jsonify({"is_unsubscribed":False})
+        return jsonify({"is_unsubscribed": True})
+    return jsonify({"is_unsubscribed": False})
+
 
 
 # increment number of slots to delete by 1
@@ -1094,7 +1099,7 @@ def get_user_subscriptions(user_id=None):
         for subscription in subscriptions:
             if subscription.tv_show_id is not None:
                 subscriptions_id_list.append(subscription.tv_show_id)
-        return jsonify({"subscriptions":subscriptions_id_list})
+        return jsonify({"subscriptions": subscriptions_id_list})
     except Exception as e:
         return str(e)
 
@@ -1297,17 +1302,17 @@ def display_wall(user_id=None):
         wall = list()
         user = User.query.filter_by(id=user_id).first()
 
-        wall_posts = TimeLine.query.filter_by(user_id=user.id).order_by(TimeLine.date_of_post)
+        wall_posts = TimeLine.query.filter_by(wall_id=user.id).order_by(TimeLine.date_of_post)
 
         for post in wall_posts:
-            user = User.query.filter_by(id=post.user_id).first()
-            post_user = User.query.filter_by(id=post.post_user_id).first()
+            user = User.query.filter_by(id=post.wall_id).first()
+            post_user = User.query.filter_by(id=post.user_id).first()
 
             comments = list()
-            comment_list = PostComments.query.filter_by(user_id=post.user_id).filter_by(
-                post_user_id=post.post_user_id).filter_by(post_id=post.post_id)
+            comment_list = PostComments.query.filter_by(user_id=post.wall_id).filter_by(
+                post_user_id=post_user.id).filter_by(post_id=post.post_id)
             for comment in comment_list:
-                comment_user = User.query.filter_by(id=comment.comment_user_id).first()
+                comment_user = User.query.filter_by(id=comment.user_id).first()
                 comments.append(PostComment(
                     user_id=user.id,
                     username=user.username,
@@ -1549,32 +1554,33 @@ def get_average_rating(is_tv_show: bool, media_id: int):
 def delete_expired_movies(func_call=False, user_id=None):
     try:
 
-            yesterday_datetime = datetime.now() - timedelta(1)
-            users_list = list()
-            # ensures list is not empty
-            if func_call is True and user_id is not None:
-                check_not_empty = UserRentedMovies.query.filter_by(user_id=user_id).filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
-                user = User.query.filter_by(id=user_id).first()
-                users_list.append(user)
-            else:
-                check_not_empty = UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
-                users_id_list = list()
-                # get all user ids and remove duplicates
-                for user_movie_rel in check_not_empty:
-                    users_id_list.append(user_movie_rel.user_id)
+        yesterday_datetime = datetime.now() - timedelta(1)
+        users_list = list()
+        # ensures list is not empty
+        if func_call is True and user_id is not None:
+            check_not_empty = UserRentedMovies.query.filter_by(user_id=user_id).filter(
+                UserRentedMovies.rent_datetime <= yesterday_datetime)
+            user = User.query.filter_by(id=user_id).first()
+            users_list.append(user)
+        else:
+            check_not_empty = UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
+            users_id_list = list()
+            # get all user ids and remove duplicates
+            for user_movie_rel in check_not_empty:
+                users_id_list.append(user_movie_rel.user_id)
 
-                users_id_list = list(dict.fromkeys(users_list))
-                for user_id in users_id_list:
-                    users_list = User.query.filter_by(id=user_id).first()
+            users_id_list = list(dict.fromkeys(users_list))
+            for user_id in users_id_list:
+                users_list = User.query.filter_by(id=user_id).first()
 
-            if check_not_empty:
-                UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
-                db.session.commit()
-                for user in users_list:
-                    email_sender.movie_return_email(user.username, user.email)
-                return 'success'
-            else:
-                return 'no movies to delete'
+        if check_not_empty:
+            UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
+            db.session.commit()
+            for user in users_list:
+                email_sender.movie_return_email(user.username, user.email)
+            return 'success'
+        else:
+            return 'no movies to delete'
 
     except Exception as e:
         return str(e)
