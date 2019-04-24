@@ -671,25 +671,58 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['success'], False)
 
         # Should Return
-        # 'valid_user_id': False
+        # 'valid_user_id': True
         # 'valid_friend_id': False
         # 'valid_friendship_request': False
         # 'success': False
 
-        test_values = [[None, None],
-                       [None, ''],
-                       ['', None],
-                       ['', '']
+        test_values = [[1, None],
+                       [1, '']
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.post(url, json={'user_id': test_values[i][0],
+                                              'request_from': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user_id'], True)
+            self.assertEqual(expected['valid_friend_id'], False)
+            self.assertEqual(expected['valid_friendship_request'], False)
+            self.assertEqual(expected['success'], False)
+
+        # Should Return
+        # 'valid_user_id': False
+        # 'valid_friend_id': True
+        # 'valid_friendship_request': False
+        # 'success': False
+
+        test_values = [[None, 1],
+                       ['', 1]
                        ]
         for i in range(len(test_values)):
             result = self.app.post(url, json={'user_id': test_values[i][0],
                                               'request_from': test_values[i][1]})
             expected = result.get_json()
             self.assertEqual(expected['valid_user_id'], False)
-            self.assertEqual(expected['valid_friend_id'], False)
+            self.assertEqual(expected['valid_friend_id'], True)
             self.assertEqual(expected['valid_friendship_request'], False)
             self.assertEqual(expected['success'], False)
 
+        # Should Return
+        # 'valid_user_id': True
+        # 'valid_friend_id': True
+        # 'valid_friendship_request': False
+        # 'success': False
+
+        test_values = [[1, 1],
+                       [2, 3]
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.post(url, json={'user_id': test_values[i][0],
+                                              'request_from': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user_id'], True)
+            self.assertEqual(expected['valid_friend_id'], True)
+            self.assertEqual(expected['valid_friendship_request'], False)
+            self.assertEqual(expected['success'], False)
 
     def test_rate_movie(self):
         url = '/user/movie/rating'
