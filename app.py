@@ -30,7 +30,7 @@ port = int(os.environ.get('PORT', 33507))
 
 # Import Models
 from Email import Email
-from crypto_models import Key
+from models.crypto_models import Key
 from models.user_models import Login
 from models.user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
 from models.user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
@@ -394,15 +394,15 @@ def update_profile_pic():
         profile_pic_pattern = re.compile("[^@]+\.png")
         user = User.query.filter_by(id=user_id).first()
 
-        if user is None and profile_pic_pattern.match(profile_pic) is None:
+        if (user is None or user_id is '' or user_id is None) and (profile_pic is '' or profile_pic is None):
             return jsonify({'success': False,
                             'valid_user': False,
                             'valid_pic': False})
-        elif user is None:
+        elif user is None or user_id is None or user_id is '':
             return jsonify({'success': False,
                             'valid_user': False,
                             'valid_pic': True})
-        elif profile_pic_pattern.match(profile_pic) is None:
+        elif profile_pic is None or profile_pic is '':
             return jsonify({'success': False,
                             'valid_user': True,
                             'valid_pic': False})
