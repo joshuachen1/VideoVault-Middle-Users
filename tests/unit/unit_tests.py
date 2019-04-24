@@ -148,7 +148,7 @@ class UnitTests(unittest.TestCase):
         # 'success': False
         test_jsons = [
             {'name': name, 'username': username, 'email': 'joshuachen1@cpp.edu', 'password': None, 'card_num': None},
-            ]
+        ]
 
         for test_json in test_jsons:
             result = self.app.post(url, json=test_json)
