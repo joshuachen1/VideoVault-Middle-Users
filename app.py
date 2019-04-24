@@ -737,7 +737,7 @@ def accept_friend_request(function_call=False):
         return str(e)
 
 
-# { user_id: [user_id], pending_friend_id: [pending_friend_id] }
+# { user_id: [user_id], request_from: [pending_friend_id] }
 # decline a friend request
 @app.route('/decline_friend_request', methods=['POST'])
 def decline_friend_request():
