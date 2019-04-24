@@ -441,10 +441,12 @@ def is_slots_full(user_id=None):
 
 # [url]/user=[user_id]/tv_show[tv_show_id]/is_tv_show_in_slot
 @app.route('/user=<user_id>/tv_show=<tv_show_id>/is_tv_show_in_slot', methods=['GET'])
+@app.route('/user=/tv_show=<tv_show_id>/is_tv_show_in_slot', methods=['GET'])
+@app.route('/user=<user_id>/tv_show=/is_tv_show_in_slot', methods=['GET'])
 @app.route('/user=/tv_show=/is_tv_show_in_slot', methods=['GET'])
 def is_tv_show_in_slot(user_id=None, tv_show_id=None):
     try:
-        if UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first() is not None:
+        if UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).scalar() is not None:
             return jsonify({'is_tv_show_in_slot': True})
         else:
             return jsonify({'is_tv_show_in_slot': False})
