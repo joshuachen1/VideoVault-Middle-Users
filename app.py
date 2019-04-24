@@ -537,17 +537,31 @@ def subscribe(user_id=None, tv_show_id=None, function_call=False):
             data = request.get_json()
             user_id = data['user_id']
             tv_show_id = data['tv_show_id']
+        # casts input into int if string
+        if user_id is None or tv_show_id is None:
+            return jsonify({'is_success': False,
+                            'is_slot_exist': False})
+        if isinstance(user_id, str):
+            if user_id.isdigit():
+                user_id = int(user_id)
+            else:
+                return jsonify({'is_success': False,
+                                'is_slot_exist': False})
+        if isinstance(tv_show_id, str):
+            if tv_show_id.isdigit():
+                tv_show_id = int(tv_show_id)
+            else:
+                return jsonify({'is_success': False,
+                                'is_slot_exist': False})
 
-        check_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
-
-        if check_slot is not None:
+        if UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).scalar() is not None:
             change_subscription_status(user_id, tv_show_id, False)
             db.session.commit()
             return jsonify({'is_success': True,
                             'is_slot_exist': True})
         else:
             return jsonify({'is_success': False,
-                            'is_slot_exist:': False})
+                            'is_slot_exist': False})
     except Exception as e:
         return str(e)
 
