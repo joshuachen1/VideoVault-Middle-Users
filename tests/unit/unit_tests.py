@@ -2,12 +2,12 @@ import unittest
 
 from app import app
 from app import db
-from models.user_models import User
+from models.user_media_models import MovieComment, TVShowComment
 from models.user_models import TimeLine, PostComments
-from models.user_models import UserRentedMovies
+from models.user_models import User
 from models.user_models import UserRatedMovieRel
 from models.user_models import UserRatedTVShowRel
-from models.user_media_models import MovieComment, TVShowComment
+from models.user_models import UserRentedMovies
 
 
 class UnitTests(unittest.TestCase):
@@ -67,10 +67,10 @@ class UnitTests(unittest.TestCase):
         # 'valid_card_num': False,
         # 'success': False
         test_jsons = [{'name': None, 'username': None, 'email': None, 'password': None, 'card_num': None},
-                      {'name': '',   'username': None, 'email': None, 'password': None, 'card_num': None},
-                      {'name': None, 'username': '',   'email': None, 'password': None, 'card_num': None},
-                      {'name': None, 'username': None, 'email': '',   'password': None, 'card_num': None},
-                      {'name': None, 'username': None, 'email': None, 'password': '',   'card_num': None},
+                      {'name': '', 'username': None, 'email': None, 'password': None, 'card_num': None},
+                      {'name': None, 'username': '', 'email': None, 'password': None, 'card_num': None},
+                      {'name': None, 'username': None, 'email': '', 'password': None, 'card_num': None},
+                      {'name': None, 'username': None, 'email': None, 'password': '', 'card_num': None},
                       {'name': None, 'username': None, 'email': None, 'password': None, 'card_num': ''},
                       {'name': None, 'username': 'blah', 'email': None, 'password': None, 'card_num': ''},
                       ]
@@ -146,8 +146,9 @@ class UnitTests(unittest.TestCase):
         # 'valid_password': False,
         # 'valid_card_num': False,
         # 'success': False
-        test_jsons = [{'name': name, 'username': username, 'email': 'joshuachen1@cpp.edu', 'password': None, 'card_num': None},
-                      ]
+        test_jsons = [
+            {'name': name, 'username': username, 'email': 'joshuachen1@cpp.edu', 'password': None, 'card_num': None},
+            ]
 
         for test_json in test_jsons:
             result = self.app.post(url, json=test_json)
@@ -211,10 +212,10 @@ class UnitTests(unittest.TestCase):
 
         # Should Be Successful Signup
         new_user = {'name': 'Unit Test',
-                       'username': 'unittest',
-                       'email': 'unit@test.com',
-                       'password': 'pythonunittest',
-                       'card_num': card_num}
+                    'username': 'unittest',
+                    'email': 'unit@test.com',
+                    'password': 'pythonunittest',
+                    'card_num': card_num}
 
         result = self.app.post(url, json=new_user)
         expected = result.get_json()
@@ -376,6 +377,40 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['is_slots_full'], True)
 
+    def test_is_tv_show_in_slot(self):
+        # Should Return
+        # 'is_tv_show_in_slot: False
+
+        test_values = [[None, None],
+                       [None, ''],
+                       ['', None],
+                       ['', ''],
+                       [1, 12],
+                       [2, 13]
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/tv_show={tv_show_id}/is_tv_show_in_slot'.format(user_id=test_values[i][0],
+                                                                                   tv_show_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['is_tv_show_in_slot'], False)
+
+        # Should Return
+        # 'is_tv_show_in_slot: True
+
+        test_values = [[1, 1],
+                       [1, 2],
+                       [2, 12],
+                       [2, 14]
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/tv_show={tv_show_id}/is_tv_show_in_slot'.format(user_id=test_values[i][0],
+                                                                                   tv_show_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['is_tv_show_in_slot'], True)
 
     def test_rate_movie(self):
         url = '/user/movie/rating'
@@ -388,10 +423,10 @@ class UnitTests(unittest.TestCase):
         # 'valid_movie': False
         # 'success': False
         test_jsons = [{'user_id': None, 'movie_id': None, 'rating': 5},
-                   {'user_id': 0, 'movie_id': None, 'rating': 5},
-                   {'user_id': None, 'movie_id': 0, 'rating': 5},
-                   {'user_id': 0, 'movie_id': 0, 'rating': 5}
-                   ]
+                      {'user_id': 0, 'movie_id': None, 'rating': 5},
+                      {'user_id': None, 'movie_id': 0, 'rating': 5},
+                      {'user_id': 0, 'movie_id': 0, 'rating': 5}
+                      ]
 
         for test_json in test_jsons:
             result = self.app.post(url, json=test_json)
@@ -447,7 +482,6 @@ class UnitTests(unittest.TestCase):
         assert mr is not None
         UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
         db.session.flush()
-
 
     def test_rate_tv_show(self):
         url = '/user/tv_show/rating'
@@ -520,7 +554,7 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['success'], False)
 
         user_id = 1
-        tv_show_id= 1
+        tv_show_id = 1
         result = self.app.post(url, json={'user_id': user_id,
                                           'tv_show_id': tv_show_id,
                                           'rating': 5, })
