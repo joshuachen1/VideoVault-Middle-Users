@@ -726,6 +726,29 @@ class UnitTests(unittest.TestCase):
         MovieComment.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
         db.session.flush()
 
+    def test_is_friend_request(self):
+        # Should Return
+        # 'at_least_one_request': False
+
+        test_values = ['', 1]
+
+        for i in range(len(test_values)):
+            url = '/is_friend_request/user={user_id}'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['at_least_one_request'], False)
+
+        # Should Return
+        # 'at_least_one_request': False
+
+        test_values = [26]
+
+        for i in range(len(test_values)):
+            url = '/is_friend_request/user={user_id}'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['at_least_one_request'], True)
+
     def test_tv_show_commenting(self):
         url = '/tv_show/comment'
 
