@@ -2,12 +2,12 @@ import unittest
 
 from app import app
 from app import db
-from models.user_models import User
+from models.user_media_models import MovieComment, TVShowComment
 from models.user_models import TimeLine, PostComments
-from models.user_models import UserRentedMovies
+from models.user_models import User, Friends, UserSlots
 from models.user_models import UserRatedMovieRel
 from models.user_models import UserRatedTVShowRel
-from models.user_media_models import MovieComment, TVShowComment
+from models.user_models import UserRentedMovies
 
 
 class UnitTests(unittest.TestCase):
@@ -48,7 +48,7 @@ class UnitTests(unittest.TestCase):
     def test_signup(self):
         url = '/signup'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         name = 'Unit Test'
@@ -67,10 +67,10 @@ class UnitTests(unittest.TestCase):
         # 'valid_card_num': False,
         # 'success': False
         test_jsons = [{'name': None, 'username': None, 'email': None, 'password': None, 'card_num': None},
-                      {'name': '',   'username': None, 'email': None, 'password': None, 'card_num': None},
-                      {'name': None, 'username': '',   'email': None, 'password': None, 'card_num': None},
-                      {'name': None, 'username': None, 'email': '',   'password': None, 'card_num': None},
-                      {'name': None, 'username': None, 'email': None, 'password': '',   'card_num': None},
+                      {'name': '', 'username': None, 'email': None, 'password': None, 'card_num': None},
+                      {'name': None, 'username': '', 'email': None, 'password': None, 'card_num': None},
+                      {'name': None, 'username': None, 'email': '', 'password': None, 'card_num': None},
+                      {'name': None, 'username': None, 'email': None, 'password': '', 'card_num': None},
                       {'name': None, 'username': None, 'email': None, 'password': None, 'card_num': ''},
                       {'name': None, 'username': 'blah', 'email': None, 'password': None, 'card_num': ''},
                       ]
@@ -146,8 +146,9 @@ class UnitTests(unittest.TestCase):
         # 'valid_password': False,
         # 'valid_card_num': False,
         # 'success': False
-        test_jsons = [{'name': name, 'username': username, 'email': 'joshuachen1@cpp.edu', 'password': None, 'card_num': None},
-                      ]
+        test_jsons = [
+            {'name': name, 'username': username, 'email': 'joshuachen1@cpp.edu', 'password': None, 'card_num': None},
+        ]
 
         for test_json in test_jsons:
             result = self.app.post(url, json=test_json)
@@ -211,10 +212,10 @@ class UnitTests(unittest.TestCase):
 
         # Should Be Successful Signup
         new_user = {'name': 'Unit Test',
-                       'username': 'unittest',
-                       'email': 'unit@test.com',
-                       'password': 'pythonunittest',
-                       'card_num': card_num}
+                    'username': 'unittest',
+                    'email': 'unit@test.com',
+                    'password': 'pythonunittest',
+                    'card_num': card_num}
 
         result = self.app.post(url, json=new_user)
         expected = result.get_json()
@@ -227,7 +228,10 @@ class UnitTests(unittest.TestCase):
         # Check if User Exists, Remove From Database if it does
         user = User.query.filter_by(name='Unit Test').filter_by(username='unittest').first()
         assert user is not None
-        User.query.filter_by(name='Unit Test').filter_by(username='unittest').delete()
+        delete_user = User.query.filter_by(name='Unit Test').filter_by(username='unittest')
+        User.query.filter_by(id=delete_user.id).delete()
+        UserSlots.query.filter_by(id=delete_user.id).delete()
+        Friends.query.filter_by(id=delete_user.id).delete()
         db.session.commit()
 
     def test_login(self):
@@ -294,10 +298,255 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['num_slots'], 10)
             self.assertEqual(expected['profile_pic'], "https://upload.wikimedia.org/wikipedia/en/1/13/Stick_figure.png")
 
+    def test_update_profile_pic(self):
+        url = '/update/profile_pic'
+
+        self.assertRaises(Exception, self.app.post(url, json={}))
+
+        # Should Return
+        # 'valid_user': False
+        # 'valid_pic': False
+        # 'success': False
+        test_jsons = [{'user_id': None, 'profile_pic': None},
+                      {'user_id': '', 'profile_pic': None},
+                      {'user_id': None, 'profile_pic': ''},
+                      {'user_id': '', 'profile_pic': ''}
+                      ]
+        for test_json in test_jsons:
+            result = self.app.put(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_pic'], False)
+            self.assertEqual(expected['success'], False)
+
+        # Should Return
+        # 'valid_user': False
+        # 'valid_pic': True
+        # 'success': False
+        test_jsons = [{'user_id': None, 'profile_pic': 'blank.png'},
+                      {'user_id': '', 'profile_pic': 'blank.png'}
+                      ]
+        for test_json in test_jsons:
+            result = self.app.put(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_pic'], True)
+            self.assertEqual(expected['success'], False)
+
+        # Should Return
+        # 'valid_user': True
+        # 'valid_pic': False
+        # 'success': False
+        test_jsons = [{'user_id': 2, 'profile_pic': None},
+                      {'user_id': 2, 'profile_pic': ''}
+                      ]
+        for test_json in test_jsons:
+            result = self.app.put(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_pic'], False)
+            self.assertEqual(expected['success'], False)
+
+        # Should be Successful
+        test_json = {'user_id': 2, 'profile_pic': 'blank.png'}
+        result = self.app.put(url, json=test_json)
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_pic'], True)
+        self.assertEqual(expected['success'], True)
+
+    def test_is_slots_full(self):
+        # Should Return
+        # 'is_slots_full: False
+
+        test_values = [[None],
+                       ['']
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/is_slots_full'.format(user_id=test_values[i][0])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['is_slots_full'], False)
+
+        # Should Return
+        # 'is_slots_full: False
+
+        test_values = [[2], [3]]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/is_slots_full'.format(user_id=test_values[i][0])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['is_slots_full'], True)
+
+    def test_is_tv_show_in_slot(self):
+        # Should Return
+        # 'is_tv_show_in_slot: False
+
+        test_values = [[None, None],
+                       [None, ''],
+                       ['', None],
+                       ['', ''],
+                       [1, 12],
+                       [2, 13]
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/tv_show={tv_show_id}/is_tv_show_in_slot'.format(user_id=test_values[i][0],
+                                                                                   tv_show_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['is_tv_show_in_slot'], False)
+
+        # Should Return
+        # 'is_tv_show_in_slot: True
+
+        test_values = [[1, 1],
+                       [1, 2],
+                       [2, 12],
+                       [2, 14]
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/tv_show={tv_show_id}/is_tv_show_in_slot'.format(user_id=test_values[i][0],
+                                                                                   tv_show_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['is_tv_show_in_slot'], True)
+
+    def test_subscribe(self):
+        url = '/subscribe'
+
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.post(url, json={}))
+
+        # Should Return
+        # 'is_slot_exist': False
+        # 'is_success': False
+
+        test_jsons = [{'user_id': None, 'tv_show_id': None},
+                      {'user_id': '', 'tv_show_id': None},
+                      {'user_id': None, 'tv_show_id': ''},
+                      {'user_id': '', 'tv_show_id': ''},
+                      {'user_id': 1, 'tv_show_id': None},
+                      {'user_id': 1, 'tv_show_id': ''},
+                      ]
+        for test_json in test_jsons:
+            result = self.app.put(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['is_slot_exist'], False)
+            self.assertEqual(expected['is_success'], False)
+
+        # Should Return
+        # 'is_slot_exist': True
+        # 'is_success': True
+
+        test_jsons = [{'user_id': 1, 'tv_show_id': 11},
+                      {'user_id': 1, 'tv_show_id': 12},
+                      ]
+        for test_json in test_jsons:
+            result = self.app.put(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['is_slot_exist'], True)
+            self.assertEqual(expected['is_success'], True)
+
+    def test_is_unsubscribe(self):
+        # Should Return
+        # 'is_unsubscribed': False
+
+        test_values = [[None, None],
+                       [None, ''],
+                       ['', None],
+                       ['', ''],
+                       [1, 1],
+                       [1, 2]
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/is_unsubscribed/user_id={user_id}/tv_show_id={tv_show_id}'.format(user_id=test_values[i][0],
+                                                                                      tv_show_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['is_unsubscribed'], False)
+
+        # Should Return
+        # 'is_unsubscribed': True
+
+        test_values = [[2, 2],
+                       [3, 3]
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/is_unsubscribed/user_id={user_id}/tv_show_id={tv_show_id}'.format(user_id=test_values[i][0],
+                                                                                      tv_show_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['is_unsubscribed'], True)
+
+    def test_user_search(self):
+
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.get('/search/user=', json={}))
+        self.assertRaises(Exception, self.app.get('/search/user=/page=', json={}))
+
+        # Should Return
+        # 'users': []
+
+        test_values = [[None],
+                       [''],
+                       [-10],
+                       ['----'],
+                       ['$@$@$@$@$@$@$@$@$']
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/search/user={user_info}'.format(user_info=test_values[i][0])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['users'], [])
+            self.assertEqual(len(expected['users']), 0)
+
+        # Should be Successful
+
+        test_values = [[1],
+                       [2],
+                       ['1@1.com'],
+                       ['hbo@hbo.hbo']]
+
+        for i in range(len(test_values)):
+            url = '/search/user={user_info}'.format(user_info=test_values[i][0])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(len(expected['users']), 1)
+
+    def test_is_friend_request(self):
+        # Should Return
+        # 'at_least_one_request': False
+
+        test_values = ['', 1, None]
+
+        for i in range(len(test_values)):
+            url = '/is_friend_request/user={user_id}'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['at_least_one_request'], False)
+
+        # Should Return
+        # 'at_least_one_request': False
+
+        test_values = [20, 26, 34]
+
+        for i in range(len(test_values)):
+            url = '/is_friend_request/user={user_id}'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['at_least_one_request'], True)
+
     def test_rate_movie(self):
         url = '/user/movie/rating'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         # Should Return
@@ -305,10 +554,10 @@ class UnitTests(unittest.TestCase):
         # 'valid_movie': False
         # 'success': False
         test_jsons = [{'user_id': None, 'movie_id': None, 'rating': 5},
-                   {'user_id': 0, 'movie_id': None, 'rating': 5},
-                   {'user_id': None, 'movie_id': 0, 'rating': 5},
-                   {'user_id': 0, 'movie_id': 0, 'rating': 5}
-                   ]
+                      {'user_id': 0, 'movie_id': None, 'rating': 5},
+                      {'user_id': None, 'movie_id': 0, 'rating': 5},
+                      {'user_id': 0, 'movie_id': 0, 'rating': 5}
+                      ]
 
         for test_json in test_jsons:
             result = self.app.post(url, json=test_json)
@@ -365,11 +614,10 @@ class UnitTests(unittest.TestCase):
         UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
         db.session.flush()
 
-
     def test_rate_tv_show(self):
         url = '/user/tv_show/rating'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         result = self.app.post(url, json={'user_id': None,
@@ -437,7 +685,7 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['success'], False)
 
         user_id = 1
-        tv_show_id= 1
+        tv_show_id = 1
         result = self.app.post(url, json={'user_id': user_id,
                                           'tv_show_id': tv_show_id,
                                           'rating': 5, })
@@ -455,7 +703,7 @@ class UnitTests(unittest.TestCase):
     def test_comment_movie(self):
         url = '/movie/comment'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         result = self.app.post(url, json={'user_id': None,
@@ -539,10 +787,11 @@ class UnitTests(unittest.TestCase):
         MovieComment.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
         db.session.flush()
 
+
     def test_tv_show_commenting(self):
         url = '/tv_show/comment'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         result = self.app.post(url, json={'user_id': None,
@@ -629,7 +878,7 @@ class UnitTests(unittest.TestCase):
     def test_rent_movie(self):
         url = '/rent_movie'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         result = self.app.post(url, json={'user_id': None,
@@ -707,7 +956,7 @@ class UnitTests(unittest.TestCase):
     def test_post_timeline(self):
         url = 'timeline/post'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         # Should Return
@@ -764,7 +1013,7 @@ class UnitTests(unittest.TestCase):
     def test_comment_on_post(self):
         url = '/timeline/post/comment'
 
-        # Check Exception
+        # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
         # Should Return
