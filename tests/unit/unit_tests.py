@@ -481,6 +481,39 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['is_unsubscribed'], True)
 
+    def test_user_search(self):
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.get('/search/user=', json={}))
+
+        # Should Return
+        # 'users': []
+
+        test_values = [[None],
+                       [''],
+                       [-10],
+                       ['----'],
+                       ['$@$@$@$@$@$@$@$@$']
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/search/user={user_info}'.format(user_info=test_values[i][0])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['users'], [])
+            self.assertEqual(len(expected['users']), 0)
+
+        # Should be Successful
+
+        test_values = [[1],
+                       [2],
+                       ['1@1.com'],
+                       ['hbo@hbo.hbo']]
+
+        for i in range(len(test_values)):
+            url = '/search/user={user_info}'.format(user_info=test_values[i][0])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(len(expected['users']), 1)
 
     def test_rate_movie(self):
         url = '/user/movie/rating'
