@@ -533,6 +533,7 @@ def subscribe(user_id=None, tv_show_id=None, function_call=False):
             data = request.get_json()
             user_id = data['user_id']
             tv_show_id = data['tv_show_id']
+
         check_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
 
         if check_slot is not None:
