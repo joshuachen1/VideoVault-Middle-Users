@@ -4,7 +4,7 @@ from app import app
 from app import db
 from models.user_media_models import MovieComment, TVShowComment
 from models.user_models import TimeLine, PostComments
-from models.user_models import User
+from models.user_models import User, Friends, UserSlots
 from models.user_models import UserRatedMovieRel
 from models.user_models import UserRatedTVShowRel
 from models.user_models import UserRentedMovies
@@ -228,7 +228,10 @@ class UnitTests(unittest.TestCase):
         # Check if User Exists, Remove From Database if it does
         user = User.query.filter_by(name='Unit Test').filter_by(username='unittest').first()
         assert user is not None
-        User.query.filter_by(name='Unit Test').filter_by(username='unittest').delete()
+        delete_user = User.query.filter_by(name='Unit Test').filter_by(username='unittest')
+        User.query.filter_by(id=delete_user.id).delete()
+        UserSlots.query.filter_by(id=delete_user.id).delete()
+        Friends.query.filter_by(id=delete_user.id).delete()
         db.session.commit()
 
     def test_login(self):
