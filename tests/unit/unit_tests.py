@@ -482,8 +482,10 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['is_unsubscribed'], True)
 
     def test_user_search(self):
+
         # Check Exception Caught
         self.assertRaises(Exception, self.app.get('/search/user=', json={}))
+        self.assertRaises(Exception, self.app.get('/search/user=/page=', json={}))
 
         # Should Return
         # 'users': []
