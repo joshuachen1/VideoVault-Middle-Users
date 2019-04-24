@@ -420,6 +420,9 @@ def update_profile_pic():
 @app.route('/user=<user_id>/is_slots_full', methods=['GET'])
 @app.route('/user=/is_slots_full', methods=['GET'])
 def is_slots_full(user_id=None):
+    if user_id is None or not isinstance(user_id, int):
+        return jsonify({'is_slots_full': False})
+
     # Gets list of user slots to get length
     user_slots = UserSlots.query.filter_by(user_id=user_id).all()
     # Gets list of tv show ids to check for null entries later
