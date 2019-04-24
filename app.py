@@ -658,19 +658,6 @@ def user_search(query=None, page=1):
         return str(e)
 
 
-# [url]/users/page=[page]
-# [url]/users
-@app.route('/users/page=<int:page>', methods=['GET'])
-@app.route('/users/page=', methods=['GET'])
-@app.route('/users', methods=['GET'])
-def get_users(page=1):
-    try:
-        users = User.query.order_by().all()
-        return paginated_json('users', users, page)
-    except Exception as e:
-        return str(e)
-
-
 # { request_to: [user_id], request_from: [pending_friend_id] }
 # send a friend request to another user
 @app.route('/send_friend_request', methods=['POST'])
