@@ -544,10 +544,10 @@ def subscribe(user_id=None, tv_show_id=None, function_call=False):
             change_subscription_status(user_id, tv_show_id, False)
             db.session.commit()
             return jsonify({'is_success': True,
-                            'is_slot_exist': True})
+                            'is_slot_exist': True, })
         else:
             return jsonify({'is_success': False,
-                            'is_slot_exist:': False})
+                            'is_slot_exist:': False, })
     except Exception as e:
         return str(e)
 
