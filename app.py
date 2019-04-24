@@ -1259,17 +1259,17 @@ def display_wall(user_id=None):
         wall = list()
         user = User.query.filter_by(id=user_id).first()
 
-        wall_posts = TimeLine.query.filter_by(user_id=user.id).order_by(TimeLine.date_of_post)
+        wall_posts = TimeLine.query.filter_by(wall_id=user.id).order_by(TimeLine.date_of_post)
 
         for post in wall_posts:
-            user = User.query.filter_by(id=post.user_id).first()
-            post_user = User.query.filter_by(id=post.post_user_id).first()
+            user = User.query.filter_by(id=post.wall_id).first()
+            post_user = User.query.filter_by(id=post.user_id).first()
 
             comments = list()
-            comment_list = PostComments.query.filter_by(user_id=post.user_id).filter_by(
-                post_user_id=post.post_user_id).filter_by(post_id=post.post_id)
+            comment_list = PostComments.query.filter_by(user_id=post.wall_id).filter_by(
+                post_user_id=post_user.id).filter_by(post_id=post.post_id)
             for comment in comment_list:
-                comment_user = User.query.filter_by(id=comment.comment_user_id).first()
+                comment_user = User.query.filter_by(id=comment.user_id).first()
                 comments.append(PostComment(
                     user_id=user.id,
                     username=user.username,
