@@ -420,7 +420,9 @@ def update_profile_pic():
 @app.route('/user=<user_id>/is_slots_full', methods=['GET'])
 @app.route('/user=/is_slots_full', methods=['GET'])
 def is_slots_full(user_id=None):
-    if user_id is None or not isinstance(user_id, int):
+    if user_id is not None and user_id.isdigit():
+        user_id = int(user_id)
+    if not user_id or not isinstance(user_id, int):
         return jsonify({'is_slots_full': False})
 
     # Gets list of user slots to get length
