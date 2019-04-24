@@ -1911,7 +1911,9 @@ def max_pages(queried_list: []):
 def isEnglish(s):
     try:
         s.encode(encoding='utf-8').decode('ascii')
-    except Exception:
+    except UnicodeDecodeError:
+        return False
+    else:
         return True
 
 

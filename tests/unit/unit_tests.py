@@ -228,7 +228,7 @@ class UnitTests(unittest.TestCase):
         # Check if User Exists, Remove From Database if it does
         user = User.query.filter_by(name='Unit Test').filter_by(username='unittest').first()
         assert user is not None
-        User.query.filter_by(name='Unit Test').filter_by(username='unittest').delete()
+        User.query.filter_by(username=expected['username']).delete()
         db.session.commit()
 
     def test_login(self):
