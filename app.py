@@ -206,7 +206,7 @@ def signup():
         return str(e)
 
 
-#[url]/server_update
+# [url]/server_update
 @app.route('/database_update', methods=['DELETE'])
 def database_update():
     data = request.get_json()
@@ -218,8 +218,8 @@ def database_update():
         return jsonify({'success': True,
                         'valid_user_id': True})
     else:
-        return jsonify({'success':False,
-                        'valid_user_id':False})
+        return jsonify({'success': False,
+                        'valid_user_id': False})
 
 
 # [url]/login/email=[email]/password=[password]
@@ -566,12 +566,14 @@ def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
     except Exception as e:
         return str(e)
 
+
 @app.route('/is_unsubscribed/user_id=<user_id>/tv_show_id=<tv_show_id>', methods=['GET'])
-def is_unsubscribe(user_id=None,tv_show_id=None):
-    unsubscribe_boolean=UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+def is_unsubscribe(user_id=None, tv_show_id=None):
+    unsubscribe_boolean = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
     if unsubscribe_boolean is not None and unsubscribe_boolean.unsubscribe is True:
-        return jsonify({"is_unsubscribed":True})
-    return jsonify({"is_unsubscribed":False})
+        return jsonify({"is_unsubscribed": True})
+    return jsonify({"is_unsubscribed": False})
+
 
 # { user_id: [user_id] }
 # route to clear all slots
@@ -1089,7 +1091,7 @@ def get_user_subscriptions(user_id=None):
         for subscription in subscriptions:
             if subscription.tv_show_id is not None:
                 subscriptions_id_list.append(subscription.tv_show_id)
-        return jsonify({"subscriptions":subscriptions_id_list})
+        return jsonify({"subscriptions": subscriptions_id_list})
     except Exception as e:
         return str(e)
 
@@ -1544,32 +1546,33 @@ def get_average_rating(is_tv_show: bool, media_id: int):
 def delete_expired_movies(func_call=False, user_id=None):
     try:
 
-            yesterday_datetime = datetime.now() - timedelta(1)
-            users_list = list()
-            # ensures list is not empty
-            if func_call is True and user_id is not None:
-                check_not_empty = UserRentedMovies.query.filter_by(user_id=user_id).filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
-                user = User.query.filter_by(id=user_id).first()
-                users_list.append(user)
-            else:
-                check_not_empty = UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
-                users_id_list = list()
-                # get all user ids and remove duplicates
-                for user_movie_rel in check_not_empty:
-                    users_id_list.append(user_movie_rel.user_id)
+        yesterday_datetime = datetime.now() - timedelta(1)
+        users_list = list()
+        # ensures list is not empty
+        if func_call is True and user_id is not None:
+            check_not_empty = UserRentedMovies.query.filter_by(user_id=user_id).filter(
+                UserRentedMovies.rent_datetime <= yesterday_datetime)
+            user = User.query.filter_by(id=user_id).first()
+            users_list.append(user)
+        else:
+            check_not_empty = UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
+            users_id_list = list()
+            # get all user ids and remove duplicates
+            for user_movie_rel in check_not_empty:
+                users_id_list.append(user_movie_rel.user_id)
 
-                users_id_list = list(dict.fromkeys(users_list))
-                for user_id in users_id_list:
-                    users_list = User.query.filter_by(id=user_id).first()
+            users_id_list = list(dict.fromkeys(users_list))
+            for user_id in users_id_list:
+                users_list = User.query.filter_by(id=user_id).first()
 
-            if check_not_empty:
-                UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
-                db.session.commit()
-                for user in users_list:
-                    email_sender.movie_return_email(user.username, user.email)
-                return 'success'
-            else:
-                return 'no movies to delete'
+        if check_not_empty:
+            UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
+            db.session.commit()
+            for user in users_list:
+                email_sender.movie_return_email(user.username, user.email)
+            return 'success'
+        else:
+            return 'no movies to delete'
 
     except Exception as e:
         return str(e)
