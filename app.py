@@ -1746,6 +1746,7 @@ def increment_slot(user_id) -> int:
     num_slots = check_id.num_slots + 1
     sub_date = check_id.sub_date
     profile_pic = check_id.profile_pic
+    slots_to_delete = check_id.slots_to_delete
 
     try:
         user = User.query.filter_by(id=user_id).first()
@@ -1758,6 +1759,7 @@ def increment_slot(user_id) -> int:
         user.num_slots = num_slots
         user.sub_date = sub_date
         user.profile_pic = profile_pic
+        user.slots_to_delete = slots_to_delete
 
         return num_slots
 
@@ -1778,6 +1780,7 @@ def decrement_slot(user_id) -> int:
     num_slots = check_id.num_slots - 1
     sub_date = check_id.sub_date
     profile_pic = check_id.profile_pic
+    slots_to_delete = check_id.slots_to_delete
 
     try:
         user = User.query.filter_by(id=user_id).first()
@@ -1790,6 +1793,7 @@ def decrement_slot(user_id) -> int:
         user.num_slots = num_slots
         user.sub_date = sub_date
         user.profile_pic = profile_pic
+        user.slots_to_delete = slots_to_delete
 
         return num_slots
 
