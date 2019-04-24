@@ -561,11 +561,7 @@ def subscribe(user_id=None, tv_show_id=None, function_call=False):
                             'is_slot_exist': True, })
         else:
             return jsonify({'is_success': False,
-<<<<<<< HEAD
-                            'is_slot_exist:': False, })
-=======
                             'is_slot_exist': False})
->>>>>>> f2e6254d64bb07653de123717dea861eed5080e1
     except Exception as e:
         return str(e)
 
