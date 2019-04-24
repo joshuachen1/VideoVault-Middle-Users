@@ -456,7 +456,7 @@ class UnitTests(unittest.TestCase):
                        [None, ''],
                        ['', None],
                        ['', ''],
-                       [1, 1,
+                       [1, 1],
                        [1, 2]
                        ]
 
@@ -465,7 +465,21 @@ class UnitTests(unittest.TestCase):
                                                                                       tv_show_id=test_values[i][1])
             result = self.app.get(url)
             expected = result.get_json()
-            self.assertEqual(expected['is_slots_full'], False)
+            self.assertEqual(expected['is_unsubscribed'], False)
+
+        # Should Return
+        # 'is_unsubscribed': True
+
+        test_values = [[2, 2],
+                       [3, 3]
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/is_unsubscribed/user_id={user_id}/tv_show_id={tv_show_id}'.format(user_id=test_values[i][0],
+                                                                                      tv_show_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['is_unsubscribed'], True)
 
 
     def test_rate_movie(self):
