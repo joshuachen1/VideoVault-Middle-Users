@@ -621,10 +621,9 @@ class UnitTests(unittest.TestCase):
 
         test_values = [[None, None, 5], [None, 0, 5], [0, None, 5], [0, 0, 5]]
         for i in range(len(test_values)):
-            for j in range(len(test_values)):
-                result = self.app.post(url, json={'user_id': test_values[i][j],
-                                                  'tv_show_id': test_values[i][j],
-                                                  'rating': test_values[i][j]})
+                result = self.app.post(url, json={'user_id': test_values[i][0],
+                                                  'tv_show_id': test_values[i][1],
+                                                  'rating': test_values[i][2]})
                 expected = result.get_json()
                 self.assertEqual(expected['valid_user'], False)
                 self.assertEqual(expected['valid_tv_show'], False)
@@ -632,36 +631,33 @@ class UnitTests(unittest.TestCase):
 
         test_values = [[1, None, 5], [1, 0, 5]]
         for i in range(len(test_values)):
-            for j in range(len(test_values)):
-                result = self.app.post(url, json={'user_id': test_values[i][j],
-                                                  'tv_show_id': test_values[i][j],
-                                                  'rating': test_values[i][j]})
-                expected = result.get_json()
-                self.assertEqual(expected['valid_user'], True)
-                self.assertEqual(expected['valid_tv_show'], False)
-                self.assertEqual(expected['success'], False)
+            result = self.app.post(url, json={'user_id': test_values[i][0],
+                                                'tv_show_id': test_values[i][1],
+                                                'rating': test_values[i][2]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_tv_show'], False)
+            self.assertEqual(expected['success'], False)
 
         test_values = [[None, 1, 5], [0, 1, 5]]
         for i in range(len(test_values)):
-            for j in range(len(test_values)):
-                result = self.app.post(url, json={'user_id': test_values[i][j],
-                                                  'tv_show_id': test_values[i][j],
-                                                  'rating': test_values[i][j]})
-                expected = result.get_json()
-                self.assertEqual(expected['valid_user'], False)
-                self.assertEqual(expected['valid_tv_show'], True)
-                self.assertEqual(expected['success'], False)
+            result = self.app.post(url, json={'user_id': test_values[i][0],
+                                                'tv_show_id': test_values[i][1],
+                                                'rating': test_values[i][2]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_tv_show'], True)
+            self.assertEqual(expected['success'], False)
 
         test_values = [[1, 1, 5]]
         for i in range(len(test_values)):
-            for j in range(len(test_values)):
-                result = self.app.post(url, json={'user_id': test_values[i][j],
-                                                  'tv_show_id': test_values[i][j],
-                                                  'rating': test_values[i][j]})
-                expected = result.get_json()
-                self.assertEqual(expected['valid_user'], True)
-                self.assertEqual(expected['valid_tv_show'], True)
-                self.assertEqual(expected['success'], True)
+            result = self.app.post(url, json={'user_id': test_values[i][0],
+                                              'tv_show_id': test_values[i][1],
+                                              'rating': test_values[i][2]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_tv_show'], True)
+            self.assertEqual(expected['success'], True)
 
         user_id = 1
         tv_show_id = 1
@@ -770,68 +766,37 @@ class UnitTests(unittest.TestCase):
     def test_tv_show_commenting(self):
         url = '/tv_show/comment'
 
+        test_values = [[None, None, 'Test'], [None, 0, 'Test'], [0, None, 'Test'], [0, 0, 'Test']]
         # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
-
-        result = self.app.post(url, json={'user_id': None,
-                                          'tv_show_id': None,
-                                          'comment': 'Test'})
+        for i in range(len(test_values)):
+            result = self.app.post(url, json={'user_id': test_values[i][0],
+                                              'tv_show_id': test_values[i][1],
+                                              'comment': test_values[i][2]})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], False)
         self.assertEqual(expected['valid_tv_show'], False)
         self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': None,
-                                          'tv_show_id': 0,
-                                          'comment': 'Test'})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_tv_show'], False)
-        self.assertEqual(expected['success'], False)
-
-        result = self.app.post(url, json={'user_id': 0,
-                                          'tv_show_id': None,
-                                          'comment': 'Test'})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_tv_show'], False)
-        self.assertEqual(expected['success'], False)
-
-        result = self.app.post(url, json={'user_id': 0,
-                                          'tv_show_id': 0,
-                                          'comment': 'Test'})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_tv_show'], False)
-        self.assertEqual(expected['success'], False)
-
-        result = self.app.post(url, json={'user_id': 1,
-                                          'tv_show_id': None,
-                                          'comment': 'Test'})
+        test_values = [[1, None, 'Test'], [1, 0, 'Test']]
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.post(url, json={}))
+        for i in range(len(test_values)):
+            result = self.app.post(url, json={'user_id': test_values[i][0],
+                                              'tv_show_id': test_values[i][1],
+                                              'comment': test_values[i][2]})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
         self.assertEqual(expected['valid_tv_show'], False)
         self.assertEqual(expected['success'], False)
 
-        result = self.app.post(url, json={'user_id': 1,
-                                          'tv_show_id': 0,
-                                          'comment': 'Test'})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_tv_show'], False)
-        self.assertEqual(expected['success'], False)
-
-        result = self.app.post(url, json={'user_id': None,
-                                          'tv_show_id': 1,
-                                          'comment': 'Test'})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], False)
-        self.assertEqual(expected['valid_tv_show'], True)
-        self.assertEqual(expected['success'], False)
-
-        result = self.app.post(url, json={'user_id': 0,
-                                          'tv_show_id': 1,
-                                          'comment': 'Test'})
+        test_values = [[None, 1, 'Test'], [0, 1, 'Test']]
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.post(url, json={}))
+        for i in range(len(test_values)):
+            result = self.app.post(url, json={'user_id': test_values[i][0],
+                                              'tv_show_id': test_values[i][1],
+                                              'comment': test_values[i][2]})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], False)
         self.assertEqual(expected['valid_tv_show'], True)
