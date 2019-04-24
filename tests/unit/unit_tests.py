@@ -228,10 +228,7 @@ class UnitTests(unittest.TestCase):
         # Check if User Exists, Remove From Database if it does
         user = User.query.filter_by(name='Unit Test').filter_by(username='unittest').first()
         assert user is not None
-        delete_user = User.query.filter_by(name='Unit Test').filter_by(username='unittest')
-        User.query.filter_by(id=delete_user.id).delete()
-        UserSlots.query.filter_by(id=delete_user.id).delete()
-        Friends.query.filter_by(id=delete_user.id).delete()
+        User.query.filter_by(username=expected['username']).delete()
         db.session.commit()
 
     def test_login(self):
@@ -301,7 +298,8 @@ class UnitTests(unittest.TestCase):
     def test_update_profile_pic(self):
         url = '/update/profile_pic'
 
-        self.assertRaises(Exception, self.app.post(url, json={}))
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.put(url, json={}))
 
         # Should Return
         # 'valid_user': False
@@ -381,6 +379,9 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['is_slots_full'], True)
 
     def test_is_tv_show_in_slot(self):
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.get('/user=/tv_show=/is_tv_show_in_slot', json={}))
+
         # Should Return
         # 'is_tv_show_in_slot: False
 
@@ -419,7 +420,7 @@ class UnitTests(unittest.TestCase):
         url = '/subscribe'
 
         # Check Exception Caught
-        self.assertRaises(Exception, self.app.post(url, json={}))
+        self.assertRaises(Exception, self.app.put(url, json={}))
 
         # Should Return
         # 'is_slot_exist': False
@@ -487,8 +488,7 @@ class UnitTests(unittest.TestCase):
     def test_user_search(self):
 
         # Check Exception Caught
-        self.assertRaises(Exception, self.app.get('/search/user=', json={}))
-        self.assertRaises(Exception, self.app.get('/search/user=/page=', json={}))
+        self.assertRaises(Exception, self.app.get('/search/user=', json={'$@$@'}))
 
         # Should Return
         # 'users': []
@@ -521,6 +521,9 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(len(expected['users']), 1)
 
     def test_is_friend_request(self):
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.get('/is_friend_request/user=$@$@'))
+
         # Should Return
         # 'at_least_one_request': False
 
