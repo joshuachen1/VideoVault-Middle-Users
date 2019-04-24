@@ -443,7 +443,7 @@ class UnitTests(unittest.TestCase):
         # 'is_success': True
 
         test_jsons = [{'user_id': 1, 'tv_show_id': 11},
-                      {'user_id': 1, 'tv_show_id': 12},
+                      {'user_id': 1, 'tv_show_id': 14},
                       ]
         for test_json in test_jsons:
             result = self.app.put(url, json=test_json)
