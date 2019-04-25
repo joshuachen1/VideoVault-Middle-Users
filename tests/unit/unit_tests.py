@@ -314,6 +314,44 @@ class UnitTests(unittest.TestCase):
     def test_delete_account(self):
         url = '/account/delete'
 
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.delete(url, json={}))
+
+        # Should Return
+        # 'valid_user': False
+        # 'success': False
+
+        test_values = [[None, None],
+                       [None, ''],
+                       ['', None],
+                       ['', '']
+                       ]
+
+        for i in range(len(test_values)):
+            result = self.app.delete(url, json={'user_id': test_values[i][0],
+                                                'password': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['success'], False)
+
+        # Should Return
+        # 'valid_user': True
+        # 'valid_password': False
+        # 'success': False
+
+        test_values = [[1, None],
+                       [1, ''],
+                       [1, 'test']
+                       ]
+
+        for i in range(len(test_values)):
+            result = self.app.delete(url, json={'user_id': test_values[i][0],
+                                                'password': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_password'], False)
+            self.assertEqual(expected['success'], False)
+
         # Should Return
         # 'valid_user': True
         # 'valid_password': True
