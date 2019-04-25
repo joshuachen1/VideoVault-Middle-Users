@@ -420,6 +420,8 @@ def update_profile_pic():
 @app.route('/user=<user_id>/is_slots_full', methods=['GET'])
 @app.route('/user=/is_slots_full', methods=['GET'])
 def is_slots_full(user_id=None):
+    if user_id is not None and user_id.isdigit():
+        user_id = int(user_id)
     if user_id is None or not isinstance(user_id, int):
         return jsonify({'is_slots_full': False})
 
@@ -441,10 +443,12 @@ def is_slots_full(user_id=None):
 
 # [url]/user=[user_id]/tv_show[tv_show_id]/is_tv_show_in_slot
 @app.route('/user=<user_id>/tv_show=<tv_show_id>/is_tv_show_in_slot', methods=['GET'])
+@app.route('/user=/tv_show=<tv_show_id>/is_tv_show_in_slot', methods=['GET'])
+@app.route('/user=<user_id>/tv_show=/is_tv_show_in_slot', methods=['GET'])
 @app.route('/user=/tv_show=/is_tv_show_in_slot', methods=['GET'])
 def is_tv_show_in_slot(user_id=None, tv_show_id=None):
     try:
-        if UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first() is not None:
+        if UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).scalar() is not None:
             return jsonify({'is_tv_show_in_slot': True})
         else:
             return jsonify({'is_tv_show_in_slot': False})
@@ -533,17 +537,31 @@ def subscribe(user_id=None, tv_show_id=None, function_call=False):
             data = request.get_json()
             user_id = data['user_id']
             tv_show_id = data['tv_show_id']
+        # casts input into int if string
+        if user_id is None or tv_show_id is None:
+            return jsonify({'is_success': False,
+                            'is_slot_exist': False})
+        if isinstance(user_id, str):
+            if user_id.isdigit():
+                user_id = int(user_id)
+            else:
+                return jsonify({'is_success': False,
+                                'is_slot_exist': False})
+        if isinstance(tv_show_id, str):
+            if tv_show_id.isdigit():
+                tv_show_id = int(tv_show_id)
+            else:
+                return jsonify({'is_success': False,
+                                'is_slot_exist': False})
 
-        check_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
-
-        if check_slot is not None:
+        if UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).scalar() is not None:
             change_subscription_status(user_id, tv_show_id, False)
             db.session.commit()
             return jsonify({'is_success': True,
-                            'is_slot_exist': True})
+                            'is_slot_exist': True, })
         else:
             return jsonify({'is_success': False,
-                            'is_slot_exist:': False})
+                            'is_slot_exist': False})
     except Exception as e:
         return str(e)
 
@@ -572,6 +590,9 @@ def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
 
 
 @app.route('/is_unsubscribed/user_id=<user_id>/tv_show_id=<tv_show_id>', methods=['GET'])
+@app.route('/is_unsubscribed/user_id=/tv_show_id=<tv_show_id>', methods=['GET'])
+@app.route('/is_unsubscribed/user_id=<user_id>/tv_show_id=', methods=['GET'])
+@app.route('/is_unsubscribed/user_id=/tv_show_id=', methods=['GET'])
 def is_unsubscribe(user_id=None, tv_show_id=None):
     unsubscribe_boolean = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
     if unsubscribe_boolean is not None and unsubscribe_boolean.unsubscribe is True:
@@ -658,19 +679,6 @@ def user_search(query=None, page=1):
         return str(e)
 
 
-# [url]/users/page=[page]
-# [url]/users
-@app.route('/users/page=<int:page>', methods=['GET'])
-@app.route('/users/page=', methods=['GET'])
-@app.route('/users', methods=['GET'])
-def get_users(page=1):
-    try:
-        users = User.query.order_by().all()
-        return paginated_json('users', users, page)
-    except Exception as e:
-        return str(e)
-
-
 # { request_to: [user_id], request_from: [pending_friend_id] }
 # send a friend request to another user
 @app.route('/send_friend_request', methods=['POST'])
@@ -680,12 +688,16 @@ def send_friend_request():
         request_to = data['request_to']
         request_from = data['request_from']
 
-        check_user_to = User.query.filter_by(id=request_to).first()
-        check_user_to = check_user_to is not None
-        check_user_from = User.query.filter_by(id=request_from)
-        check_user_from = check_user_from is not None
-        check_friendship = Friends.query.filter_by(user_id=request_from).filter_by(friend_id=request_to).first()
-        check_friendship = check_friendship is None
+        check_user_to = User.query.filter_by(id=request_to).scalar() is not None
+        check_user_from = User.query.filter_by(id=request_from).scalar() is not None
+        check_friendship = Friends.query.filter_by(user_id=request_from).filter_by(friend_id=request_to).scalar() is None
+        if not isinstance(request_to, int):
+            check_user_to = False
+            check_friendship = False
+        if not isinstance(request_from, int):
+            check_user_from = False
+            check_friendship = False
+
         if check_user_to and check_user_from and check_friendship:
             # add request to table
             new_friend_request = PendingFriends(
@@ -750,7 +762,7 @@ def accept_friend_request(function_call=False):
         return str(e)
 
 
-# { user_id: [user_id], pending_friend_id: [pending_friend_id] }
+# { user_id: [user_id], request_from: [pending_friend_id] }
 # decline a friend request
 @app.route('/decline_friend_request', methods=['POST'])
 def decline_friend_request():
@@ -809,9 +821,26 @@ def is_friend_request(user_id=None):
 
 # Check Friendship
 # [url]/user1=[user1_id]/user2=[user2_id]
-@app.route('/user1=<int:user1_id>/user2=<int:user2_id>')
+@app.route('/user1=<user1_id>/user2=<user2_id>', methods=['GET'])
+@app.route('/user1=<user1_id>/user2=', methods=['GET'])
+@app.route('/user1=/user2=<user2_id>', methods=['GET'])
+@app.route('/user1=/user2=', methods=['GET'])
 def is_friend(user1_id=None, user2_id=None, inner_call=False):
     try:
+        if user1_id is None or user1_id is '' or user2_id is None or user2_id is '':
+            if inner_call:
+                return False
+            return jsonify({'is_friend': False})
+
+        user1_id = '{}%'.format(user1_id)
+        user2_id = '{}%'.format(user2_id)
+
+        if User.query.filter(User.username.like(user1_id)) is None or User.query.filter(
+                User.username.like(user2_id)) is None:
+            if inner_call:
+                return False
+            return jsonify({'is_friend': False})
+
         friendship = Friends.query.filter_by(user_id=user1_id).filter_by(friend_id=user2_id).first()
         if friendship is not None:
             if inner_call:
@@ -1029,35 +1058,35 @@ def comment_movie():
 # [url]/movie=[title]/comments
 @app.route('/movie=<title>/comments/reverse=<reverse>', methods=['GET'])
 @app.route('/movie=<title>/comments', methods=['GET'])
+@app.route('/movie=/comments', methods=['GET'])
 def get_movie_comments(title=None, reverse=False):
-    try:
-        movie = Movie.query.filter_by(title=title).first()
+    if title is None:
+        return jsonify({'valid_movie': False})
 
-        if movie is None:
-            return jsonify({'valid_movie': False})
-        else:
-            comments = list()
-            raw_comments = MovieComment.query.filter_by(movie_id=movie.id).order_by(MovieComment.date_of_comment)
+    movie = Movie.query.filter_by(title=title).first()
 
-            for rc in raw_comments:
-                user_id = rc.user_id
-                username = User.query.filter_by(id=user_id).first().username
-                comment = rc.comment
-                date_of_comment = rc.date_of_comment
-                comments.append(Comment(
-                    user_id=user_id,
-                    username=username,
-                    comment=comment,
-                    date_of_comment=date_of_comment,
-                ))
+    if movie is None:
+        return jsonify({'valid_movie': False})
+    else:
+        comments = list()
+        raw_comments = MovieComment.query.filter_by(movie_id=movie.id).order_by(MovieComment.date_of_comment)
 
-            if reverse:
-                comments = reversed(comments)
+        for rc in raw_comments:
+            user_id = rc.user_id
+            username = User.query.filter_by(id=user_id).first().username
+            comment = rc.comment
+            date_of_comment = rc.date_of_comment
+            comments.append(Comment(
+                user_id=user_id,
+                username=username,
+                comment=comment,
+                date_of_comment=date_of_comment,
+            ))
 
-            return jsonify({'comments': [comment.serialize() for comment in comments]})
+        if reverse:
+            comments = reversed(comments)
 
-    except Exception as e:
-        return str(e)
+        return jsonify({'comments': [comment.serialize() for comment in comments]})
 
 
 # [url]/user=[user_id]/tv_show_list
@@ -1198,35 +1227,35 @@ def comment_tv_show():
 # [url]/tv_show=[title]/comments
 @app.route('/tv_show=<title>/comments/reverse=<reverse>', methods=['GET'])
 @app.route('/tv_show=<title>/comments', methods=['GET'])
+@app.route('/tv_show=/comments', methods=['GET'])
 def get_tv_show_comments(title=None, reverse=False):
-    try:
-        tv_show = TVShows.query.filter_by(title=title).first()
+    if title is None:
+        return jsonify({'valid_tv_show': False})
 
-        if tv_show is None:
-            return jsonify({'valid_tv_show': False})
-        else:
-            comments = list()
-            raw_comments = TVShowComment.query.filter_by(tv_show_id=tv_show.id).order_by(TVShowComment.date_of_comment)
+    tv_show = TVShows.query.filter_by(title=title).first()
 
-            for rc in raw_comments:
-                user_id = rc.user_id
-                username = User.query.filter_by(id=user_id).first().username
-                comment = rc.comment
-                date_of_comment = rc.date_of_comment
-                comments.append(Comment(
-                    user_id=user_id,
-                    username=username,
-                    comment=comment,
-                    date_of_comment=date_of_comment,
-                ))
+    if tv_show is None:
+        return jsonify({'valid_tv_show': False})
+    else:
+        comments = list()
+        raw_comments = TVShowComment.query.filter_by(tv_show_id=tv_show.id).order_by(TVShowComment.date_of_comment)
 
-            if reverse:
-                comments = reversed(comments)
+        for rc in raw_comments:
+            user_id = rc.user_id
+            username = User.query.filter_by(id=user_id).first().username
+            comment = rc.comment
+            date_of_comment = rc.date_of_comment
+            comments.append(Comment(
+                user_id=user_id,
+                username=username,
+                comment=comment,
+                date_of_comment=date_of_comment,
+            ))
 
-            return jsonify({'comments': [comment.serialize() for comment in comments]})
+        if reverse:
+            comments = reversed(comments)
 
-    except Exception as e:
-        return str(e)
+        return jsonify({'comments': [comment.serialize() for comment in comments]})
 
 
 # [url]/user=[user_id]/movie=[movie_id]/is_movie_rented
@@ -1601,7 +1630,7 @@ def delete_expired_tv_shows(user_id=None):
                 if UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True).scalar() is not None:
                     remove_list = UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True).all()
                     update_sub_date(user.id)
-                # email_sender.subscription_renew_email(user.username, user.email, user.sub_date + timedelta(30))
+                email_sender.subscription_renew_email(user.username, user.email, user.sub_date + timedelta(30))
                 if remove_list:
                     for tv_show_to_remove in remove_list:
                         subscribe(user.id, tv_show_to_remove.tv_show_id, True)
