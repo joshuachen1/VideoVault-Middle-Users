@@ -686,6 +686,40 @@ def flag_slot_delete():
     except Exception as e:
             return str(e)
 
+
+# { user_id: [user_id] }
+@app.route('/slot/delete', methods=['DELETE'])
+def delete_slots():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+
+        user = User.query.filter_by(id=user_id).first()
+
+        if user is None:
+            return jsonify({'valid_user_id': False,
+                            'success': False})
+
+        if not user.num_slots > 10:
+            return jsonify({'valid_user_id': True,
+                            'success': False})
+
+        # Check Backwards
+        for slot_num in range(user.num_slots, 10, -1):
+            slot = UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_num).first()
+
+            if slot.delete_slot == 1:
+                UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_num).delete()
+                user.num_slots -= 1
+                db.session.commit()
+
+        return jsonify({'valid_user_id': True,
+                        'success': True})
+
+    except Exception as e:
+            return str(e)
+
+
 # { user_id: [user_id] }
 # route to clear all slots
 @app.route('/clear_slots', methods=['PUT'])
