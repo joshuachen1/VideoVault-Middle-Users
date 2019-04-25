@@ -1097,6 +1097,12 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             assert len(expected['comments']) > 0
 
+        for i in range(len(test_values)):
+            url = '/movie={title}/comments/reverse={reverse}'.format(title=test_values[i],
+                                                                     reverse=True)
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert len(expected['comments']) > 0
 
     def test_tv_show_commenting(self):
         url = '/tv_show/comment'
@@ -1173,6 +1179,13 @@ class UnitTests(unittest.TestCase):
         test_values = ['Seinfeld', 'Game of Thrones']
         for i in range(len(test_values)):
             url = '/tv_show={title}/comments'.format(title=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert len(expected['comments']) > 0
+
+        for i in range(len(test_values)):
+            url = '/tv_show={title}/comments/reverse={reverse}'.format(title=test_values[i],
+                                                                       reverse=True)
             result = self.app.get(url)
             expected = result.get_json()
             assert len(expected['comments']) > 0
