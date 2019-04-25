@@ -1021,7 +1021,10 @@ class UnitTests(unittest.TestCase):
         # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
 
-        test_values = [[None, None, 'Test'], [None, 0, 'Test'], [0, None, 'Test'], [0, 0, 'Test']]
+        test_values = [[None, None, 'Test'],
+                       [None, 0, 'Test'],
+                       [0, None, 'Test'],
+                       [0, 0, 'Test']]
         # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
         for i in range(len(test_values)):
@@ -1033,7 +1036,8 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['valid_movie'], False)
             self.assertEqual(expected['success'], False)
 
-        test_values = [[1, None, 'Test'], [1, 0, 'Test']]
+        test_values = [[1, None, 'Test'],
+                       [1, 0, 'Test']]
         # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
         for i in range(len(test_values)):
@@ -1045,7 +1049,8 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['valid_movie'], False)
             self.assertEqual(expected['success'], False)
 
-        test_values = [[None, 1, 'Test'], [0, 1, 'Test']]
+        test_values = [[None, 1, 'Test'],
+                       [0, 1, 'Test']]
         # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
         for i in range(len(test_values)):
@@ -1078,7 +1083,10 @@ class UnitTests(unittest.TestCase):
         # Should return
         # 'valid_movie': False
 
-        test_values = [None, '', '$@$@$@', 12345]
+        test_values = [None,
+                       '',
+                       '$@$@$@',
+                       12345]
         for i in range(len(test_values)):
             url = '/movie={title}/comments'.format(title=test_values[i])
             result = self.app.get(url)
@@ -1087,7 +1095,9 @@ class UnitTests(unittest.TestCase):
 
         # Should be Successful
 
-        test_values = ['Bird Box', 'Toy Story']
+        test_values = ['Bird Box',
+                       'Toy Story']
+
         for i in range(len(test_values)):
             url = '/movie={title}/comments'.format(title=test_values[i])
             result = self.app.get(url)
@@ -1104,7 +1114,10 @@ class UnitTests(unittest.TestCase):
     def test_tv_show_commenting(self):
         url = '/tv_show/comment'
 
-        test_values = [[None, None, 'Test'], [None, 0, 'Test'], [0, None, 'Test'], [0, 0, 'Test']]
+        test_values = [[None, None, 'Test'],
+                       [None, 0, 'Test'],
+                       [0, None, 'Test'],
+                       [0, 0, 'Test']]
         # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
         for i in range(len(test_values)):
@@ -1116,7 +1129,8 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['valid_tv_show'], False)
             self.assertEqual(expected['success'], False)
 
-        test_values = [[1, None, 'Test'], [1, 0, 'Test']]
+        test_values = [[1, None, 'Test'],
+                       [1, 0, 'Test']]
         # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
         for i in range(len(test_values)):
@@ -1128,7 +1142,8 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['valid_tv_show'], False)
             self.assertEqual(expected['success'], False)
 
-        test_values = [[None, 1, 'Test'], [0, 1, 'Test']]
+        test_values = [[None, 1, 'Test'],
+                       [0, 1, 'Test']]
         # Check Exception Caught
         self.assertRaises(Exception, self.app.post(url, json={}))
         for i in range(len(test_values)):
@@ -1161,7 +1176,10 @@ class UnitTests(unittest.TestCase):
         # Should return
         # 'valid_movie': False
 
-        test_values = [None, '', '$@$@$@', 12345]
+        test_values = [None, '',
+                       '$@$@$@',
+                       12345]
+
         for i in range(len(test_values)):
             url = '/tv_show={title}/comments'.format(title=test_values[i])
             result = self.app.get(url)
@@ -1170,7 +1188,9 @@ class UnitTests(unittest.TestCase):
 
         # Should be Successful
 
-        test_values = ['Seinfeld', 'Game of Thrones']
+        test_values = ['Seinfeld',
+                       'Game of Thrones']
+
         for i in range(len(test_values)):
             url = '/tv_show={title}/comments'.format(title=test_values[i])
             result = self.app.get(url)
