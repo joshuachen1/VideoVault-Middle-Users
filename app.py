@@ -843,16 +843,13 @@ def has_friend_request(user_id=None, request_from=None):
 @app.route('/get_friend_requests/user=/page=', methods=['GET'])
 @app.route('/get_friend_requests/user=', methods=['GET'])
 def get_friend_requests(user_id=None, page=1):
-    try:
-        pending_friend_list = list()
-        if user_id is not None and user_id.isdigit() and int(user_id) > 0:
-            pending_request_rel = PendingFriends.query.filter_by(user_id=user_id).all()
-            for request in pending_request_rel:
-                pending_friend = User.query.filter_by(id=request.pending_from_id).first()
-                pending_friend_list.append(pending_friend)
-        return paginated_json('pending_friend_requests', pending_friend_list, page)
-    except Exception as e:
-        return str(e)
+    pending_friend_list = list()
+    if user_id is not None and user_id.isdigit() and int(user_id) > 0:
+        pending_request_rel = PendingFriends.query.filter_by(user_id=user_id).all()
+        for request in pending_request_rel:
+            pending_friend = User.query.filter_by(id=request.pending_from_id).first()
+            pending_friend_list.append(pending_friend)
+    return paginated_json('pending_friend_requests', pending_friend_list, page)
 
 
 # checks if there is at least 1 pending friend request and returns True if there is
@@ -860,13 +857,10 @@ def get_friend_requests(user_id=None, page=1):
 @app.route('/is_friend_request/user=<int:user_id>', methods=['GET'])
 @app.route('/is_friend_request/user=', methods=['GET'])
 def is_friend_request(user_id=None):
-    try:
-        friend_request_boolean = False
-        if user_id is not None:
-            friend_request_boolean = PendingFriends.query.filter_by(user_id=user_id).scalar() is not None
-        return jsonify({'at_least_one_request': friend_request_boolean})
-    except Exception as e:
-        return str(e)
+    friend_request_boolean = False
+    if user_id is not None:
+        friend_request_boolean = PendingFriends.query.filter_by(user_id=user_id).scalar() is not None
+    return jsonify({'at_least_one_request': friend_request_boolean})
 
 
 # Check Friendship
@@ -876,32 +870,29 @@ def is_friend_request(user_id=None):
 @app.route('/user1=/user2=<user2_id>', methods=['GET'])
 @app.route('/user1=/user2=', methods=['GET'])
 def is_friend(user1_id=None, user2_id=None, inner_call=False):
-    try:
-        if user1_id is None or user1_id is '' or user2_id is None or user2_id is '':
-            if inner_call:
-                return False
-            return jsonify({'is_friend': False})
+    if user1_id is None or user1_id is '' or user2_id is None or user2_id is '':
+        if inner_call:
+            return False
+        return jsonify({'is_friend': False})
 
-        user1_id = '{}%'.format(user1_id)
-        user2_id = '{}%'.format(user2_id)
+    user1_id = '{}%'.format(user1_id)
+    user2_id = '{}%'.format(user2_id)
 
-        if User.query.filter(User.username.like(user1_id)) is None or User.query.filter(
-                User.username.like(user2_id)) is None:
-            if inner_call:
-                return False
-            return jsonify({'is_friend': False})
+    if User.query.filter(User.username.like(user1_id)) is None or User.query.filter(
+            User.username.like(user2_id)) is None:
+        if inner_call:
+            return False
+        return jsonify({'is_friend': False})
 
-        friendship = Friends.query.filter_by(user_id=user1_id).filter_by(friend_id=user2_id).first()
-        if friendship is not None:
-            if inner_call:
-                return True
-            return jsonify({'is_friend': True})
-        else:
-            if inner_call:
-                return False
-            return jsonify({'is_friend': False})
-    except Exception as e:
-        return str(e)
+    friendship = Friends.query.filter_by(user_id=user1_id).filter_by(friend_id=user2_id).first()
+    if friendship is not None:
+        if inner_call:
+            return True
+        return jsonify({'is_friend': True})
+    else:
+        if inner_call:
+            return False
+        return jsonify({'is_friend': False})
 
 
 # Display user friends
@@ -1567,68 +1558,57 @@ def comment_on_post():
 
 # add friend friend and friend adds back
 def add_friend(user_id, friend_id):
-    try:
-        # Add friend to database
-        friend = Friends(
-            user_id=user_id,
-            friend_id=friend_id
-        )
-        db.session.add(friend)
+    # Add friend to database
+    friend = Friends(
+        user_id=user_id,
+        friend_id=friend_id
+    )
+    db.session.add(friend)
 
-        # Friend adds back
-        friend_back = Friends(
-            user_id=friend_id,
-            friend_id=user_id
-        )
-        db.session.add(friend_back)
-        return 'success'
-    except Exception as e:
-        return str(e)
+    # Friend adds back
+    friend_back = Friends(
+        user_id=friend_id,
+        friend_id=user_id
+    )
+    db.session.add(friend_back)
+    return 'success'
 
 
 def update_average_rating(is_tv_show: bool, media_id: int):
-    try:
-        if is_tv_show:
-            average = get_average_rating(True, media_id)
-            tv_show = TVShows.query.filter_by(id=media_id).first()
-            tv_show.avg_rating = average
-            db.session.commit()
+    if is_tv_show:
+        average = get_average_rating(True, media_id)
+        tv_show = TVShows.query.filter_by(id=media_id).first()
+        tv_show.avg_rating = average
+        db.session.commit()
 
-        else:
-            average = get_average_rating(False, media_id)
-            movie = Movie.query.filter_by(id=media_id).first()
-            movie.avg_rating = average
-            db.session.commit()
-
-    except Exception as e:
-        return str(e)
+    else:
+        average = get_average_rating(False, media_id)
+        movie = Movie.query.filter_by(id=media_id).first()
+        movie.avg_rating = average
+        db.session.commit()
 
 
 def get_average_rating(is_tv_show: bool, media_id: int):
-    try:
-        if is_tv_show:
-            tv_show_ratings = UserRatedTVShowRel.query.filter_by(tv_show_id=media_id)
-            total = 0
-            num_ratings = 0
+    if is_tv_show:
+        tv_show_ratings = UserRatedTVShowRel.query.filter_by(tv_show_id=media_id)
+        total = 0
+        num_ratings = 0
 
-            for tsr in tv_show_ratings:
-                total += tsr.user_rating
-                num_ratings += 1
-            return '%.2f' % (total / num_ratings)
+        for tsr in tv_show_ratings:
+            total += tsr.user_rating
+            num_ratings += 1
+        return '%.2f' % (total / num_ratings)
 
-        else:
-            movie_ratings = UserRatedMovieRel.query.filter_by(movie_id=media_id)
-            total = 0
-            num_ratings = 0
+    else:
+        movie_ratings = UserRatedMovieRel.query.filter_by(movie_id=media_id)
+        total = 0
+        num_ratings = 0
 
-            for mr in movie_ratings:
-                total += mr.user_rating
-                num_ratings += 1
+        for mr in movie_ratings:
+            total += mr.user_rating
+            num_ratings += 1
 
-            return '%.2f' % (total / num_ratings)
-
-    except Exception as e:
-        return str(e)
+        return '%.2f' % (total / num_ratings)
 
 
 # checks database if movies are past rented due date and deletes them
