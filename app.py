@@ -311,6 +311,13 @@ def delete_account():
         user_id = data['user_id']
         password = data['password']
 
+        if (user_id is None or user_id is '') and (password is None or password is ''):
+            return jsonify({'success': False,
+                            'valid_user': False})
+        elif user_id is None or user_id is '':
+            return jsonify({'success': False,
+                            'valid_user': False})
+
         user = User.query.filter_by(id=user_id).first()
 
         # Get Key
@@ -322,11 +329,8 @@ def delete_account():
         true_pwd = user.password.encode('utf-8')
         decrypted_pwd = (cipher.decrypt(true_pwd)).decode('utf-8')
 
-        if user.id is not user_id:
-            return jsonify({'success:': False,
-                            'valid_user': False})
-        elif decrypted_pwd != password:
-            return jsonify({'success:': False,
+        if decrypted_pwd != password:
+            return jsonify({'success': False,
                             'valid_user': True,
                             'valid_password': False})
         else:
@@ -339,15 +343,19 @@ def delete_account():
             TVShowComment.query.filter_by(user_id=user_id).delete()
 
             # Delete User Rated Media Lists
-            movie_list = UserRatedMovieRel.query.filter_by(user_id=user_id).delete()
-            for m in movie_list:
-                UserRatedMovieRel.query.filter_by(movie_id=m.movie_id).delete()
-                update_average_rating(False, m.movie_id)
+            movie_list = UserRatedMovieRel.query.filter_by(user_id=user_id).first()
+            if movie_list is not None:
+                for m in movie_list:
+                    UserRatedMovieRel.query.filter_by(movie_id=m.movie_id).delete()
+                    update_average_rating(False, m.movie_id)
+            UserRatedMovieRel.query.filter_by(user_id=user_id).delete()
 
-            tv_show_list = UserRatedTVShowRel.query.filter_by(user_id=user_id).delete()
-            for tvs in tv_show_list:
-                UserRatedTVShowRel.query.filter_by(tv_show_id=tvs.tv_show_id).delete()
-                update_average_rating(True, tvs.tv_show_id)
+            tv_show_list = UserRatedTVShowRel.query.filter_by(user_id=user_id).first()
+            if tv_show_list is not None:
+                for tvs in tv_show_list:
+                    UserRatedTVShowRel.query.filter_by(tv_show_id=tvs.tv_show_id).delete()
+                    update_average_rating(True, tvs.tv_show_id)
+            UserRatedTVShowRel.query.filter_by(user_id=user_id).delete()
 
             # Remove All User Slots
             UserSlots.query.filter_by(user_id=user_id).delete()
@@ -357,7 +365,7 @@ def delete_account():
 
             db.session.commit()
 
-            return jsonify({'success:': True,
+            return jsonify({'success': True,
                             'valid_user': True,
                             'valid_password': True})
 
