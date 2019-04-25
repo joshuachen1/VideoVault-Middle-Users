@@ -5,7 +5,7 @@ from app import db
 from models.user_media_models import MovieComment, TVShowComment
 from models.user_models import PendingFriends
 from models.user_models import TimeLine, PostComments
-from models.user_models import User
+from models.user_models import User, Friends
 from models.user_models import UserRatedMovieRel
 from models.user_models import UserRatedTVShowRel
 from models.user_models import UserRentedMovies
@@ -725,6 +725,38 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['valid_friend_id'], True)
             self.assertEqual(expected['valid_friendship_request'], False)
             self.assertEqual(expected['success'], False)
+
+        # Should Return
+        # 'valid_user_id': True
+        # 'valid_friend_id': True
+        # 'valid_friendship_request': True
+        # 'success': True
+
+        test_values = [[30, 1]]
+
+        # Create Friend Request
+        new_friend_request = PendingFriends(
+            user_id=test_values[0][0],
+            pending_from_id=test_values[0][1],
+        )
+        db.session.add(new_friend_request)
+        db.session.commit()
+
+        # Accept Friend Request
+        for i in range(len(test_values)):
+            result = self.app.post(url, json={'user_id': test_values[i][0],
+                                              'request_from': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user_id'], True)
+            self.assertEqual(expected['valid_friend_id'], True)
+            self.assertEqual(expected['valid_friendship_request'], True)
+            self.assertEqual(expected['success'], True)
+
+        # Remove from Friends Table
+        Friends.query.filter_by(user_id=test_values[0][0]).filter_by(friend_id=test_values[0][1]).delete()
+        Friends.query.filter_by(user_id=test_values[0][1]).filter_by(friend_id=test_values[0][0]).delete()
+        db.session.commit()
+
 
     def test_decline_friend_request(self):
         url = '/decline_friend_request'

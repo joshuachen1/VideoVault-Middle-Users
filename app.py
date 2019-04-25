@@ -781,8 +781,7 @@ def accept_friend_request(function_call=False):
             check_friend_request = check_friend_request is not None
             # checks if friend request exists
             if check_friend_request:
-                if function_call is False:
-                    add_friend(user_id, pending_from_id)
+                add_friend(user_id, pending_from_id)
                 # delete request
                 PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_from_id=pending_from_id).delete()
                 db.session.commit()
@@ -809,7 +808,6 @@ def accept_friend_request(function_call=False):
 @app.route('/decline_friend_request', methods=['POST'])
 def decline_friend_request():
     try:
-        function_call = True
 
         data = request.get_json()
         user_id = data['user_id']
@@ -826,8 +824,6 @@ def decline_friend_request():
             check_friend_request = check_friend_request is not None
             # checks if friend request exists
             if check_friend_request:
-                if function_call is False:
-                    add_friend(user_id, pending_from_id)
                 # delete request
                 PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_from_id=pending_from_id).delete()
                 db.session.commit()
