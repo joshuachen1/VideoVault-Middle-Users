@@ -283,6 +283,21 @@ class UnitTests(unittest.TestCase):
         # 'invalid_password': True
         # 'login_successful': False
 
+        test_values = [['josh526chen@gmail.com', 'banana']]
+
+        for i in range(len(test_values)):
+            url = '/login/email={email}/password={password}'.format(email=test_values[i][0], password=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['invalid_email'], False)
+            self.assertEqual(expected['invalid_password'], True)
+            self.assertEqual(expected['login_successful'], False)
+
+        # Should Return
+        # 'invalid_email': False
+        # 'invalid_password': True
+        # 'login_successful': False
+
         test_values = [['josh526chen@gmail.com', 'test']]
 
         for i in range(len(test_values)):
