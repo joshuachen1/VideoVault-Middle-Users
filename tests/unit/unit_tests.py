@@ -803,8 +803,6 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['success'], False)
 
     def test_has_friend_request(self):
-        # Check Exception Caught
-        self.assertRaises(Exception, self.app.get('/has_friend_request/user_id=<1>/request_from=<1>'))
 
         # Should Return
         # 'has_friend_request': False

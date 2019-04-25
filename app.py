@@ -851,21 +851,17 @@ def decline_friend_request():
 
 # returns true if user_id and friend_id is in the pending table
 # [url]/has_friend_request/user_id=[user_id]/request_from=[pending_from_id]
-@app.route('/has_friend_request/user_id=<int:user_id>/request_from=<int:request_from>', methods=['GET'])
-@app.route('/has_friend_request/user_id=<int:user_id>/request_from=', methods=['GET'])
-@app.route('/has_friend_request/user_id=/request_from=<int:request_from>', methods=['GET'])
+@app.route('/has_friend_request/user_id=<user_id>/request_from=<request_from>', methods=['GET'])
+@app.route('/has_friend_request/user_id=<user_id>/request_from=', methods=['GET'])
+@app.route('/has_friend_request/user_id=/request_from=<request_from>', methods=['GET'])
 @app.route('/has_friend_request/user_id=/request_from=', methods=['GET'])
 def has_friend_request(user_id=None, request_from=None):
-    try:
-        if user_id is not None or request_from is not None or not isinstance(user_id, int) or not isinstance(
-                request_from, int):
-            is_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(
-                pending_from_id=request_from).scalar()
-            if is_request is not None:
-                return jsonify({'has_friend_request': True})
-        return jsonify({'has_friend_request': False})
-    except Exception as e:
-        str(e)
+    if user_id is not None and request_from is not None and user_id.isdigit() and request_from.isdigit() and \
+            int(user_id) > 0 and int(request_from) > 0:
+        is_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_from_id=request_from).scalar()
+        if is_request is not None:
+            return jsonify({'has_friend_request': True})
+    return jsonify({'has_friend_request': False})
 
 
 # returns a list of all friend requests from a specific user
@@ -1674,37 +1670,6 @@ def delete_expired_movies(func_call=False, user_id=None):
             return 'success'
         else:
             return 'no movies to delete'
-
-    except Exception as e:
-        return str(e)
-
-
-@app.route('/test/user=<user_id>', methods=['GET'])
-# need to add to login function and need to add check to not allow deleting slots past 10
-def delete_expired_tv_shows(user_id=None):
-    try:
-        month_ago_date = (datetime.now() - timedelta(30)).date()
-        # ensures list is not empty
-        expired_users = User.query.filter_by(id=user_id).filter(User.sub_date <= month_ago_date).all()
-        remove_list = list()
-        if expired_users:
-            for user in expired_users:
-                if UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True).scalar() is not None:
-                    remove_list = UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True).all()
-                    update_sub_date(user.id)
-                email_sender.subscription_renew_email(user.username, user.email, user.sub_date + timedelta(30))
-                if remove_list:
-                    for tv_show_to_remove in remove_list:
-                        subscribe(user.id, tv_show_to_remove.tv_show_id, True)
-                        remove_tv_show(user.id, tv_show_to_remove.tv_show_id)
-                if user.slots_to_delete > 0:
-                    for i in range(user.slots_to_delete):
-                        delete_slot(user_id)  # look at this function
-                        update_slots_to_delete(user.id, 0)
-            db.session.commit()
-            return jsonify({'expired_tv_shows_removed': True})
-        else:
-            return jsonify({'expired_tv_shows_removed': False})
 
     except Exception as e:
         return str(e)
