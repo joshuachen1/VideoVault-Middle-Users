@@ -901,8 +901,8 @@ def is_friend(user1_id=None, user2_id=None, inner_call=False):
     user1_id = '{}%'.format(user1_id)
     user2_id = '{}%'.format(user2_id)
 
-    if User.query.filter(User.username.like(user1_id)) is None or User.query.filter(
-            User.username.like(user2_id)) is None:
+    if User.query.filter(User.username.like(user1_id)) is None or \
+            User.query.filter(User.username.like(user2_id)) is None:
         if inner_call:
             return False
         return jsonify({'is_friend': False})
