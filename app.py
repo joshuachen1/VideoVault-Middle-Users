@@ -29,7 +29,7 @@ pymysql.install_as_MySQLdb()
 port = int(os.environ.get('PORT', 33507))
 
 # Import Models
-from Email import Email
+from models.Email import Email
 from models.crypto_models import Key
 from models.user_models import Login
 from models.user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
