@@ -1385,7 +1385,7 @@ class UnitTests(unittest.TestCase):
         rm = UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
         assert rm is not None
         UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
-        db.session.flush()
+        db.session.commit()
 
     def test_post_timeline(self):
         url = 'timeline/post'
