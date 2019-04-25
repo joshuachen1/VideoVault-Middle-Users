@@ -94,16 +94,16 @@ class PendingFriends(db.Model):
     __tablename__ = 'pending_friends'
 
     user_id = db.Column(db.Integer, primary_key=True)
-    pending_friend_id = db.Column(db.Integer, primary_key=True)
+    pending_from_id = db.Column(db.Integer, primary_key=True)
 
-    def __init__(self, user_id, pending_friend_id):
+    def __init__(self, user_id, pending_from_id):
         self.user_id = user_id
-        self.pending_friend_id = pending_friend_id
+        self.pending_from_id = pending_from_id
 
     def serialize(self):
         return {
             'user_id': self.user_id,
-            'pending_friend_id': self.pending_friend_id,
+            'pending_friend_id': self.pending_from_id,
         }
 
 

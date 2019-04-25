@@ -5,7 +5,7 @@ from app import db
 from models.user_media_models import MovieComment, TVShowComment
 from models.user_models import PendingFriends
 from models.user_models import TimeLine, PostComments
-from models.user_models import User
+from models.user_models import User, Friends
 from models.user_models import UserRatedMovieRel
 from models.user_models import UserRatedTVShowRel
 from models.user_models import UserRentedMovies
@@ -283,6 +283,21 @@ class UnitTests(unittest.TestCase):
         # 'invalid_password': True
         # 'login_successful': False
 
+        test_values = [['josh526chen@gmail.com', 'banana']]
+
+        for i in range(len(test_values)):
+            url = '/login/email={email}/password={password}'.format(email=test_values[i][0], password=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['invalid_email'], False)
+            self.assertEqual(expected['invalid_password'], True)
+            self.assertEqual(expected['login_successful'], False)
+
+        # Should Return
+        # 'invalid_email': False
+        # 'invalid_password': True
+        # 'login_successful': False
+
         test_values = [['josh526chen@gmail.com', 'test']]
 
         for i in range(len(test_values)):
@@ -295,6 +310,77 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['email'], "josh526chen@gmail.com")
             self.assertEqual(expected['num_slots'], 10)
             self.assertEqual(expected['profile_pic'], "https://upload.wikimedia.org/wikipedia/en/1/13/Stick_figure.png")
+
+    def test_delete_account(self):
+        url = '/account/delete'
+
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.delete(url, json={}))
+
+        # Should Return
+        # 'valid_user': False
+        # 'success': False
+
+        test_values = [[None, None],
+                       [None, ''],
+                       ['', None],
+                       ['', ''],
+                       [None, 'bad password'],
+                       ['', 'bad password']
+                       ]
+
+        for i in range(len(test_values)):
+            result = self.app.delete(url, json={'user_id': test_values[i][0],
+                                                'password': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['success'], False)
+
+        # Should Return
+        # 'valid_user': True
+        # 'valid_password': False
+        # 'success': False
+
+        test_values = [[1, None],
+                       [1, ''],
+                       [1, 'test']
+                       ]
+
+        for i in range(len(test_values)):
+            result = self.app.delete(url, json={'user_id': test_values[i][0],
+                                                'password': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_password'], False)
+            self.assertEqual(expected['success'], False)
+
+        # Should Return
+        # 'valid_user': True
+        # 'valid_password': True
+        # 'success': True
+
+        # Create New Account
+        new_user = {'name': 'Unit Test',
+                    'username': 'unittest',
+                    'email': 'unit@test.com',
+                    'password': 'pythonunittest',
+                    'card_num': 123}
+
+        result = self.app.post('/signup', json=new_user)
+        expected = result.get_json()
+        self.assertEqual(expected['name'], 'Unit Test')
+        self.assertEqual(expected['username'], 'unittest')
+        self.assertEqual(expected['email'], 'unit@test.com')
+        self.assertEqual(expected['num_slots'], 10)
+        self.assertEqual(expected['profile_pic'], "https://upload.wikimedia.org/wikipedia/en/1/13/Stick_figure.png")
+
+        # Delete Account
+        result = self.app.delete(url, json={'user_id': expected['id'],
+                                            'password': 'pythonunittest'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_password'], True)
+        self.assertEqual(expected['success'], True)
 
     def test_update_profile_pic(self):
         url = '/update/profile_pic'
@@ -369,6 +455,17 @@ class UnitTests(unittest.TestCase):
         # Should Return
         # 'is_slots_full: False
 
+        test_values = [5]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/is_slots_full'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['is_slots_full'], False)
+
+        # Should Return
+        # 'is_slots_full: True
+
         test_values = [2, 3]
 
         for i in range(len(test_values)):
@@ -431,6 +528,7 @@ class UnitTests(unittest.TestCase):
                       {'user_id': '', 'tv_show_id': ''},
                       {'user_id': 1, 'tv_show_id': None},
                       {'user_id': 1, 'tv_show_id': ''},
+                      {'user_id': 1, 'tv_show_id': 0},
                       ]
         for test_json in test_jsons:
             result = self.app.put(url, json=test_json)
@@ -444,6 +542,9 @@ class UnitTests(unittest.TestCase):
 
         test_jsons = [{'user_id': 1, 'tv_show_id': 11},
                       {'user_id': 1, 'tv_show_id': 14},
+                      {'user_id': 1, 'tv_show_id': '14'},
+                      {'user_id': '1', 'tv_show_id': 14},
+                      {'user_id': '1', 'tv_show_id': '14'},
                       ]
         for test_json in test_jsons:
             result = self.app.put(url, json=test_json)
@@ -600,8 +701,7 @@ class UnitTests(unittest.TestCase):
         # 'not_friends_already': True
         # 'success': True
 
-        test_values = [[1, 29],
-                       [5, 1]
+        test_values = [[1, 29]
                        ]
         for i in range(len(test_values)):
             result = self.app.post(url, json={'request_to': test_values[i][0],
@@ -613,8 +713,9 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['success'], True)
 
             PendingFriends.query.filter_by(user_id=test_values[i][0]) \
-                .filter_by(pending_friend_id=test_values[i][1]) \
+                .filter_by(pending_from_id=test_values[i][1]) \
                 .delete()
+            db.session.commit()
 
     def test_accept_friend_request(self):
         url = '/accept_friend_request'
@@ -696,6 +797,37 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['valid_friendship_request'], False)
             self.assertEqual(expected['success'], False)
 
+        # Should Return
+        # 'valid_user_id': True
+        # 'valid_friend_id': True
+        # 'valid_friendship_request': True
+        # 'success': True
+
+        test_values = [[30, 1]]
+
+        # Create Friend Request
+        new_friend_request = PendingFriends(
+            user_id=test_values[0][0],
+            pending_from_id=test_values[0][1],
+        )
+        db.session.add(new_friend_request)
+        db.session.commit()
+
+        # Accept Friend Request
+        for i in range(len(test_values)):
+            result = self.app.post(url, json={'user_id': test_values[i][0],
+                                              'request_from': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user_id'], True)
+            self.assertEqual(expected['valid_friend_id'], True)
+            self.assertEqual(expected['valid_friendship_request'], True)
+            self.assertEqual(expected['success'], True)
+
+        # Remove from Friends Table
+        Friends.query.filter_by(user_id=test_values[0][0]).filter_by(friend_id=test_values[0][1]).delete()
+        Friends.query.filter_by(user_id=test_values[0][1]).filter_by(friend_id=test_values[0][0]).delete()
+        db.session.commit()
+
     def test_decline_friend_request(self):
         url = '/decline_friend_request'
 
@@ -776,9 +908,33 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['valid_friendship_request'], False)
             self.assertEqual(expected['success'], False)
 
+        # Should Return
+        # 'valid_user_id': True
+        # 'valid_friend_id': True
+        # 'valid_friendship_request': True
+        # 'success': True
+
+        test_values = [[30, 1]]
+
+        # Create Friend Request
+        new_friend_request = PendingFriends(
+            user_id=test_values[0][0],
+            pending_from_id=test_values[0][1],
+        )
+        db.session.add(new_friend_request)
+        db.session.commit()
+
+        # Decline Friend Request
+        for i in range(len(test_values)):
+            result = self.app.post(url, json={'user_id': test_values[i][0],
+                                              'request_from': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user_id'], True)
+            self.assertEqual(expected['valid_friend_id'], True)
+            self.assertEqual(expected['valid_friendship_request'], True)
+            self.assertEqual(expected['success'], True)
+
     def test_has_friend_request(self):
-        # Check Exception Caught
-        self.assertRaises(Exception, self.app.get('/has_friend_request/user_id=<1>/request_from=<1>'))
 
         # Should Return
         # 'has_friend_request': False
@@ -800,6 +956,30 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['has_friend_request'], False)
 
+        # Should Return
+        # 'has_friend_request': True
+
+        test_values = [[30, 1]]
+
+        # Create Friend Request
+        new_friend_request = PendingFriends(
+            user_id=test_values[0][0],
+            pending_from_id=test_values[0][1],
+        )
+        db.session.add(new_friend_request)
+        db.session.commit()
+
+        # Accept Friend Request
+        for i in range(len(test_values)):
+            result = self.app.get('/has_friend_request/user_id={}/request_from={}'.format(test_values[i][0],
+                                                                                          test_values[i][1]))
+            expected = result.get_json()
+            self.assertEqual(expected['has_friend_request'], True)
+
+        # Remove from PendingFriends Table
+        PendingFriends.query.filter_by(user_id=test_values[0][0]).filter_by(pending_from_id=test_values[0][1]).delete()
+        db.session.commit()
+
     def test_get_friend_requests(self):
         # Check Exception Caught
         self.assertRaises(Exception, self.app.get('/get_friend_requests/user=$@$@'))
@@ -817,7 +997,7 @@ class UnitTests(unittest.TestCase):
         # Should be Successful
         result = self.app.get('/get_friend_requests/user=20')
         expected = result.get_json()
-        self.assertEqual(len(expected['pending_friend_requests']), 1)
+        assert len(expected['pending_friend_requests']) > 0
 
     def test_is_friend_request(self):
         # Check Exception Caught
@@ -942,6 +1122,24 @@ class UnitTests(unittest.TestCase):
         # 'success': True
         user_id = 1
         movie_id = 1
+        result = self.app.post(url, json={'user_id': user_id, 'movie_id': movie_id, 'rating': 5})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_movie'], True)
+        self.assertEqual(expected['success'], True)
+
+        # Check if Movie Rating Exists, Remove From Database if it does
+        mr = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+        assert mr is not None
+        UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
+        db.session.flush()
+
+        # Should Return
+        # 'valid_user': True
+        # 'valid_movie': True
+        # 'success': True
+        user_id = 30
+        movie_id = 30
         result = self.app.post(url, json={'user_id': user_id, 'movie_id': movie_id, 'rating': 5})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
@@ -1257,7 +1455,7 @@ class UnitTests(unittest.TestCase):
         rm = UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
         assert rm is not None
         UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
-        db.session.flush()
+        db.session.commit()
 
     def test_post_timeline(self):
         url = 'timeline/post'

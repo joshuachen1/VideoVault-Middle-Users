@@ -29,7 +29,7 @@ pymysql.install_as_MySQLdb()
 port = int(os.environ.get('PORT', 33507))
 
 # Import Models
-from Email import Email
+from models.Email import Email
 from models.crypto_models import Key
 from models.user_models import Login
 from models.user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
@@ -206,22 +206,6 @@ def signup():
         return str(e)
 
 
-# [url]/server_update
-@app.route('/database_update', methods=['DELETE'])
-def database_update():
-    data = request.get_json()
-    user_id = data['user_id']
-
-    if User.query.filter_by(id=user_id).scalar() is not None:
-        delete_expired_movies(True, user_id)
-        delete_expired_tv_shows(True, user_id)
-        return jsonify({'success': True,
-                        'valid_user_id': True})
-    else:
-        return jsonify({'success': False,
-                        'valid_user_id': False})
-
-
 # [url]/login/email=[email]/password=[password]
 @app.route('/login/email=<email>/password=<attempted_pwd>', methods=['GET'])
 @app.route('/login/email=<email>/password=', methods=['GET'])
@@ -327,6 +311,13 @@ def delete_account():
         user_id = data['user_id']
         password = data['password']
 
+        if (user_id is None or user_id is '') and (password is None or password is ''):
+            return jsonify({'success': False,
+                            'valid_user': False})
+        elif user_id is None or user_id is '':
+            return jsonify({'success': False,
+                            'valid_user': False})
+
         user = User.query.filter_by(id=user_id).first()
 
         # Get Key
@@ -338,11 +329,8 @@ def delete_account():
         true_pwd = user.password.encode('utf-8')
         decrypted_pwd = (cipher.decrypt(true_pwd)).decode('utf-8')
 
-        if user.id is not user_id:
-            return jsonify({'success:': False,
-                            'valid_user': False})
-        elif decrypted_pwd != password:
-            return jsonify({'success:': False,
+        if decrypted_pwd != password:
+            return jsonify({'success': False,
                             'valid_user': True,
                             'valid_password': False})
         else:
@@ -355,15 +343,8 @@ def delete_account():
             TVShowComment.query.filter_by(user_id=user_id).delete()
 
             # Delete User Rated Media Lists
-            movie_list = UserRatedMovieRel.query.filter_by(user_id=user_id).delete()
-            for m in movie_list:
-                UserRatedMovieRel.query.filter_by(movie_id=m.movie_id).delete()
-                update_average_rating(False, m.movie_id)
-
-            tv_show_list = UserRatedTVShowRel.query.filter_by(user_id=user_id).delete()
-            for tvs in tv_show_list:
-                UserRatedTVShowRel.query.filter_by(tv_show_id=tvs.tv_show_id).delete()
-                update_average_rating(True, tvs.tv_show_id)
+            UserRatedMovieRel.query.filter_by(user_id=user_id).delete()
+            UserRatedTVShowRel.query.filter_by(user_id=user_id).delete()
 
             # Remove All User Slots
             UserSlots.query.filter_by(user_id=user_id).delete()
@@ -373,7 +354,7 @@ def delete_account():
 
             db.session.commit()
 
-            return jsonify({'success:': True,
+            return jsonify({'success': True,
                             'valid_user': True,
                             'valid_password': True})
 
@@ -447,13 +428,10 @@ def is_slots_full(user_id=None):
 @app.route('/user=<user_id>/tv_show=/is_tv_show_in_slot', methods=['GET'])
 @app.route('/user=/tv_show=/is_tv_show_in_slot', methods=['GET'])
 def is_tv_show_in_slot(user_id=None, tv_show_id=None):
-    try:
-        if UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).scalar() is not None:
-            return jsonify({'is_tv_show_in_slot': True})
-        else:
-            return jsonify({'is_tv_show_in_slot': False})
-    except Exception as e:
-        return str(e)
+    if UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).scalar() is not None:
+        return jsonify({'is_tv_show_in_slot': True})
+    else:
+        return jsonify({'is_tv_show_in_slot': False})
 
 
 # { user_id: [user_id], tv_show_id: [tv_show_id] }
@@ -600,36 +578,83 @@ def is_unsubscribe(user_id=None, tv_show_id=None):
     return jsonify({"is_unsubscribed": False})
 
 
-# increment number of slots to delete by 1
-@app.route('/delete_slot_increment', methods=['PUT'])
-def delete_slot_increment(user_id=None):
+# { user_id: [user_id], slot_id: [slot_id] }
+@app.route('/slot/flag/delete', methods=['PUT'])
+def flag_slot_delete():
     try:
         data = request.get_json()
         user_id = data['user_id']
+        slot_id = data['slot_id']
+
         user = User.query.filter_by(id=user_id).first()
-        # can delete slot
-        if user.num_slots - user.slots_to_delete >= 10:
-            increment_slots_to_delete(user_id)
-            return jsonify({'success': True})
-        else:
-            return jsonify({'success': False})
+        slot_to_flag = UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_id).first()
+
+        if user is None:
+            return jsonify({'valid_user_id': False,
+                            'success': False})
+
+        if not user.num_slots > 10:
+            return jsonify({'valid_user_id': True,
+                            'success': False})
+
+        # Check Backwards
+        for slot_num in range(user.num_slots, 10, -1):
+            slot = UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_num).first()
+
+            if slot.delete_slot == 0:
+                # Swap Unsubscribe Status
+                temp_unsub_flag = slot_to_flag.unsubscribe
+                slot_to_flag.unsubscribe = slot.unsubscribe
+                slot.unsubscribe = temp_unsub_flag
+
+                # Swap tv_show_ids
+                temp_id = slot_to_flag.tv_show_id
+                slot_to_flag.tv_show_id = slot.tv_show_id
+                slot.tv_show_id = temp_id
+
+                # Flag Slot
+                slot.unsubscribe = 1
+                slot.delete_slot = 1
+                db.session.commit()
+                return jsonify({'valid_user_id': True,
+                                'success': True})
+
+        return jsonify({'valid_user_id': True,
+                        'success': False})
+
     except Exception as e:
         return str(e)
 
 
-# decrement number of slots to delete by 1
-@app.route('/delete_slot_decrement', methods=['PUT'])
-def delete_slot_decrement(user_id=None):
+# { user_id: [user_id] }
+@app.route('/slot/delete', methods=['DELETE'])
+def delete_slots():
     try:
         data = request.get_json()
         user_id = data['user_id']
+
         user = User.query.filter_by(id=user_id).first()
-        # can delete slot
-        if user.num_slots - user.slots_to_delete >= 10:
-            decrement_slots_to_delete(user_id)
-            return jsonify({'success': True})
-        else:
-            return jsonify({'success': False})
+
+        if user is None or user.sub_date <= (datetime.now() - timedelta(30)).date():
+            return jsonify({'valid_user_id': False,
+                            'success': False})
+
+        if not user.num_slots > 10:
+            return jsonify({'valid_user_id': True,
+                            'success': False})
+
+        # Check Backwards
+        for slot_num in range(user.num_slots, 10, -1):
+            slot = UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_num).first()
+
+            if slot.delete_slot == 1:
+                UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_num).delete()
+                user.num_slots -= 1
+                db.session.commit()
+
+        return jsonify({'valid_user_id': True,
+                        'success': True})
+
     except Exception as e:
         return str(e)
 
@@ -659,27 +684,24 @@ def clear_slots():
 @app.route('/search/user=<query>', methods=['GET'])
 @app.route('/search/user=', methods=['GET'])
 def user_search(query=None, page=1):
-    try:
-        results = list()
-        query_user = '{}%'.format(query)
+    results = list()
+    query_user = '{}%'.format(query)
 
-        # Get all LIKE username
-        username_dict = User.query.filter(User.username.like(query_user))
-        for user in username_dict:
+    # Get all LIKE username
+    username_dict = User.query.filter(User.username.like(query_user))
+    for user in username_dict:
+        results.append(user)
+
+    # Get exact user email
+    email_dict = User.query.filter(User.email.like(query_user))
+    for user in email_dict:
+        if user not in results:
             results.append(user)
 
-        # Get exact user email
-        email_dict = User.query.filter(User.email.like(query_user))
-        for user in email_dict:
-            if user not in results:
-                results.append(user)
-
-        return paginated_json('users', results, page)
-    except Exception as e:
-        return str(e)
+    return paginated_json('users', results, page)
 
 
-# { request_to: [user_id], request_from: [pending_friend_id] }
+# { request_to: [user_id], request_from: [pending_from_id] }
 # send a friend request to another user
 @app.route('/send_friend_request', methods=['POST'])
 def send_friend_request():
@@ -690,7 +712,8 @@ def send_friend_request():
 
         check_user_to = User.query.filter_by(id=request_to).scalar() is not None
         check_user_from = User.query.filter_by(id=request_from).scalar() is not None
-        check_friendship = Friends.query.filter_by(user_id=request_from).filter_by(friend_id=request_to).scalar() is None
+        check_friendship = Friends.query.filter_by(user_id=request_from).filter_by(
+            friend_id=request_to).scalar() is None
         if not isinstance(request_to, int):
             check_user_to = False
             check_friendship = False
@@ -702,7 +725,7 @@ def send_friend_request():
             # add request to table
             new_friend_request = PendingFriends(
                 user_id=request_to,
-                pending_friend_id=request_from,
+                pending_from_id=request_from,
             )
             db.session.add(new_friend_request)
             db.session.commit()
@@ -719,30 +742,29 @@ def send_friend_request():
         return str(e)
 
 
-# { user_id: [user_id], request_from: [pending_friend_id] }
+# { user_id: [user_id], request_from: [pending_from_id] }
 # accepts a friend request
 @app.route('/accept_friend_request', methods=['POST'])
-def accept_friend_request(function_call=False):
+def accept_friend_request():
     try:
         data = request.get_json()
         user_id = data['user_id']
-        pending_friend_id = data['request_from']
+        pending_from_id = data['request_from']
         check_user_id = User.query.filter_by(id=user_id).first()
         check_user_id = check_user_id is not None
-        check_friend_id = User.query.filter_by(id=pending_friend_id).first()
+        check_friend_id = User.query.filter_by(id=pending_from_id).first()
         check_friend_id = check_friend_id is not None
 
         # checks for valid inputs
         if check_friend_id and check_user_id:
             check_friend_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(
-                pending_friend_id=pending_friend_id).first()
+                pending_from_id=pending_from_id).first()
             check_friend_request = check_friend_request is not None
             # checks if friend request exists
             if check_friend_request:
-                if function_call is False:
-                    add_friend(user_id, pending_friend_id)
+                add_friend(user_id, pending_from_id)
                 # delete request
-                PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=pending_friend_id).delete()
+                PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_from_id=pending_from_id).delete()
                 db.session.commit()
                 return jsonify({'success': True,
                                 'valid_friendship_request': check_friend_request,
@@ -762,61 +784,87 @@ def accept_friend_request(function_call=False):
         return str(e)
 
 
-# { user_id: [user_id], request_from: [pending_friend_id] }
+# { user_id: [user_id], request_from: [pending_from_id] }
 # decline a friend request
 @app.route('/decline_friend_request', methods=['POST'])
 def decline_friend_request():
-    return accept_friend_request(True)
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        pending_from_id = data['request_from']
+        check_user_id = User.query.filter_by(id=user_id).first()
+        check_user_id = check_user_id is not None
+        check_friend_id = User.query.filter_by(id=pending_from_id).first()
+        check_friend_id = check_friend_id is not None
+
+        # checks for valid inputs
+        if check_friend_id and check_user_id:
+            check_friend_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(
+                pending_from_id=pending_from_id).first()
+            check_friend_request = check_friend_request is not None
+            # checks if friend request exists
+            if check_friend_request:
+                # delete request
+                PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_from_id=pending_from_id).delete()
+                db.session.commit()
+                return jsonify({'success': True,
+                                'valid_friendship_request': check_friend_request,
+                                'valid_user_id': check_user_id,
+                                'valid_friend_id': check_friend_id})
+            else:
+                return jsonify({'success': False,
+                                'valid_friendship_request': check_friend_request,
+                                'valid_user_id': check_user_id,
+                                'valid_friend_id': check_friend_id})
+        else:
+            return jsonify({'success': False,
+                            'valid_friendship_request': False,
+                            'valid_user_id': check_user_id,
+                            'valid_friend_id': check_friend_id})
+    except Exception as e:
+        return str(e)
 
 
 # returns true if user_id and friend_id is in the pending table
-# [url]/has_friend_request/user_id=[user_id]/request_from=[pending_friend_id]
-@app.route('/has_friend_request/user_id=<int:user_id>/request_from=<int:request_from>', methods=['GET'])
+# [url]/has_friend_request/user_id=[user_id]/request_from=[pending_from_id]
+@app.route('/has_friend_request/user_id=<user_id>/request_from=<request_from>', methods=['GET'])
+@app.route('/has_friend_request/user_id=<user_id>/request_from=', methods=['GET'])
+@app.route('/has_friend_request/user_id=/request_from=<request_from>', methods=['GET'])
+@app.route('/has_friend_request/user_id=/request_from=', methods=['GET'])
 def has_friend_request(user_id=None, request_from=None):
-    try:
-        if request_from is not None and user_id is not None:
-            is_friend_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(
-                pending_friend_id=request_from).scalar()
-            if is_friend_request is not None:
-                return jsonify({'has_friend_request': True})
-            else:
-                return jsonify({'has_friend_request': False})
-    except Exception as e:
-        str(e)
+    if user_id is not None and request_from is not None and user_id.isdigit() and request_from.isdigit() and \
+            int(user_id) > 0 and int(request_from) > 0:
+        is_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_from_id=request_from).scalar()
+        if is_request is not None:
+            return jsonify({'has_friend_request': True})
+    return jsonify({'has_friend_request': False})
 
 
 # returns a list of all friend requests from a specific user
 # [url]/get_friend_requests/user=[user_id]
-@app.route('/get_friend_requests/user=<int:user_id>', methods=['GET'])
-@app.route('/get_friend_requests/user=<int:user_id>/page=<int:page>', methods=['GET'])
+@app.route('/get_friend_requests/user=<user_id>', methods=['GET'])
+@app.route('/get_friend_requests/user=<user_id>/page=<int:page>', methods=['GET'])
 @app.route('/get_friend_requests/user=/page=', methods=['GET'])
 @app.route('/get_friend_requests/user=', methods=['GET'])
 def get_friend_requests(user_id=None, page=1):
-    try:
-        if user_id is not None:
-            pending_request_rel = PendingFriends.query.filter_by(user_id=user_id).all()
-            pending_friend_list = list()
-            for request in pending_request_rel:
-                pending_friend = User.query.filter_by(id=request.pending_friend_id).first()
-                pending_friend_list.append(pending_friend)
-
-        return paginated_json('pending_friend_requests', pending_friend_list, page)
-    except Exception as e:
-        return str(e)
+    pending_friend_list = list()
+    if user_id is not None and user_id.isdigit() and int(user_id) > 0:
+        pending_request_rel = PendingFriends.query.filter_by(user_id=user_id).all()
+        for request in pending_request_rel:
+            pending_friend = User.query.filter_by(id=request.pending_from_id).first()
+            pending_friend_list.append(pending_friend)
+    return paginated_json('pending_friend_requests', pending_friend_list, page)
 
 
 # checks if there is at least 1 pending friend request and returns True if there is
 # [url]/is_friend_request/user=[user_id]
-@app.route('/is_friend_request/user=<int:user_id>', methods=['GET'])
+@app.route('/is_friend_request/user=<user_id>', methods=['GET'])
 @app.route('/is_friend_request/user=', methods=['GET'])
 def is_friend_request(user_id=None):
-    try:
-        friend_request_boolean = False
-        if user_id is not None:
-            friend_request_boolean = PendingFriends.query.filter_by(user_id=user_id).scalar() is not None
-        return jsonify({'at_least_one_request': friend_request_boolean})
-    except Exception as e:
-        return str(e)
+    friend_request_boolean = False
+    if user_id is not None and user_id.isdigit() and int(user_id) > 0:
+        friend_request_boolean = PendingFriends.query.filter_by(user_id=user_id).scalar() is not None
+    return jsonify({'at_least_one_request': friend_request_boolean})
 
 
 # Check Friendship
@@ -826,32 +874,29 @@ def is_friend_request(user_id=None):
 @app.route('/user1=/user2=<user2_id>', methods=['GET'])
 @app.route('/user1=/user2=', methods=['GET'])
 def is_friend(user1_id=None, user2_id=None, inner_call=False):
-    try:
-        if user1_id is None or user1_id is '' or user2_id is None or user2_id is '':
-            if inner_call:
-                return False
-            return jsonify({'is_friend': False})
+    if user1_id is None or user1_id is '' or user2_id is None or user2_id is '':
+        if inner_call:
+            return False
+        return jsonify({'is_friend': False})
 
-        user1_id = '{}%'.format(user1_id)
-        user2_id = '{}%'.format(user2_id)
+    user1_id = '{}%'.format(user1_id)
+    user2_id = '{}%'.format(user2_id)
 
-        if User.query.filter(User.username.like(user1_id)) is None or User.query.filter(
-                User.username.like(user2_id)) is None:
-            if inner_call:
-                return False
-            return jsonify({'is_friend': False})
+    if User.query.filter(User.username.like(user1_id)) is None or \
+            User.query.filter(User.username.like(user2_id)) is None:
+        if inner_call:
+            return False
+        return jsonify({'is_friend': False})
 
-        friendship = Friends.query.filter_by(user_id=user1_id).filter_by(friend_id=user2_id).first()
-        if friendship is not None:
-            if inner_call:
-                return True
-            return jsonify({'is_friend': True})
-        else:
-            if inner_call:
-                return False
-            return jsonify({'is_friend': False})
-    except Exception as e:
-        return str(e)
+    friendship = Friends.query.filter_by(user_id=user1_id).filter_by(friend_id=user2_id).first()
+    if friendship is not None:
+        if inner_call:
+            return True
+        return jsonify({'is_friend': True})
+    else:
+        if inner_call:
+            return False
+        return jsonify({'is_friend': False})
 
 
 # Display user friends
@@ -1130,7 +1175,8 @@ def get_user_subscriptions(user_id=None):
         for subscription in subscriptions:
             if subscription.tv_show_id is not None:
                 subscriptions_id_list.append(subscription.tv_show_id)
-        return jsonify({"subscriptions": subscriptions_id_list})
+        subscription_obj_list = TVShows.query.filter(TVShows.id.in_(subscriptions_id_list)).all()
+        return jsonify({'subscriptions': [subscription_obj.serialize() for subscription_obj in subscription_obj_list]})
     except Exception as e:
         return str(e)
 
@@ -1289,29 +1335,29 @@ def get_user_rented_movies(user_id=None):
 # adds rented movie into user_rented_movies table
 @app.route('/rent_movie', methods=['POST'])
 def rent_movie():
-    data = request.get_json()
-    user_id = data['user_id']
-    movie_id = data['movie_id']
-    rent_datetime = datetime.now()
-
-    user_check = User.query.filter_by(id=user_id).first()
-    movie_check = Movie.query.filter_by(id=movie_id).first()
-
-    # checks if data is valid
-    if user_check is None and movie_check is None:
-        return jsonify({'success': False,
-                        'valid_user': False,
-                        'valid_movie': False})
-    elif user_check is None:
-        return jsonify({'success': False,
-                        'valid_user': False,
-                        'valid_movie': True})
-    elif movie_check is None:
-        return jsonify({'success': False,
-                        'valid_user': True,
-                        'valid_movie': False})
-
     try:
+        data = request.get_json()
+        user_id = data['user_id']
+        movie_id = data['movie_id']
+        rent_datetime = datetime.now()
+
+        user_check = User.query.filter_by(id=user_id).first()
+        movie_check = Movie.query.filter_by(id=movie_id).first()
+
+        # checks if data is valid
+        if user_check is None and movie_check is None:
+            return jsonify({'success': False,
+                            'valid_user': False,
+                            'valid_movie': False})
+        elif user_check is None:
+            return jsonify({'success': False,
+                            'valid_user': False,
+                            'valid_movie': True})
+        elif movie_check is None:
+            return jsonify({'success': False,
+                            'valid_user': True,
+                            'valid_movie': False})
+
         user_rented_movies = UserRentedMovies(
             user_id=user_id,
             movie_id=movie_id,
@@ -1515,70 +1561,75 @@ def comment_on_post():
         return str(e)
 
 
+# [url]/server_update
+@app.route('/database_update', methods=['DELETE'])
+def database_update():
+    data = request.get_json()
+    user_id = data['user_id']
+
+    if User.query.filter_by(id=user_id).scalar() is not None:
+        delete_expired_movies(True, user_id)
+        delete_expired_tv_shows(True, user_id)
+        return jsonify({'success': True,
+                        'valid_user_id': True})
+    else:
+        return jsonify({'success': False,
+                        'valid_user_id': False})
+
+
 # add friend friend and friend adds back
 def add_friend(user_id, friend_id):
-    try:
-        # Add friend to database
-        friend = Friends(
-            user_id=user_id,
-            friend_id=friend_id
-        )
-        db.session.add(friend)
+    # Add friend to database
+    friend = Friends(
+        user_id=user_id,
+        friend_id=friend_id
+    )
+    db.session.add(friend)
 
-        # Friend adds back
-        friend_back = Friends(
-            user_id=friend_id,
-            friend_id=user_id
-        )
-        db.session.add(friend_back)
-        return 'success'
-    except Exception as e:
-        return str(e)
+    # Friend adds back
+    friend_back = Friends(
+        user_id=friend_id,
+        friend_id=user_id
+    )
+    db.session.add(friend_back)
+    return 'success'
 
 
 def update_average_rating(is_tv_show: bool, media_id: int):
-    try:
-        if is_tv_show:
-            average = get_average_rating(True, media_id)
-            tv_show = TVShows.query.filter_by(id=media_id).first()
-            tv_show.avg_rating = average
-            db.session.commit()
+    if is_tv_show:
+        average = get_average_rating(True, media_id)
+        tv_show = TVShows.query.filter_by(id=media_id).first()
+        tv_show.avg_rating = average
+        db.session.commit()
 
-        else:
-            average = get_average_rating(False, media_id)
-            movie = Movie.query.filter_by(id=media_id).first()
-            movie.avg_rating = average
-            db.session.commit()
-
-    except Exception as e:
-        return str(e)
+    else:
+        average = get_average_rating(False, media_id)
+        movie = Movie.query.filter_by(id=media_id).first()
+        movie.avg_rating = average
+        db.session.commit()
 
 
 def get_average_rating(is_tv_show: bool, media_id: int):
-    try:
-        if is_tv_show:
-            tv_show_ratings = UserRatedTVShowRel.query.filter_by(tv_show_id=media_id)
-            total = 0
-            num_ratings = 0
+    if is_tv_show:
+        tv_show_ratings = UserRatedTVShowRel.query.filter_by(tv_show_id=media_id)
+        total = 0
+        num_ratings = 0
 
-            for tsr in tv_show_ratings:
-                total += tsr.user_rating
-                num_ratings += 1
-            return '%.2f' % (total / num_ratings)
+        for tsr in tv_show_ratings:
+            total += tsr.user_rating
+            num_ratings += 1
+        return '%.2f' % (total / num_ratings)
 
-        else:
-            movie_ratings = UserRatedMovieRel.query.filter_by(movie_id=media_id)
-            total = 0
-            num_ratings = 0
+    else:
+        movie_ratings = UserRatedMovieRel.query.filter_by(movie_id=media_id)
+        total = 0
+        num_ratings = 0
 
-            for mr in movie_ratings:
-                total += mr.user_rating
-                num_ratings += 1
+        for mr in movie_ratings:
+            total += mr.user_rating
+            num_ratings += 1
 
-            return '%.2f' % (total / num_ratings)
-
-    except Exception as e:
-        return str(e)
+        return '%.2f' % (total / num_ratings)
 
 
 # checks database if movies are past rented due date and deletes them
@@ -1612,37 +1663,6 @@ def delete_expired_movies(func_call=False, user_id=None):
             return 'success'
         else:
             return 'no movies to delete'
-
-    except Exception as e:
-        return str(e)
-
-
-@app.route('/test/user=<user_id>', methods=['GET'])
-# need to add to login function and need to add check to not allow deleting slots past 10
-def delete_expired_tv_shows(user_id=None):
-    try:
-        month_ago_date = (datetime.now() - timedelta(30)).date()
-        # ensures list is not empty
-        expired_users = User.query.filter_by(id=user_id).filter(User.sub_date <= month_ago_date).all()
-        remove_list = list()
-        if expired_users:
-            for user in expired_users:
-                if UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True).scalar() is not None:
-                    remove_list = UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True).all()
-                    update_sub_date(user.id)
-                email_sender.subscription_renew_email(user.username, user.email, user.sub_date + timedelta(30))
-                if remove_list:
-                    for tv_show_to_remove in remove_list:
-                        subscribe(user.id, tv_show_to_remove.tv_show_id, True)
-                        remove_tv_show(user.id, tv_show_to_remove.tv_show_id)
-                if user.slots_to_delete > 0:
-                    for i in range(user.slots_to_delete):
-                        delete_slot(user_id)  # look at this function
-                        update_slots_to_delete(user.id, 0)
-            db.session.commit()
-            return jsonify({'expired_tv_shows_removed': True})
-        else:
-            return jsonify({'expired_tv_shows_removed': False})
 
     except Exception as e:
         return str(e)
@@ -1745,26 +1765,6 @@ def remove_tv_show(user_id=None, tv_show_id=None):
         return str(e)
 
 
-# function to delete a slot only if top slot is empty
-def delete_slot(user_id=None):
-    try:
-        user = User.query.filter_by(id=user_id).first()
-        top_user_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).first()
-        empty_slot = top_user_slot.tv_show_id is None
-        more_than_ten_slots = user.num_slots > 10
-
-        if empty_slot and more_than_ten_slots:
-            UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).delete()
-            decrement_slot(user_id)
-            db.session.commit()
-            return 'success'
-        else:
-            return 'failure'
-
-    except Exception as e:
-        return str(e)
-
-
 # (Pseudo PUT) increment user's slot_num by 1 and return new slot_id
 def increment_slot(user_id) -> int:
     # increment slot number in users
@@ -1813,50 +1813,6 @@ def decrement_slot(user_id) -> int:
     sub_date = check_id.sub_date
     profile_pic = check_id.profile_pic
     slots_to_delete = check_id.slots_to_delete
-
-    try:
-        user = User.query.filter_by(id=user_id).first()
-        user.id = user_id
-        user.name = name
-        user.username = username
-        user.email = email
-        user.password = password
-        user.card_num = card_num
-        user.num_slots = num_slots
-        user.sub_date = sub_date
-        user.profile_pic = profile_pic
-        user.slots_to_delete = slots_to_delete
-
-        return num_slots
-
-    except Exception as e:
-        return str(e)
-
-
-def increment_slots_to_delete(user_id=None):
-    adjust_slot(user_id, True)
-
-
-def decrement_slots_to_delete(user_id=None):
-    adjust_slot(user_id, False)
-
-
-def adjust_slot(user_id, is_increment):
-    # increment slot number in users
-    check_id = User.query.filter_by(id=user_id).first()
-
-    name = check_id.name
-    username = check_id.username
-    email = check_id.email
-    password = check_id.password
-    card_num = check_id.card_num
-    num_slots = check_id.num_slots
-    sub_date = check_id.sub_date
-    profile_pic = check_id.profile_pic
-    if is_increment:
-        slots_to_delete = check_id.slots_to_delete + 1
-    else:
-        slots_to_delete = check_id.slots_to_delete - 1
 
     try:
         user = User.query.filter_by(id=user_id).first()
