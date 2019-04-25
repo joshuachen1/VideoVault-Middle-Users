@@ -688,12 +688,16 @@ def send_friend_request():
         request_to = data['request_to']
         request_from = data['request_from']
 
-        check_user_to = User.query.filter_by(id=request_to).first()
-        check_user_to = check_user_to is not None
-        check_user_from = User.query.filter_by(id=request_from)
-        check_user_from = check_user_from is not None
-        check_friendship = Friends.query.filter_by(user_id=request_from).filter_by(friend_id=request_to).first()
-        check_friendship = check_friendship is None
+        check_user_to = User.query.filter_by(id=request_to).scalar() is not None
+        check_user_from = User.query.filter_by(id=request_from).scalar() is not None
+        check_friendship = Friends.query.filter_by(user_id=request_from).filter_by(friend_id=request_to).scalar() is None
+        if not isinstance(request_to, int):
+            check_user_to = False
+            check_friendship = False
+        if not isinstance(request_from, int):
+            check_user_from = False
+            check_friendship = False
+
         if check_user_to and check_user_from and check_friendship:
             # add request to table
             new_friend_request = PendingFriends(

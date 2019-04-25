@@ -537,7 +537,7 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['valid_user_to'], False)
             self.assertEqual(expected['valid_user_from'], False)
-            self.assertEqual(expected['not_friends_already'], False)
+            self.assertEqual(expected['not_already_friends'], False)
             self.assertEqual(expected['success'], False)
 
         # Should Return
@@ -555,7 +555,7 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['valid_user_to'], True)
             self.assertEqual(expected['valid_user_from'], False)
-            self.assertEqual(expected['not_friends_already'], False)
+            self.assertEqual(expected['not_already_friends'], False)
             self.assertEqual(expected['success'], False)
 
         # Should Return
@@ -573,7 +573,7 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['valid_user_to'], False)
             self.assertEqual(expected['valid_user_from'], True)
-            self.assertEqual(expected['not_friends_already'], False)
+            self.assertEqual(expected['not_already_friends'], False)
             self.assertEqual(expected['success'], False)
 
         # Should Return
@@ -591,7 +591,7 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['valid_user_to'], True)
             self.assertEqual(expected['valid_user_from'], True)
-            self.assertEqual(expected['not_friends_already'], False)
+            self.assertEqual(expected['not_already_friends'], False)
             self.assertEqual(expected['success'], False)
 
         # Should be Successful
@@ -609,7 +609,7 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['valid_user_to'], True)
             self.assertEqual(expected['valid_user_from'], True)
-            self.assertEqual(expected['not_friends_already'], True)
+            self.assertEqual(expected['not_already_friends'], True)
             self.assertEqual(expected['success'], True)
 
             PendingFriends.query.filter_by(user_id=test_values[i][0]) \
