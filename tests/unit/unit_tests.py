@@ -283,7 +283,7 @@ class UnitTests(unittest.TestCase):
         # 'invalid_password': True
         # 'login_successful': False
 
-        test_values = [['test@gmail.com', 'banana']]
+        test_values = [['josh526chen@gmail.com', 'banana']]
 
         for i in range(len(test_values)):
             url = '/login/email={email}/password={password}'.format(email=test_values[i][0], password=test_values[i][1])
