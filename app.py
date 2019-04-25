@@ -882,11 +882,11 @@ def get_friend_requests(user_id=None, page=1):
 
 # checks if there is at least 1 pending friend request and returns True if there is
 # [url]/is_friend_request/user=[user_id]
-@app.route('/is_friend_request/user=<int:user_id>', methods=['GET'])
+@app.route('/is_friend_request/user=<user_id>', methods=['GET'])
 @app.route('/is_friend_request/user=', methods=['GET'])
 def is_friend_request(user_id=None):
     friend_request_boolean = False
-    if user_id is not None:
+    if user_id is not None and user_id.isdigit() and int(user_id) > 0:
         friend_request_boolean = PendingFriends.query.filter_by(user_id=user_id).scalar() is not None
     return jsonify({'at_least_one_request': friend_request_boolean})
 
