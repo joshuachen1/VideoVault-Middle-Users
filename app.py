@@ -1050,8 +1050,12 @@ def comment_movie():
 # [url]/movie=[title]/comments
 @app.route('/movie=<title>/comments/reverse=<reverse>', methods=['GET'])
 @app.route('/movie=<title>/comments', methods=['GET'])
+@app.route('/movie=/comments', methods=['GET'])
 def get_movie_comments(title=None, reverse=False):
     try:
+        if title is None:
+            return jsonify({'valid_movie': False})
+
         movie = Movie.query.filter_by(title=title).first()
 
         if movie is None:
