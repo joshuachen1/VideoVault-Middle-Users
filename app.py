@@ -828,7 +828,8 @@ def is_friend(user1_id=None, user2_id=None, inner_call=False):
         user1_id = '{}%'.format(user1_id)
         user2_id = '{}%'.format(user2_id)
 
-        if User.query.filter(User.username.like(user1_id)) is None or User.query.filter(User.username.like(user2_id)) is None:
+        if User.query.filter(User.username.like(user1_id)) is None or User.query.filter(
+                User.username.like(user2_id)) is None:
             if inner_call:
                 return False
             return jsonify({'is_friend': False})
@@ -1052,37 +1053,33 @@ def comment_movie():
 @app.route('/movie=<title>/comments', methods=['GET'])
 @app.route('/movie=/comments', methods=['GET'])
 def get_movie_comments(title=None, reverse=False):
-    try:
-        if title is None:
-            return jsonify({'valid_movie': False})
+    if title is None:
+        return jsonify({'valid_movie': False})
 
-        movie = Movie.query.filter_by(title=title).first()
+    movie = Movie.query.filter_by(title=title).first()
 
-        if movie is None:
-            return jsonify({'valid_movie': False})
-        else:
-            comments = list()
-            raw_comments = MovieComment.query.filter_by(movie_id=movie.id).order_by(MovieComment.date_of_comment)
+    if movie is None:
+        return jsonify({'valid_movie': False})
+    else:
+        comments = list()
+        raw_comments = MovieComment.query.filter_by(movie_id=movie.id).order_by(MovieComment.date_of_comment)
 
-            for rc in raw_comments:
-                user_id = rc.user_id
-                username = User.query.filter_by(id=user_id).first().username
-                comment = rc.comment
-                date_of_comment = rc.date_of_comment
-                comments.append(Comment(
-                    user_id=user_id,
-                    username=username,
-                    comment=comment,
-                    date_of_comment=date_of_comment,
-                ))
+        for rc in raw_comments:
+            user_id = rc.user_id
+            username = User.query.filter_by(id=user_id).first().username
+            comment = rc.comment
+            date_of_comment = rc.date_of_comment
+            comments.append(Comment(
+                user_id=user_id,
+                username=username,
+                comment=comment,
+                date_of_comment=date_of_comment,
+            ))
 
-            if reverse:
-                comments = reversed(comments)
+        if reverse:
+            comments = reversed(comments)
 
-            return jsonify({'comments': [comment.serialize() for comment in comments]})
-
-    except Exception as e:
-        return str(e)
+        return jsonify({'comments': [comment.serialize() for comment in comments]})
 
 
 # [url]/user=[user_id]/tv_show_list
@@ -1225,37 +1222,33 @@ def comment_tv_show():
 @app.route('/tv_show=<title>/comments', methods=['GET'])
 @app.route('/tv_show=/comments', methods=['GET'])
 def get_tv_show_comments(title=None, reverse=False):
-    try:
-        if title is None:
-            return jsonify({'valid_tv_show': False})
+    if title is None:
+        return jsonify({'valid_tv_show': False})
 
-        tv_show = TVShows.query.filter_by(title=title).first()
+    tv_show = TVShows.query.filter_by(title=title).first()
 
-        if tv_show is None:
-            return jsonify({'valid_tv_show': False})
-        else:
-            comments = list()
-            raw_comments = TVShowComment.query.filter_by(tv_show_id=tv_show.id).order_by(TVShowComment.date_of_comment)
+    if tv_show is None:
+        return jsonify({'valid_tv_show': False})
+    else:
+        comments = list()
+        raw_comments = TVShowComment.query.filter_by(tv_show_id=tv_show.id).order_by(TVShowComment.date_of_comment)
 
-            for rc in raw_comments:
-                user_id = rc.user_id
-                username = User.query.filter_by(id=user_id).first().username
-                comment = rc.comment
-                date_of_comment = rc.date_of_comment
-                comments.append(Comment(
-                    user_id=user_id,
-                    username=username,
-                    comment=comment,
-                    date_of_comment=date_of_comment,
-                ))
+        for rc in raw_comments:
+            user_id = rc.user_id
+            username = User.query.filter_by(id=user_id).first().username
+            comment = rc.comment
+            date_of_comment = rc.date_of_comment
+            comments.append(Comment(
+                user_id=user_id,
+                username=username,
+                comment=comment,
+                date_of_comment=date_of_comment,
+            ))
 
-            if reverse:
-                comments = reversed(comments)
+        if reverse:
+            comments = reversed(comments)
 
-            return jsonify({'comments': [comment.serialize() for comment in comments]})
-
-    except Exception as e:
-        return str(e)
+        return jsonify({'comments': [comment.serialize() for comment in comments]})
 
 
 # [url]/user=[user_id]/movie=[movie_id]/is_movie_rented

@@ -1075,9 +1075,6 @@ class UnitTests(unittest.TestCase):
         db.session.flush()
 
     def test_get_movie_comments(self):
-        # Check Exception Caught
-        self.assertRaises(Exception, self.app.get('/movie=$@$@/comments'))
-
         # Should return
         # 'valid_movie': False
 
@@ -1161,9 +1158,6 @@ class UnitTests(unittest.TestCase):
         db.session.flush()
 
     def test_get_tv_show_comments(self):
-        # Check Exception Caught
-        self.assertRaises(Exception, self.app.get('/tv_show=$@$@/comments'))
-
         # Should return
         # 'valid_movie': False
 
