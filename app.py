@@ -1174,8 +1174,9 @@ def get_user_subscriptions(user_id=None):
         subscriptions_id_list = list()
         for subscription in subscriptions:
             if subscription.tv_show_id is not None:
-                subscriptions_id_list.append(TVShows.query.filter_by(id=subscription.tv_show_id).first())
-        return jsonify({'subscriptions': subscription.serialize() for subscription in subscriptions_id_list})
+                subscriptions_id_list.append(subscription.tv_show_id)
+        subscription_obj_list = TVShows.query.filter(TVShows.id.in_(subscriptions_id_list)).all()
+        return jsonify({'subscriptions': [subscription_obj.serialize() for subscription_obj in subscription_obj_list]})
     except Exception as e:
         return str(e)
 
