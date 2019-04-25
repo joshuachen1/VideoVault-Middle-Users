@@ -679,7 +679,7 @@ def user_search(query=None, page=1):
         return str(e)
 
 
-# { request_to: [user_id], request_from: [pending_friend_id] }
+# { request_to: [user_id], request_from: [pending_from_id] }
 # send a friend request to another user
 @app.route('/send_friend_request', methods=['POST'])
 def send_friend_request():
@@ -702,7 +702,7 @@ def send_friend_request():
             # add request to table
             new_friend_request = PendingFriends(
                 user_id=request_to,
-                pending_friend_id=request_from,
+                pending_from_id=request_from,
             )
             db.session.add(new_friend_request)
             db.session.commit()
@@ -719,30 +719,30 @@ def send_friend_request():
         return str(e)
 
 
-# { user_id: [user_id], request_from: [pending_friend_id] }
+# { user_id: [user_id], request_from: [pending_from_id] }
 # accepts a friend request
 @app.route('/accept_friend_request', methods=['POST'])
 def accept_friend_request(function_call=False):
     try:
         data = request.get_json()
         user_id = data['user_id']
-        pending_friend_id = data['request_from']
+        pending_from_id = data['request_from']
         check_user_id = User.query.filter_by(id=user_id).first()
         check_user_id = check_user_id is not None
-        check_friend_id = User.query.filter_by(id=pending_friend_id).first()
+        check_friend_id = User.query.filter_by(id=pending_from_id).first()
         check_friend_id = check_friend_id is not None
 
         # checks for valid inputs
         if check_friend_id and check_user_id:
             check_friend_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(
-                pending_friend_id=pending_friend_id).first()
+                pending_from_id=pending_from_id).first()
             check_friend_request = check_friend_request is not None
             # checks if friend request exists
             if check_friend_request:
                 if function_call is False:
-                    add_friend(user_id, pending_friend_id)
+                    add_friend(user_id, pending_from_id)
                 # delete request
-                PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_friend_id=pending_friend_id).delete()
+                PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_from_id=pending_from_id).delete()
                 db.session.commit()
                 return jsonify({'success': True,
                                 'valid_friendship_request': check_friend_request,
@@ -762,7 +762,7 @@ def accept_friend_request(function_call=False):
         return str(e)
 
 
-# { user_id: [user_id], request_from: [pending_friend_id] }
+# { user_id: [user_id], request_from: [pending_from_id] }
 # decline a friend request
 @app.route('/decline_friend_request', methods=['POST'])
 def decline_friend_request():
@@ -770,36 +770,36 @@ def decline_friend_request():
 
 
 # returns true if user_id and friend_id is in the pending table
-# [url]/has_friend_request/user_id=[user_id]/request_from=[pending_friend_id]
+# [url]/has_friend_request/user_id=[user_id]/request_from=[pending_from_id]
 @app.route('/has_friend_request/user_id=<int:user_id>/request_from=<int:request_from>', methods=['GET'])
+@app.route('/has_friend_request/user_id=<int:user_id>/request_from=', methods=['GET'])
+@app.route('/has_friend_request/user_id=/request_from=<int:request_from>', methods=['GET'])
+@app.route('/has_friend_request/user_id=/request_from=', methods=['GET'])
 def has_friend_request(user_id=None, request_from=None):
     try:
-        if request_from is not None and user_id is not None:
-            is_friend_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(
-                pending_friend_id=request_from).scalar()
-            if is_friend_request is not None:
+        if user_id is not None or request_from is not None or not isinstance(user_id, int) or not isinstance(request_from, int):
+            is_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_from_id=request_from).scalar()
+            if is_request is not None:
                 return jsonify({'has_friend_request': True})
-            else:
-                return jsonify({'has_friend_request': False})
+        return jsonify({'has_friend_request': False})
     except Exception as e:
         str(e)
 
 
 # returns a list of all friend requests from a specific user
 # [url]/get_friend_requests/user=[user_id]
-@app.route('/get_friend_requests/user=<int:user_id>', methods=['GET'])
-@app.route('/get_friend_requests/user=<int:user_id>/page=<int:page>', methods=['GET'])
+@app.route('/get_friend_requests/user=<user_id>', methods=['GET'])
+@app.route('/get_friend_requests/user=<user_id>/page=<int:page>', methods=['GET'])
 @app.route('/get_friend_requests/user=/page=', methods=['GET'])
 @app.route('/get_friend_requests/user=', methods=['GET'])
 def get_friend_requests(user_id=None, page=1):
     try:
-        if user_id is not None:
+        pending_friend_list = list()
+        if user_id is not None and user_id.isdigit() and int(user_id) > 0:
             pending_request_rel = PendingFriends.query.filter_by(user_id=user_id).all()
-            pending_friend_list = list()
             for request in pending_request_rel:
-                pending_friend = User.query.filter_by(id=request.pending_friend_id).first()
+                pending_friend = User.query.filter_by(id=request.pending_from_id).first()
                 pending_friend_list.append(pending_friend)
-
         return paginated_json('pending_friend_requests', pending_friend_list, page)
     except Exception as e:
         return str(e)
@@ -1129,8 +1129,8 @@ def get_user_subscriptions(user_id=None):
         subscriptions_id_list = list()
         for subscription in subscriptions:
             if subscription.tv_show_id is not None:
-                subscriptions_id_list.append(subscription.tv_show_id)
-        return jsonify({"subscriptions": subscriptions_id_list})
+                subscriptions_id_list.append(TVShows.query.filter_by(id=subscription.tv_show_id).first())
+        return jsonify({'subscriptions': subscription.serialize() for subscription in subscriptions_id_list})
     except Exception as e:
         return str(e)
 
