@@ -600,8 +600,7 @@ class UnitTests(unittest.TestCase):
         # 'not_friends_already': True
         # 'success': True
 
-        test_values = [[1, 29],
-                       [5, 1]
+        test_values = [[1, 29]
                        ]
         for i in range(len(test_values)):
             result = self.app.post(url, json={'request_to': test_values[i][0],
@@ -613,8 +612,9 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['success'], True)
 
             PendingFriends.query.filter_by(user_id=test_values[i][0]) \
-                .filter_by(pending_friend_id=test_values[i][1]) \
+                .filter_by(pending_from_id=test_values[i][1]) \
                 .delete()
+            db.session.commit()
 
     def test_accept_friend_request(self):
         url = '/accept_friend_request'
