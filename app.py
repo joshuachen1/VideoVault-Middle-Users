@@ -600,45 +600,6 @@ def is_unsubscribe(user_id=None, tv_show_id=None):
     return jsonify({"is_unsubscribed": False})
 
 
-# increment number of slots to delete by 1
-@app.route('/delete_slot_increment', methods=['PUT'])
-def delete_slot_increment(user_id=None):
-    try:
-        data = request.get_json()
-        user_id = data['user_id']
-        user = User.query.filter_by(id=user_id).first()
-        # can delete slot
-        if user.num_slots - user.slots_to_delete >= 10:
-            increment_slots_to_delete(user_id)
-            return jsonify({'success': True})
-        else:
-            return jsonify({'success': False})
-    except Exception as e:
-        return str(e)
-
-
-# decrement number of slots to delete by 1
-@app.route('/delete_slot_decrement', methods=['PUT'])
-def delete_slot_decrement(user_id=None):
-    try:
-        data = request.get_json()
-        user_id = data['user_id']
-        user = User.query.filter_by(id=user_id).first()
-        # can delete slot
-        if user.num_slots - user.slots_to_delete >= 10:
-            decrement_slots_to_delete(user_id)
-            return jsonify({'success': True})
-        else:
-            return jsonify({'success': False})
-    except Exception as e:
-        return str(e)
-
-
-'''
-Josh Attempt at Delete Slot
-'''
-
-
 # { user_id: [user_id], slot_id: [slot_id] }
 @app.route('/slot/flag/delete', methods=['PUT'])
 def flag_slot_delete():
@@ -1831,26 +1792,6 @@ def remove_tv_show(user_id=None, tv_show_id=None):
         return str(e)
 
 
-# function to delete a slot only if top slot is empty
-def delete_slot(user_id=None):
-    try:
-        user = User.query.filter_by(id=user_id).first()
-        top_user_slot = UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).first()
-        empty_slot = top_user_slot.tv_show_id is None
-        more_than_ten_slots = user.num_slots > 10
-
-        if empty_slot and more_than_ten_slots:
-            UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=user.num_slots).delete()
-            decrement_slot(user_id)
-            db.session.commit()
-            return 'success'
-        else:
-            return 'failure'
-
-    except Exception as e:
-        return str(e)
-
-
 # (Pseudo PUT) increment user's slot_num by 1 and return new slot_id
 def increment_slot(user_id) -> int:
     # increment slot number in users
@@ -1899,50 +1840,6 @@ def decrement_slot(user_id) -> int:
     sub_date = check_id.sub_date
     profile_pic = check_id.profile_pic
     slots_to_delete = check_id.slots_to_delete
-
-    try:
-        user = User.query.filter_by(id=user_id).first()
-        user.id = user_id
-        user.name = name
-        user.username = username
-        user.email = email
-        user.password = password
-        user.card_num = card_num
-        user.num_slots = num_slots
-        user.sub_date = sub_date
-        user.profile_pic = profile_pic
-        user.slots_to_delete = slots_to_delete
-
-        return num_slots
-
-    except Exception as e:
-        return str(e)
-
-
-def increment_slots_to_delete(user_id=None):
-    adjust_slot(user_id, True)
-
-
-def decrement_slots_to_delete(user_id=None):
-    adjust_slot(user_id, False)
-
-
-def adjust_slot(user_id, is_increment):
-    # increment slot number in users
-    check_id = User.query.filter_by(id=user_id).first()
-
-    name = check_id.name
-    username = check_id.username
-    email = check_id.email
-    password = check_id.password
-    card_num = check_id.card_num
-    num_slots = check_id.num_slots
-    sub_date = check_id.sub_date
-    profile_pic = check_id.profile_pic
-    if is_increment:
-        slots_to_delete = check_id.slots_to_delete + 1
-    else:
-        slots_to_delete = check_id.slots_to_delete - 1
 
     try:
         user = User.query.filter_by(id=user_id).first()
