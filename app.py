@@ -770,7 +770,7 @@ def send_friend_request():
 # { user_id: [user_id], request_from: [pending_from_id] }
 # accepts a friend request
 @app.route('/accept_friend_request', methods=['POST'])
-def accept_friend_request(function_call=False):
+def accept_friend_request():
     try:
         data = request.get_json()
         user_id = data['user_id']
@@ -814,7 +814,45 @@ def accept_friend_request(function_call=False):
 # decline a friend request
 @app.route('/decline_friend_request', methods=['POST'])
 def decline_friend_request():
-    return accept_friend_request(True)
+    try:
+        function_call = True
+
+        data = request.get_json()
+        user_id = data['user_id']
+        pending_from_id = data['request_from']
+        check_user_id = User.query.filter_by(id=user_id).first()
+        check_user_id = check_user_id is not None
+        check_friend_id = User.query.filter_by(id=pending_from_id).first()
+        check_friend_id = check_friend_id is not None
+
+        # checks for valid inputs
+        if check_friend_id and check_user_id:
+            check_friend_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(
+                pending_from_id=pending_from_id).first()
+            check_friend_request = check_friend_request is not None
+            # checks if friend request exists
+            if check_friend_request:
+                if function_call is False:
+                    add_friend(user_id, pending_from_id)
+                # delete request
+                PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_from_id=pending_from_id).delete()
+                db.session.commit()
+                return jsonify({'success': True,
+                                'valid_friendship_request': check_friend_request,
+                                'valid_user_id': check_user_id,
+                                'valid_friend_id': check_friend_id})
+            else:
+                return jsonify({'success': False,
+                                'valid_friendship_request': check_friend_request,
+                                'valid_user_id': check_user_id,
+                                'valid_friend_id': check_friend_id})
+        else:
+            return jsonify({'success': False,
+                            'valid_friendship_request': False,
+                            'valid_user_id': check_user_id,
+                            'valid_friend_id': check_friend_id})
+    except Exception as e:
+        return str(e)
 
 
 # returns true if user_id and friend_id is in the pending table
