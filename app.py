@@ -1223,8 +1223,12 @@ def comment_tv_show():
 # [url]/tv_show=[title]/comments
 @app.route('/tv_show=<title>/comments/reverse=<reverse>', methods=['GET'])
 @app.route('/tv_show=<title>/comments', methods=['GET'])
+@app.route('/tv_show=/comments', methods=['GET'])
 def get_tv_show_comments(title=None, reverse=False):
     try:
+        if title is None:
+            return jsonify({'valid_tv_show': False})
+
         tv_show = TVShows.query.filter_by(title=title).first()
 
         if tv_show is None:
