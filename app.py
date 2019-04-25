@@ -764,7 +764,7 @@ def send_friend_request():
 # { user_id: [user_id], request_from: [pending_from_id] }
 # accepts a friend request
 @app.route('/accept_friend_request', methods=['POST'])
-def accept_friend_request(function_call=False):
+def accept_friend_request():
     try:
         data = request.get_json()
         user_id = data['user_id']
@@ -781,8 +781,7 @@ def accept_friend_request(function_call=False):
             check_friend_request = check_friend_request is not None
             # checks if friend request exists
             if check_friend_request:
-                if function_call is False:
-                    add_friend(user_id, pending_from_id)
+                add_friend(user_id, pending_from_id)
                 # delete request
                 PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_from_id=pending_from_id).delete()
                 db.session.commit()
@@ -809,8 +808,6 @@ def accept_friend_request(function_call=False):
 @app.route('/decline_friend_request', methods=['POST'])
 def decline_friend_request():
     try:
-        function_call = True
-
         data = request.get_json()
         user_id = data['user_id']
         pending_from_id = data['request_from']
@@ -826,8 +823,6 @@ def decline_friend_request():
             check_friend_request = check_friend_request is not None
             # checks if friend request exists
             if check_friend_request:
-                if function_call is False:
-                    add_friend(user_id, pending_from_id)
                 # delete request
                 PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_from_id=pending_from_id).delete()
                 db.session.commit()
@@ -1670,37 +1665,6 @@ def delete_expired_movies(func_call=False, user_id=None):
             return 'success'
         else:
             return 'no movies to delete'
-
-    except Exception as e:
-        return str(e)
-
-
-@app.route('/test/user=<user_id>', methods=['GET'])
-# need to add to login function and need to add check to not allow deleting slots past 10
-def delete_expired_tv_shows(user_id=None):
-    try:
-        month_ago_date = (datetime.now() - timedelta(30)).date()
-        # ensures list is not empty
-        expired_users = User.query.filter_by(id=user_id).filter(User.sub_date <= month_ago_date).all()
-        remove_list = list()
-        if expired_users:
-            for user in expired_users:
-                if UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True).scalar() is not None:
-                    remove_list = UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True).all()
-                    update_sub_date(user.id)
-                email_sender.subscription_renew_email(user.username, user.email, user.sub_date + timedelta(30))
-                if remove_list:
-                    for tv_show_to_remove in remove_list:
-                        subscribe(user.id, tv_show_to_remove.tv_show_id, True)
-                        remove_tv_show(user.id, tv_show_to_remove.tv_show_id)
-                if user.slots_to_delete > 0:
-                    for i in range(user.slots_to_delete):
-                        delete_slot(user_id)  # look at this function
-                        update_slots_to_delete(user.id, 0)
-            db.session.commit()
-            return jsonify({'expired_tv_shows_removed': True})
-        else:
-            return jsonify({'expired_tv_shows_removed': False})
 
     except Exception as e:
         return str(e)
