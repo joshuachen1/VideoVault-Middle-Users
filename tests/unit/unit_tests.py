@@ -311,6 +311,37 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['num_slots'], 10)
             self.assertEqual(expected['profile_pic'], "https://upload.wikimedia.org/wikipedia/en/1/13/Stick_figure.png")
 
+    def test_delete_account(self):
+        url = '/account/delete'
+
+        # Should Return
+        # 'valid_user': True
+        # 'valid_password': True
+        # 'success': True
+
+        # Create New Account
+        new_user = {'name': 'Unit Test',
+                    'username': 'unittest',
+                    'email': 'unit@test.com',
+                    'password': 'pythonunittest',
+                    'card_num': 123}
+
+        result = self.app.post('/signup', json=new_user)
+        expected = result.get_json()
+        self.assertEqual(expected['name'], 'Unit Test')
+        self.assertEqual(expected['username'], 'unittest')
+        self.assertEqual(expected['email'], 'unit@test.com')
+        self.assertEqual(expected['num_slots'], 10)
+        self.assertEqual(expected['profile_pic'], "https://upload.wikimedia.org/wikipedia/en/1/13/Stick_figure.png")
+
+        # Delete Account
+        result = self.app.delete(url, json={'user_id': expected['id'],
+                                            'password': 'pythonunittest'})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_password'], True)
+        self.assertEqual(expected['success'], True)
+
     def test_update_profile_pic(self):
         url = '/update/profile_pic'
 
@@ -756,7 +787,6 @@ class UnitTests(unittest.TestCase):
         Friends.query.filter_by(user_id=test_values[0][0]).filter_by(friend_id=test_values[0][1]).delete()
         Friends.query.filter_by(user_id=test_values[0][1]).filter_by(friend_id=test_values[0][0]).delete()
         db.session.commit()
-
 
     def test_decline_friend_request(self):
         url = '/decline_friend_request'
