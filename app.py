@@ -1345,29 +1345,29 @@ def get_user_rented_movies(user_id=None):
 # adds rented movie into user_rented_movies table
 @app.route('/rent_movie', methods=['POST'])
 def rent_movie():
-    data = request.get_json()
-    user_id = data['user_id']
-    movie_id = data['movie_id']
-    rent_datetime = datetime.now()
-
-    user_check = User.query.filter_by(id=user_id).first()
-    movie_check = Movie.query.filter_by(id=movie_id).first()
-
-    # checks if data is valid
-    if user_check is None and movie_check is None:
-        return jsonify({'success': False,
-                        'valid_user': False,
-                        'valid_movie': False})
-    elif user_check is None:
-        return jsonify({'success': False,
-                        'valid_user': False,
-                        'valid_movie': True})
-    elif movie_check is None:
-        return jsonify({'success': False,
-                        'valid_user': True,
-                        'valid_movie': False})
-
     try:
+        data = request.get_json()
+        user_id = data['user_id']
+        movie_id = data['movie_id']
+        rent_datetime = datetime.now()
+
+        user_check = User.query.filter_by(id=user_id).first()
+        movie_check = Movie.query.filter_by(id=movie_id).first()
+
+        # checks if data is valid
+        if user_check is None and movie_check is None:
+            return jsonify({'success': False,
+                            'valid_user': False,
+                            'valid_movie': False})
+        elif user_check is None:
+            return jsonify({'success': False,
+                            'valid_user': False,
+                            'valid_movie': True})
+        elif movie_check is None:
+            return jsonify({'success': False,
+                            'valid_user': True,
+                            'valid_movie': False})
+
         user_rented_movies = UserRentedMovies(
             user_id=user_id,
             movie_id=movie_id,
