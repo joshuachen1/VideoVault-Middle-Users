@@ -512,33 +512,7 @@ class UnitTests(unittest.TestCase):
             url = '/search/user={user_info}'.format(user_info=test_values[i][0])
             result = self.app.get(url)
             expected = result.get_json()
-            self.assertEqual(len(expected['users']), 1)
-
-    def test_is_friend_request(self):
-        # Check Exception Caught
-        self.assertRaises(Exception, self.app.get('/is_friend_request/user=$@$@'))
-
-        # Should Return
-        # 'at_least_one_request': False
-
-        test_values = ['', 1, None]
-
-        for i in range(len(test_values)):
-            url = '/is_friend_request/user={user_id}'.format(user_id=test_values[i])
-            result = self.app.get(url)
-            expected = result.get_json()
-            self.assertEqual(expected['at_least_one_request'], False)
-
-        # Should Return
-        # 'at_least_one_request': False
-
-        test_values = [20, 26, 34]
-
-        for i in range(len(test_values)):
-            url = '/is_friend_request/user={user_id}'.format(user_id=test_values[i])
-            result = self.app.get(url)
-            expected = result.get_json()
-            self.assertEqual(expected['at_least_one_request'], True)
+            assert len(expected['users']) > 0
 
     def test_send_friend_request(self):
         url = '/send_friend_request'
@@ -844,6 +818,70 @@ class UnitTests(unittest.TestCase):
         result = self.app.get('/get_friend_requests/user=20')
         expected = result.get_json()
         self.assertEqual(len(expected['pending_friend_requests']), 1)
+
+    def test_is_friend_request(self):
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.get('/is_friend_request/user=$@$@'))
+
+        # Should Return
+        # 'at_least_one_request': False
+
+        test_values = ['', 1, None]
+
+        for i in range(len(test_values)):
+            url = '/is_friend_request/user={user_id}'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['at_least_one_request'], False)
+
+        # Should Return
+        # 'at_least_one_request': False
+
+        test_values = [20, 26, 34]
+
+        for i in range(len(test_values)):
+            url = '/is_friend_request/user={user_id}'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['at_least_one_request'], True)
+
+    def test_is_friend(self):
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.get('/user1=$@$@/user2='))
+        self.assertRaises(Exception, self.app.get('/user1=/user2=$@$@'))
+        self.assertRaises(Exception, self.app.get('/user1=$@$@/user2=$@$@'))
+
+        # Should Return
+        # 'is_friend': False
+
+        test_values = [[None, None],
+                       [None, ''],
+                       ['', None],
+                       ['', ''],
+                       [1, None],
+                       [1, ''],
+                       [1, 5],
+                       [5, 108]
+                       ]
+        for i in range(len(test_values)):
+            url = '/user1={user1_id}/user2={user2_id}'.format(user1_id=test_values[i][0],
+                                                              user2_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['is_friend'], False)
+
+        # Should Return
+        # 'is_friend': False
+
+        test_values = [[1, 1],
+                       [3, 5]
+                       ]
+        for i in range(len(test_values)):
+            url = '/user1={user1_id}/user2={user2_id}'.format(user1_id=test_values[i][0],
+                                                              user2_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['is_friend'], True)
 
     def test_rate_movie(self):
         url = '/user/movie/rating'
