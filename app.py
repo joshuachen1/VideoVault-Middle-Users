@@ -447,13 +447,10 @@ def is_slots_full(user_id=None):
 @app.route('/user=<user_id>/tv_show=/is_tv_show_in_slot', methods=['GET'])
 @app.route('/user=/tv_show=/is_tv_show_in_slot', methods=['GET'])
 def is_tv_show_in_slot(user_id=None, tv_show_id=None):
-    try:
-        if UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).scalar() is not None:
-            return jsonify({'is_tv_show_in_slot': True})
-        else:
-            return jsonify({'is_tv_show_in_slot': False})
-    except Exception as e:
-        return str(e)
+    if UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).scalar() is not None:
+        return jsonify({'is_tv_show_in_slot': True})
+    else:
+        return jsonify({'is_tv_show_in_slot': False})
 
 
 # { user_id: [user_id], tv_show_id: [tv_show_id] }
@@ -706,24 +703,21 @@ def clear_slots():
 @app.route('/search/user=<query>', methods=['GET'])
 @app.route('/search/user=', methods=['GET'])
 def user_search(query=None, page=1):
-    try:
-        results = list()
-        query_user = '{}%'.format(query)
+    results = list()
+    query_user = '{}%'.format(query)
 
-        # Get all LIKE username
-        username_dict = User.query.filter(User.username.like(query_user))
-        for user in username_dict:
+    # Get all LIKE username
+    username_dict = User.query.filter(User.username.like(query_user))
+    for user in username_dict:
+        results.append(user)
+
+    # Get exact user email
+    email_dict = User.query.filter(User.email.like(query_user))
+    for user in email_dict:
+        if user not in results:
             results.append(user)
 
-        # Get exact user email
-        email_dict = User.query.filter(User.email.like(query_user))
-        for user in email_dict:
-            if user not in results:
-                results.append(user)
-
-        return paginated_json('users', results, page)
-    except Exception as e:
-        return str(e)
+    return paginated_json('users', results, page)
 
 
 # { request_to: [user_id], request_from: [pending_from_id] }
