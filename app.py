@@ -590,6 +590,9 @@ def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
 
 
 @app.route('/is_unsubscribed/user_id=<user_id>/tv_show_id=<tv_show_id>', methods=['GET'])
+@app.route('/is_unsubscribed/user_id=/tv_show_id=<tv_show_id>', methods=['GET'])
+@app.route('/is_unsubscribed/user_id=<user_id>/tv_show_id=', methods=['GET'])
+@app.route('/is_unsubscribed/user_id=/tv_show_id=', methods=['GET'])
 def is_unsubscribe(user_id=None, tv_show_id=None):
     unsubscribe_boolean = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
     if unsubscribe_boolean is not None and unsubscribe_boolean.unsubscribe is True:
