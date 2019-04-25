@@ -886,6 +886,30 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['has_friend_request'], False)
 
+        # Should Return
+        # 'has_friend_request': True
+
+        test_values = [[30, 1]]
+
+        # Create Friend Request
+        new_friend_request = PendingFriends(
+            user_id=test_values[0][0],
+            pending_from_id=test_values[0][1],
+        )
+        db.session.add(new_friend_request)
+        db.session.commit()
+
+        # Accept Friend Request
+        for i in range(len(test_values)):
+            result = self.app.get('/has_friend_request/user_id={}/request_from={}'.format(test_values[i][0],
+                                                                                          test_values[i][1]))
+            expected = result.get_json()
+            self.assertEqual(expected['has_friend_request'], True)
+
+        # Remove from PendingFriends Table
+        PendingFriends.query.filter_by(user_id=test_values[0][0]).filter_by(pending_from_id=test_values[0][1]).delete()
+        db.session.commit()
+
     def test_get_friend_requests(self):
         # Check Exception Caught
         self.assertRaises(Exception, self.app.get('/get_friend_requests/user=$@$@'))
