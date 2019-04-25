@@ -1154,6 +1154,29 @@ class UnitTests(unittest.TestCase):
         TVShowComment.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).delete()
         db.session.flush()
 
+    def test_get_tv_show_comments(self):
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.get('/tv_show=$@$@/comments'))
+
+        # Should return
+        # 'valid_movie': False
+
+        test_values = [None, '', '$@$@$@', 12345]
+        for i in range(len(test_values)):
+            url = '/tv_show={title}/comments'.format(title=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_tv_show'], False)
+
+        # Should be Successful
+
+        test_values = ['Seinfeld', 'Game of Thrones']
+        for i in range(len(test_values)):
+            url = '/tv_show={title}/comments'.format(title=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert len(expected['comments']) > 0
+
     def test_rent_movie(self):
         url = '/rent_movie'
 
