@@ -384,6 +384,17 @@ class UnitTests(unittest.TestCase):
         # Should Return
         # 'is_slots_full: False
 
+        test_values = [5]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/is_slots_full'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['is_slots_full'], False)
+
+        # Should Return
+        # 'is_slots_full: True
+
         test_values = [2, 3]
 
         for i in range(len(test_values)):
