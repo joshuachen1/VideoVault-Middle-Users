@@ -634,6 +634,58 @@ def delete_slot_decrement(user_id=None):
         return str(e)
 
 
+'''
+Josh Attempt at Delete Slot
+'''
+
+
+# { user_id: [user_id], slot_id: [slot_id] }
+@app.route('/slot/flag/delete', methods=['PUT'])
+def flag_slot_delete():
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        slot_id = data['slot_id']
+
+        user = User.query.filter_by(id=user_id).first()
+        slot_to_flag = UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_id).first()
+
+        if user is None:
+            return jsonify({'valid_user_id': False,
+                            'success': False})
+
+        if not user.num_slots > 10:
+            return jsonify({'valid_user_id': True,
+                            'success': False})
+
+        # Check Backwards
+        for slot_num in range(user.num_slots, 10, -1):
+            slot = UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_num).first()
+
+            if slot.delete_slot == 0:
+                # Swap Unsubscribe Status
+                temp_unsub_flag = slot_to_flag.unsubscribe
+                slot_to_flag.unsubscribe = slot.unsubscribe
+                slot.unsubscribe = temp_unsub_flag
+
+                # Swap tv_show_ids
+                temp_id = slot_to_flag.tv_show_id
+                slot_to_flag.tv_show_id = slot.tv_show_id
+                slot.tv_show_id = temp_id
+
+                # Flag Slot
+                slot.unsubscribe = 1
+                slot.delete_slot = 1
+                db.session.commit()
+                return jsonify({'valid_user_id': True,
+                                'success': True})
+
+        return jsonify({'valid_user_id': True,
+                        'success': False})
+
+    except Exception as e:
+            return str(e)
+
 # { user_id: [user_id] }
 # route to clear all slots
 @app.route('/clear_slots', methods=['PUT'])
