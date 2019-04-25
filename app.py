@@ -770,7 +770,7 @@ def send_friend_request():
 # { user_id: [user_id], request_from: [pending_from_id] }
 # accepts a friend request
 @app.route('/accept_friend_request', methods=['POST'])
-def accept_friend_request():
+def accept_friend_request(function_call=False):
     try:
         data = request.get_json()
         user_id = data['user_id']
