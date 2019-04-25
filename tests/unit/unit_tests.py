@@ -817,7 +817,7 @@ class UnitTests(unittest.TestCase):
         # Should be Successful
         result = self.app.get('/get_friend_requests/user=20')
         expected = result.get_json()
-        self.assertEqual(len(expected['pending_friend_requests']), 1)
+        assert len(expected['pending_friend_requests']) > 0
 
     def test_is_friend_request(self):
         # Check Exception Caught
