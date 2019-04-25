@@ -814,9 +814,25 @@ def is_friend_request(user_id=None):
 
 # Check Friendship
 # [url]/user1=[user1_id]/user2=[user2_id]
-@app.route('/user1=<int:user1_id>/user2=<int:user2_id>')
+@app.route('/user1=<user1_id>/user2=<user2_id>', methods=['GET'])
+@app.route('/user1=<user1_id>/user2=', methods=['GET'])
+@app.route('/user1=/user2=<user2_id>', methods=['GET'])
+@app.route('/user1=/user2=', methods=['GET'])
 def is_friend(user1_id=None, user2_id=None, inner_call=False):
     try:
+        if user1_id is None or user1_id is '' or user2_id is None or user2_id is '':
+            if inner_call:
+                return False
+            return jsonify({'is_friend': False})
+
+        user1_id = '{}%'.format(user1_id)
+        user2_id = '{}%'.format(user2_id)
+
+        if User.query.filter(User.username.like(user1_id)) is None or User.query.filter(User.username.like(user2_id)) is None:
+            if inner_call:
+                return False
+            return jsonify({'is_friend': False})
+
         friendship = Friends.query.filter_by(user_id=user1_id).filter_by(friend_id=user2_id).first()
         if friendship is not None:
             if inner_call:
