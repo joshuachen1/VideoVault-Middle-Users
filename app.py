@@ -645,7 +645,7 @@ def flag_slot_delete():
                         'success': False})
 
     except Exception as e:
-            return str(e)
+        return str(e)
 
 
 # { user_id: [user_id] }
@@ -678,7 +678,7 @@ def delete_slots():
                         'success': True})
 
     except Exception as e:
-            return str(e)
+        return str(e)
 
 
 # { user_id: [user_id] }
@@ -737,7 +737,8 @@ def send_friend_request():
 
         check_user_to = User.query.filter_by(id=request_to).scalar() is not None
         check_user_from = User.query.filter_by(id=request_from).scalar() is not None
-        check_friendship = Friends.query.filter_by(user_id=request_from).filter_by(friend_id=request_to).scalar() is None
+        check_friendship = Friends.query.filter_by(user_id=request_from).filter_by(
+            friend_id=request_to).scalar() is None
         if not isinstance(request_to, int):
             check_user_to = False
             check_friendship = False
@@ -824,8 +825,10 @@ def decline_friend_request():
 @app.route('/has_friend_request/user_id=/request_from=', methods=['GET'])
 def has_friend_request(user_id=None, request_from=None):
     try:
-        if user_id is not None or request_from is not None or not isinstance(user_id, int) or not isinstance(request_from, int):
-            is_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_from_id=request_from).scalar()
+        if user_id is not None or request_from is not None or not isinstance(user_id, int) or not isinstance(
+                request_from, int):
+            is_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(
+                pending_from_id=request_from).scalar()
             if is_request is not None:
                 return jsonify({'has_friend_request': True})
         return jsonify({'has_friend_request': False})
