@@ -851,21 +851,17 @@ def decline_friend_request():
 
 # returns true if user_id and friend_id is in the pending table
 # [url]/has_friend_request/user_id=[user_id]/request_from=[pending_from_id]
-@app.route('/has_friend_request/user_id=<int:user_id>/request_from=<int:request_from>', methods=['GET'])
-@app.route('/has_friend_request/user_id=<int:user_id>/request_from=', methods=['GET'])
-@app.route('/has_friend_request/user_id=/request_from=<int:request_from>', methods=['GET'])
+@app.route('/has_friend_request/user_id=<user_id>/request_from=<request_from>', methods=['GET'])
+@app.route('/has_friend_request/user_id=<user_id>/request_from=', methods=['GET'])
+@app.route('/has_friend_request/user_id=/request_from=<request_from>', methods=['GET'])
 @app.route('/has_friend_request/user_id=/request_from=', methods=['GET'])
 def has_friend_request(user_id=None, request_from=None):
-    try:
-        if user_id is not None or request_from is not None or not isinstance(user_id, int) or not isinstance(
-                request_from, int):
-            is_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(
-                pending_from_id=request_from).scalar()
-            if is_request is not None:
-                return jsonify({'has_friend_request': True})
-        return jsonify({'has_friend_request': False})
-    except Exception as e:
-        str(e)
+    if user_id is not None and request_from is not None and user_id.isdigit() and request_from.isdigit() and \
+            int(user_id) > 0 and int(request_from) > 0:
+        is_request = PendingFriends.query.filter_by(user_id=user_id).filter_by(pending_from_id=request_from).scalar()
+        if is_request is not None:
+            return jsonify({'has_friend_request': True})
+    return jsonify({'has_friend_request': False})
 
 
 # returns a list of all friend requests from a specific user
