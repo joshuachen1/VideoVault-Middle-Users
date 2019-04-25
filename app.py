@@ -696,7 +696,7 @@ def delete_slots():
 
         user = User.query.filter_by(id=user_id).first()
 
-        if user is None:
+        if user is None or user.sub_date <= (datetime.now() - timedelta(30)).date():
             return jsonify({'valid_user_id': False,
                             'success': False})
 
