@@ -902,9 +902,9 @@ def is_friend(user1_id=None, user2_id=None, inner_call=False):
 # Display user friends
 # [url]/users=[user_id]/friends/page=[page]
 # [url]/users=[user_id]/friends
-@app.route('/user=<int:user_id>/friends/page=<int:page>', methods=['GET'])
-@app.route('/user=<int:user_id>/friends/page=', methods=['GET'])
-@app.route('/user=<int:user_id>/friends', methods=['GET'])
+@app.route('/user=<user_id>/friends/page=<int:page>', methods=['GET'])
+@app.route('/user=<user_id>/friends/page=', methods=['GET'])
+@app.route('/user=<user_id>/friends', methods=['GET'])
 def get_user_friend_list(user_id=None, page=1):
     try:
         friend_list = list()
