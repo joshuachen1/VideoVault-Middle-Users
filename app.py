@@ -477,9 +477,10 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
                                 'valid_user': is_valid_user,
                                 'valid_tv_show': is_valid_tv_show,
                                 'unique_tv_show': is_unique_tv_show})
-        # Update user's slot number
-        new_slot_id = increment_slot(user_id)
+
         if resub is False:
+            # Update user's slot number
+            new_slot_id = increment_slot(user_id)
             slot = UserSlots(
                 user_id=user_id,
                 slot_num=new_slot_id,
