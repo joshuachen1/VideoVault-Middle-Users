@@ -578,17 +578,15 @@ def is_unsubscribe(user_id=None, tv_show_id=None):
 
 
 @app.route('/user=<user_id>/subscriptions', methods=['GET'])
+@app.route('/user=/subscriptions', methods=['GET'])
 def get_user_subscriptions(user_id=None):
-    try:
-        subscriptions = UserSlots.query.filter_by(user_id=user_id).filter_by(unsubscribe=False).all()
-        subscriptions_id_list = list()
-        for subscription in subscriptions:
-            if subscription.tv_show_id is not None:
-                subscriptions_id_list.append(subscription.tv_show_id)
-        subscription_obj_list = TVShows.query.filter(TVShows.id.in_(subscriptions_id_list)).all()
-        return jsonify({'subscriptions': [subscription_obj.serialize() for subscription_obj in subscription_obj_list]})
-    except Exception as e:
-        return str(e)
+    subscriptions = UserSlots.query.filter_by(user_id=user_id).all()
+    subscriptions_id_list = list()
+    for subscription in subscriptions:
+        if subscription.tv_show_id is not None:
+            subscriptions_id_list.append(subscription.tv_show_id)
+    subscription_obj_list = TVShows.query.filter(TVShows.id.in_(subscriptions_id_list)).all()
+    return jsonify({'subscriptions': [subscription_obj.serialize() for subscription_obj in subscription_obj_list]})
 
 
 # { user_id: [user_id], slot_id: [slot_id] }
@@ -1317,29 +1315,32 @@ def get_tv_show_comments(title=None, reverse=False):
 
 # [url]/user=[user_id]/movie=[movie_id]/is_movie_rented
 @app.route('/user=<user_id>/movie=<movie_id>/is_movie_rented', methods=['GET'])
+@app.route('/user=<user_id>/movie=/is_movie_rented', methods=['GET'])
+@app.route('/user=/movie=<movie_id>/is_movie_rented', methods=['GET'])
 @app.route('/user=/movie=/is_movie_rented', methods=['GET'])
 def is_movie_rented(user_id=None, movie_id=None):
-    try:
-        if UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first() is not None:
-            return jsonify({'is_movie_rented': True})
-        else:
-            return jsonify({'is_movie_rented': False})
-    except Exception as e:
-        return str(e)
+    if UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first() is not None:
+        return jsonify({'is_movie_rented': True})
+    else:
+        return jsonify({'is_movie_rented': False})
 
 
-@app.route('/user=<int:user_id>/rented_movies', methods=['GET'])
+@app.route('/user=<user_id>/rented_movies', methods=['GET'])
+@app.route('/user=/rented_movies', methods=['GET'])
 def get_user_rented_movies(user_id=None):
-    try:
-        movies = list()
+    movies = list()
+
+    if user_id is None or user_id is '' or not user_id.isdigit():
+        return jsonify({'user_rented_movies': movies})
+
+    if User.query.filter_by(id=user_id).first() is not None:
         user_movie_rel = UserRentedMovies.query.filter_by(user_id=user_id).all()
         for user_movie in user_movie_rel:
             movies.append(Movie.query.filter_by(id=user_movie.movie_id).first())
 
         return jsonify({'user_rented_movies': [movie.serialize() for movie in movies]})
-
-    except Exception as e:
-        return str(e)
+    else:
+        return jsonify({'user_rented_movies': movies})
 
 
 # { user_id: [user_id], movie_id: [movie_id] }
