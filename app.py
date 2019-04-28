@@ -579,7 +579,7 @@ def is_unsubscribe(user_id=None, tv_show_id=None):
 @app.route('/user=<user_id>/subscriptions', methods=['GET'])
 def get_user_subscriptions(user_id=None):
     try:
-        subscriptions = UserSlots.query.filter_by(user_id=user_id).all()
+        subscriptions = UserSlots.query.filter_by(user_id=user_id).filter_by(unsubscribe=False).all()
         subscriptions_id_list = list()
         for subscription in subscriptions:
             if subscription.tv_show_id is not None:
