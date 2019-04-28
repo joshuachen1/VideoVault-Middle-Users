@@ -8,7 +8,7 @@ from models.user_models import TimeLine, PostComments
 from models.user_models import User, Friends
 from models.user_models import UserRatedMovieRel
 from models.user_models import UserRatedTVShowRel
-from models.user_models import UserRentedMovies
+from models.user_models import UserRentedMovies, UserSlots
 
 
 class UnitTests(unittest.TestCase):
@@ -311,6 +311,136 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['num_slots'], 10)
             self.assertEqual(expected['profile_pic'], "https://upload.wikimedia.org/wikipedia/en/1/13/Stick_figure.png")
 
+    def test_resub(self):
+        url = '/resub'
+
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.put(url, json={}))
+
+        # Should Return
+        # 'success': False,
+        # 'valid_user': False,
+        # 'valid_tv_shows': False,
+        # 'valid_number_of_tv_shows': False
+
+        test_values = [[None, None],
+                       ['', None],
+                       [None, ''],
+                       ['', ''],
+                       [None, 0],
+                       [0, None],
+                       ['', 0],
+                       [0, ''],
+                       [0, 0]
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], False)
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_tv_shows'], False)
+            self.assertEqual(expected['valid_number_of_tv_shows'], False)
+
+        # Should Return
+        # 'success': False,
+        # 'valid_user': True,
+        # 'valid_tv_shows': False,
+        # 'valid_number_of_tv_shows': False
+
+        test_values = [[1, None],
+                       [1, ''],
+                       [1, [1, 2, None]],
+                       [1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, None]],
+                       [1, 0],
+                       [1, 1],
+                       [1, [1, 10000000000]]
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], False)
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_tv_shows'], False)
+            self.assertEqual(expected['valid_number_of_tv_shows'], False)
+
+        # Should Return
+        # 'success': False,
+        # 'valid_user': True,
+        # 'valid_tv_shows': False,
+        # 'valid_number_of_tv_shows': True
+
+        test_values = [[1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 9]],
+                       [1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]],
+                       [1, [1, 2, 3, 4, 5, 6, 7, 8, 9, '']],
+                       [1, [1, 2, 3, 4, 5, 6, 7, 8, 9, None]],
+                       [1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 1000000]]
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], False)
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_tv_shows'], False)
+            self.assertEqual(expected['valid_number_of_tv_shows'], True)
+
+        # Should Return
+        # 'success': False,
+        # 'valid_user': True,
+        # 'valid_tv_shows': True,
+        # 'valid_number_of_tv_shows': False
+
+        test_values = [[1, [1, 2, 3, 4, 5, 6]],
+                       [1, []]
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], False)
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_tv_shows'], True)
+            self.assertEqual(expected['valid_number_of_tv_shows'], False)
+
+        # Should Return
+        # 'success': False,
+        # 'valid_user': False,
+        # 'valid_tv_shows': True,
+        # 'valid_number_of_tv_shows': False
+
+        test_values = [[0, [1, 2, 3, 4, 5, 6, 7, 8, 9]],
+                       ['', [1, 2, 3, 4, 5, 6, 7, 8, 9]],
+                       [None, [1, 2, 3, 4, 5, 6, 7, 8, 9]],
+                       [None, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]],
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], False)
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_tv_shows'], True)
+            self.assertEqual(expected['valid_number_of_tv_shows'], False)
+
+        # Should Return
+        # 'success': True,
+        # 'valid_user': True,
+        # 'valid_tv_shows': True,
+        # 'valid_number_of_tv_shows': True
+
+        test_values = [[1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]],
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], True)
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_tv_shows'], True)
+            self.assertEqual(expected['valid_number_of_tv_shows'], True)
+
     def test_delete_account(self):
         url = '/account/delete'
 
@@ -512,6 +642,134 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['is_tv_show_in_slot'], True)
 
+    def test_add_tv_show(self):
+        url = 'add_tv_show'
+
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.get('/test_add_tv_show', json={}))
+
+        # Should Return
+        # 'success': False,
+        # 'valid_user': False,
+        # 'valid_tv_shows': False,
+        # 'unique_tv_show': False
+
+        test_values = [[None, None],
+                       ['', None],
+                       [None, ''],
+                       ['', ''],
+                       [None, 0],
+                       [0, None],
+                       ['', 0],
+                       [0, ''],
+                       [0, 0]
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], False)
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_tv_show'], False)
+            self.assertEqual(expected['unique_tv_show'], False)
+
+        # Should Return
+        # 'success': False,
+        # 'valid_user': True,
+        # 'valid_tv_shows': False,
+        # 'unique_tv_show': False
+
+        test_values = [[1, -1],
+                       [1, None],
+                       [1, 0],
+                       [1, '']
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], False)
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_tv_show'], False)
+            self.assertEqual(expected['unique_tv_show'], False)
+
+        # Should Return
+        # 'success': False,
+        # 'valid_user': False,
+        # 'valid_tv_shows': True,
+        # 'unique_tv_show': False
+
+        test_values = [[None, 14],
+                       [0, 14],
+                       ['', 14],
+                       [-1, 14]
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], False)
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_tv_show'], True)
+            self.assertEqual(expected['unique_tv_show'], False)
+
+        # Should Return
+        # 'success': False,
+        # 'valid_user': True,
+        # 'valid_tv_shows': True,
+        # 'unique_tv_show': False
+
+        test_values = [[1, 1],
+                       [1, 2],
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], False)
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_tv_show'], True)
+            self.assertEqual(expected['unique_tv_show'], False)
+
+        # Should Return
+        # 'success': False,
+        # 'valid_user': True,
+        # 'valid_tv_shows': False,
+        # 'unique_tv_show': True
+
+        test_values = [[1, 100000],
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], False)
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_tv_show'], False)
+            self.assertEqual(expected['unique_tv_show'], True)
+
+        # Should Return
+        # 'success': True,
+        # 'valid_user': True,
+        # 'valid_tv_shows': True,
+        # 'unique_tv_show': True
+
+        test_values = [[1, 11],
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], True)
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_tv_show'], True)
+            self.assertEqual(expected['unique_tv_show'], True)
+
+        UserSlots.query.filter_by(user_id=1).filter_by(tv_show_id=11).delete()
+        test_entry = User.query.filter_by(id=1).first()
+        test_entry.num_slots = test_entry.num_slots - 1
+        db.session.commit()
+
     def test_subscribe(self):
         url = '/subscribe'
 
@@ -540,11 +798,11 @@ class UnitTests(unittest.TestCase):
         # 'is_slot_exist': True
         # 'is_success': True
 
-        test_jsons = [{'user_id': 1, 'tv_show_id': 11},
-                      {'user_id': 1, 'tv_show_id': 14},
-                      {'user_id': 1, 'tv_show_id': '14'},
-                      {'user_id': '1', 'tv_show_id': 14},
-                      {'user_id': '1', 'tv_show_id': '14'},
+        test_jsons = [{'user_id': 30, 'tv_show_id': 7},
+                      {'user_id': 30, 'tv_show_id': 10},
+                      {'user_id': 30, 'tv_show_id': '12'},
+                      {'user_id': '30', 'tv_show_id': 9},
+                      {'user_id': '30', 'tv_show_id': '3'},
                       ]
         for test_json in test_jsons:
             result = self.app.put(url, json=test_json)
@@ -560,8 +818,8 @@ class UnitTests(unittest.TestCase):
                        [None, ''],
                        ['', None],
                        ['', ''],
-                       [1, 1],
-                       [1, 2]
+                       [1, 12],
+                       [1, 13]
                        ]
 
         for i in range(len(test_values)):
@@ -1063,6 +1321,113 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['is_friend'], True)
 
+    def test_get_user_friend_list(self):
+        # Should Return
+        # 'friends': []
+
+        test_values = [None, '', -1, 0]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/friends'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['friends'], [])
+            self.assertEqual(len(expected['friends']), 0)
+
+        # Should Return
+        # len(expected['friends']: >= 1
+
+        test_values = [1, 2, 3]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/friends'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert len(expected['friends']) >= 1
+
+    def test_get_user_slots(self):
+        # Should Return
+        # 'user_slots': []
+
+        test_values = [None, '', -1, 0]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/slots'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['user_slots'], [])
+            self.assertEqual(len(expected['user_slots']), 0)
+
+        # Should Return
+        # 'user_slots': is not None
+
+        test_values = [1, 3, 5]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/slots'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert expected['user_slots'] is not None
+
+    def test_get_user_movie_list(self):
+        # Should Return
+        # 'movie_list': []
+
+        test_values = [None, '', -1, 0]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/movie_list'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['movie_list'], [])
+            self.assertEqual(len(expected['movie_list']), 0)
+
+        # Should Return
+        # 'movie_list': is not None
+
+        test_values = [1, 3, 5]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/movie_list'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert expected['movie_list'] is not None
+
+    def test_get_user_movie_rating(self):
+        # Should Return
+        # 'movie_rating': None
+
+        test_values = [[None, None],
+                       [None, ''],
+                       ['', None],
+                       ['', ''],
+                       [1, None],
+                       [1, ''],
+                       [None, 1],
+                       ['', 1],
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/movie={movie_id}/rating'.format(user_id=test_values[i][0],
+                                                                   movie_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert expected['movie_rating'] is None
+
+        # Should Return
+        # 'movie_rating': is not None
+
+        test_values = [[1, 1],
+                       [1, 4]
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/movie={movie_id}/rating'.format(user_id=test_values[i][0],
+                                                                   movie_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert expected['movie_rating'] is not None
+
     def test_rate_movie(self):
         url = '/user/movie/rating'
 
@@ -1122,17 +1487,13 @@ class UnitTests(unittest.TestCase):
         # 'success': True
         user_id = 1
         movie_id = 1
-        result = self.app.post(url, json={'user_id': user_id, 'movie_id': movie_id, 'rating': 5})
+        mr = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+
+        result = self.app.post(url, json={'user_id': user_id, 'movie_id': movie_id, 'rating': mr.user_rating})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
         self.assertEqual(expected['valid_movie'], True)
         self.assertEqual(expected['success'], True)
-
-        # Check if Movie Rating Exists, Remove From Database if it does
-        mr = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
-        assert mr is not None
-        UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
-        db.session.flush()
 
         # Should Return
         # 'valid_user': True
@@ -1140,7 +1501,7 @@ class UnitTests(unittest.TestCase):
         # 'success': True
         user_id = 30
         movie_id = 30
-        result = self.app.post(url, json={'user_id': user_id, 'movie_id': movie_id, 'rating': 5})
+        result = self.app.post(url, json={'user_id': user_id, 'movie_id': movie_id, 'rating': 4})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
         self.assertEqual(expected['valid_movie'], True)
@@ -1150,68 +1511,7 @@ class UnitTests(unittest.TestCase):
         mr = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
         assert mr is not None
         UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
-        db.session.flush()
-
-    def test_rate_tv_show(self):
-        url = '/user/tv_show/rating'
-        # Check Exception Caught
-        self.assertRaises(Exception, self.app.post(url, json={}))
-
-        test_values = [[None, None, 5], [None, 0, 5], [0, None, 5], [0, 0, 5]]
-        for i in range(len(test_values)):
-            result = self.app.post(url, json={'user_id': test_values[i][0],
-                                              'tv_show_id': test_values[i][1],
-                                              'rating': test_values[i][2]})
-            expected = result.get_json()
-            self.assertEqual(expected['valid_user'], False)
-            self.assertEqual(expected['valid_tv_show'], False)
-            self.assertEqual(expected['success'], False)
-
-        test_values = [[1, None, 5], [1, 0, 5]]
-        for i in range(len(test_values)):
-            result = self.app.post(url, json={'user_id': test_values[i][0],
-                                              'tv_show_id': test_values[i][1],
-                                              'rating': test_values[i][2]})
-            expected = result.get_json()
-            self.assertEqual(expected['valid_user'], True)
-            self.assertEqual(expected['valid_tv_show'], False)
-            self.assertEqual(expected['success'], False)
-
-        test_values = [[None, 1, 5], [0, 1, 5]]
-        for i in range(len(test_values)):
-            result = self.app.post(url, json={'user_id': test_values[i][0],
-                                              'tv_show_id': test_values[i][1],
-                                              'rating': test_values[i][2]})
-            expected = result.get_json()
-            self.assertEqual(expected['valid_user'], False)
-            self.assertEqual(expected['valid_tv_show'], True)
-            self.assertEqual(expected['success'], False)
-
-        test_values = [[1, 1, 5]]
-        for i in range(len(test_values)):
-            result = self.app.post(url, json={'user_id': test_values[i][0],
-                                              'tv_show_id': test_values[i][1],
-                                              'rating': test_values[i][2]})
-            expected = result.get_json()
-            self.assertEqual(expected['valid_user'], True)
-            self.assertEqual(expected['valid_tv_show'], True)
-            self.assertEqual(expected['success'], True)
-
-        user_id = 1
-        tv_show_id = 1
-        result = self.app.post(url, json={'user_id': user_id,
-                                          'tv_show_id': tv_show_id,
-                                          'rating': 5, })
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_tv_show'], True)
-        self.assertEqual(expected['success'], True)
-
-        # Check if TV_Show Rating Exists, Remove From Database if it does
-        tvr = UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
-        assert tvr is not None
-        UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).delete()
-        db.session.flush()
+        db.session.commit()
 
     def test_comment_movie(self):
         url = '/movie/comment'
@@ -1309,7 +1609,133 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             assert len(expected['comments']) > 0
 
-    def test_tv_show_commenting(self):
+    def test_user_tv_show_list(self):
+        # Should Return
+        # 'tv_show_list': []
+
+        test_values = [None, '', -1, 0]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/tv_show_list'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['tv_show_list'], [])
+            self.assertEqual(len(expected['tv_show_list']), 0)
+
+        # Should Return
+        # 'tv_show_list': is not None
+
+        test_values = [1, 3, 5]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/tv_show_list'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert expected['tv_show_list'] is not None
+
+    def test_get_user_tv_show_rating(self):
+        # Should Return
+        # 'tv_show_rating': None
+
+        test_values = [[None, None],
+                       [None, ''],
+                       ['', None],
+                       ['', ''],
+                       [1, None],
+                       [1, ''],
+                       [None, 1],
+                       ['', 1],
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/tv_show={tv_show_id}/rating'.format(user_id=test_values[i][0],
+                                                                       tv_show_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert expected['tv_show_rating'] is None
+
+        # Should Return
+        # 'tv_show_rating': is not None
+
+        test_values = [[30, 10],
+                       [30, 4]
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/tv_show={tv_show_id}/rating'.format(user_id=test_values[i][0],
+                                                                       tv_show_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert expected['tv_show_rating'] is not None
+
+    def test_rate_tv_show(self):
+        url = '/user/tv_show/rating'
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.post(url, json={}))
+
+        test_values = [[None, None, 5], [None, 0, 5], [0, None, 5], [0, 0, 5]]
+        for i in range(len(test_values)):
+            result = self.app.post(url, json={'user_id': test_values[i][0],
+                                              'tv_show_id': test_values[i][1],
+                                              'rating': test_values[i][2]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_tv_show'], False)
+            self.assertEqual(expected['success'], False)
+
+        test_values = [[1, None, 5], [1, 0, 5]]
+        for i in range(len(test_values)):
+            result = self.app.post(url, json={'user_id': test_values[i][0],
+                                              'tv_show_id': test_values[i][1],
+                                              'rating': test_values[i][2]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_tv_show'], False)
+            self.assertEqual(expected['success'], False)
+
+        test_values = [[None, 1, 5], [0, 1, 5]]
+        for i in range(len(test_values)):
+            result = self.app.post(url, json={'user_id': test_values[i][0],
+                                              'tv_show_id': test_values[i][1],
+                                              'rating': test_values[i][2]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_tv_show'], True)
+            self.assertEqual(expected['success'], False)
+
+        # Should Return
+        # 'valid_user': True
+        # 'valid_tv_show': True
+        # 'success': True
+        user_id = 30
+        tv_show_id = 10
+        tvr = UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+
+        result = self.app.post(url, json={'user_id': user_id, 'tv_show_id': tv_show_id, 'rating': tvr.user_rating})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_tv_show'], True)
+        self.assertEqual(expected['success'], True)
+
+        # Should Return
+        # 'valid_user': True
+        # 'valid_tv_show': True
+        # 'success': True
+        user_id = 30
+        tv_show_id = 12
+        result = self.app.post(url, json={'user_id': user_id, 'tv_show_id': tv_show_id, 'rating': 4})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_tv_show'], True)
+        self.assertEqual(expected['success'], True)
+
+        # Check if TV_Show Rating Exists, Remove From Database if it does
+        tvr = UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+        assert tvr is not None
+        UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).delete()
+        db.session.commit()
+
+    def test_comment_tv_show(self):
         url = '/tv_show/comment'
 
         test_values = [[None, None, 'Test'],
@@ -1401,6 +1827,91 @@ class UnitTests(unittest.TestCase):
             result = self.app.get(url)
             expected = result.get_json()
             assert len(expected['comments']) > 0
+
+    def test_is_movie_rented(self):
+        # Should Return
+        # 'is_movie_rented': False
+
+        test_values = [[None, None],
+                       [None, 0],
+                       [None, ''],
+                       ['', None],
+                       ['', 0],
+                       ['', ''],
+                       [1, None],
+                       [1, ''],
+                       [1, 0],
+                       [None, 1],
+                       ['', 1],
+                       [0, 1]
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.get('/user={user_id}/movie={movie_id}/is_movie_rented'.format(user_id=test_values[i][0],
+                                                                                            movie_id=test_values[i][1]))
+            expected = result.get_json()
+            self.assertEqual(expected['is_movie_rented'], False)
+
+        # Should Return
+        # 'is_movie_rented': True
+
+        # User 30 Rents Movie 10
+        user_id = 30
+        movie_id = 10
+
+        result = self.app.post('/rent_movie', json={'user_id': user_id,
+                                                    'movie_id': movie_id})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_movie'], True)
+        self.assertEqual(expected['success'], True)
+
+        for i in range(len(test_values)):
+            result = self.app.get('/user={user_id}/movie={movie_id}/is_movie_rented'.format(user_id=user_id,
+                                                                                            movie_id=movie_id))
+            expected = result.get_json()
+            self.assertEqual(expected['is_movie_rented'], True)
+
+        # Remove Rented Movie From Database
+        rm = UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+        assert rm is not None
+        UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
+        db.session.commit()
+
+    def test_get_user_rented_movies(self):
+        # Should Return
+        # 'user_rented_movies': []
+
+        test_values = [None, '', -1, 0]
+        for i in range(len(test_values)):
+            result = self.app.get('/user={user_id}/rented_movies'.format(user_id=test_values[i]))
+            expected = result.get_json()
+            self.assertEqual(expected['user_rented_movies'], [])
+            assert len(expected['user_rented_movies']) == 0
+
+        # Should Return
+        # len(expected['user_rented_movies'] >= 1
+
+        # User 30 Rents Movie 10
+        user_id = 30
+        movie_id = 10
+
+        result = self.app.post('/rent_movie', json={'user_id': user_id,
+                                                    'movie_id': movie_id})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_movie'], True)
+        self.assertEqual(expected['success'], True)
+
+        for i in range(len(test_values)):
+            result = self.app.get('/user={user_id}/rented_movies'.format(user_id=user_id))
+            expected = result.get_json()
+            assert len(expected['user_rented_movies']) >= 1
+
+        # Remove Rented Movie From Database
+        rm = UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+        assert rm is not None
+        UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
+        db.session.commit()
 
     def test_rent_movie(self):
         url = '/rent_movie'
