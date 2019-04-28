@@ -8,7 +8,7 @@ from models.user_models import TimeLine, PostComments
 from models.user_models import User, Friends
 from models.user_models import UserRatedMovieRel
 from models.user_models import UserRatedTVShowRel
-from models.user_models import UserRentedMovies
+from models.user_models import UserRentedMovies, UserSlots
 
 
 class UnitTests(unittest.TestCase):
@@ -321,7 +321,7 @@ class UnitTests(unittest.TestCase):
         # 'success': False,
         # 'valid_user': False,
         # 'valid_tv_shows': False,
-        # 'valid_number_of_tv_shows': False})
+        # 'valid_number_of_tv_shows': False
 
         test_values = [[None, None],
                        ['', None],
@@ -346,7 +346,7 @@ class UnitTests(unittest.TestCase):
         # 'success': False,
         # 'valid_user': True,
         # 'valid_tv_shows': False,
-        # 'valid_number_of_tv_shows': False})
+        # 'valid_number_of_tv_shows': False
 
         test_values = [[1, None],
                       [1, ''],
@@ -369,7 +369,7 @@ class UnitTests(unittest.TestCase):
         # 'success': False,
         # 'valid_user': True,
         # 'valid_tv_shows': False,
-        # 'valid_number_of_tv_shows': True})
+        # 'valid_number_of_tv_shows': True
 
         test_values = [[1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 9]],
                       [1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]],
@@ -390,7 +390,7 @@ class UnitTests(unittest.TestCase):
         # 'success': False,
         # 'valid_user': True,
         # 'valid_tv_shows': True,
-        # 'valid_number_of_tv_shows': False})
+        # 'valid_number_of_tv_shows': False
 
         test_values = [[1, [1, 2, 3, 4, 5, 6]],
                        [1, []]
@@ -408,7 +408,7 @@ class UnitTests(unittest.TestCase):
         # 'success': False,
         # 'valid_user': False,
         # 'valid_tv_shows': True,
-        # 'valid_number_of_tv_shows': False})
+        # 'valid_number_of_tv_shows': False
 
         test_values = [[0, [1, 2, 3, 4, 5, 6, 7, 8, 9]],
                        ['', [1, 2, 3, 4, 5, 6, 7, 8, 9]],
@@ -428,7 +428,7 @@ class UnitTests(unittest.TestCase):
         # 'success': True,
         # 'valid_user': True,
         # 'valid_tv_shows': True,
-        # 'valid_number_of_tv_shows': True})
+        # 'valid_number_of_tv_shows': True
 
         test_values = [[1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]],
                       ]
@@ -642,8 +642,133 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['is_tv_show_in_slot'], True)
 
-    #def add_tv_show(self):
-        #url = ''
+    def test_add_tv_show(self):
+        url = 'add_tv_show'
+
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.get('/test_add_tv_show', json={}))
+
+        # Should Return
+        # 'success': False,
+        # 'valid_user': False,
+        # 'valid_tv_shows': False,
+        # 'unique_tv_show': False
+
+        test_values = [[None, None],
+                       ['', None],
+                       [None, ''],
+                       ['', ''],
+                       [None, 0],
+                       [0, None],
+                       ['', 0],
+                       [0, ''],
+                       [0, 0]
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], False)
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_tv_show'], False)
+            self.assertEqual(expected['unique_tv_show'], False)
+
+        # Should Return
+        # 'success': False,
+        # 'valid_user': True,
+        # 'valid_tv_shows': False,
+        # 'unique_tv_show': False
+
+        test_values = [[1, -1],
+                       [1, None],
+                       [1, 0],
+                       [1, '']
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], False)
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_tv_show'], False)
+            self.assertEqual(expected['unique_tv_show'], False)
+
+        # Should Return
+        # 'success': False,
+        # 'valid_user': False,
+        # 'valid_tv_shows': True,
+        # 'unique_tv_show': False
+
+        test_values = [[None, 14],
+                       [0, 14],
+                       ['', 14],
+                       [-1, 14]
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], False)
+            self.assertEqual(expected['valid_user'], False)
+            self.assertEqual(expected['valid_tv_show'], True)
+            self.assertEqual(expected['unique_tv_show'], False)
+
+        # Should Return
+        # 'success': False,
+        # 'valid_user': True,
+        # 'valid_tv_shows': True,
+        # 'unique_tv_show': False
+
+        test_values = [[1, 1],
+                       [1, 2],
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], False)
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_tv_show'], True)
+            self.assertEqual(expected['unique_tv_show'], False)
+
+        # Should Return
+        # 'success': False,
+        # 'valid_user': True,
+        # 'valid_tv_shows': False,
+        # 'unique_tv_show': True
+
+        test_values = [[1, 100000],
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], False)
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_tv_show'], False)
+            self.assertEqual(expected['unique_tv_show'], True)
+
+        # Should Return
+        # 'success': True,
+        # 'valid_user': True,
+        # 'valid_tv_shows': True,
+        # 'unique_tv_show': True
+
+        test_values = [[1, 11],
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'tv_show_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertEqual(expected['success'], True)
+            self.assertEqual(expected['valid_user'], True)
+            self.assertEqual(expected['valid_tv_show'], True)
+            self.assertEqual(expected['unique_tv_show'], True)
+
+        UserSlots.query.filter_by(user_id=1).filter_by(tv_show_id=11).delete()
+        test_entry = User.query.filter_by(id=1).first()
+        test_entry.num_slots = test_entry.num_slots - 1
+        db.session.commit()
 
     def test_subscribe(self):
         url = '/subscribe'

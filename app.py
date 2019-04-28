@@ -440,46 +440,44 @@ def is_tv_show_in_slot(user_id=None, tv_show_id=None):
 @app.route('/add_tv_show', methods=['PUT'])
 def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
     # only run this section of code to add tv show to newly added slot
-    if resub is False:
-        data = request.get_json()
-        user_id = data['user_id']
-        tv_show_id = data['tv_show_id']
+    try:
+        if resub is False:
+            data = request.get_json()
+            user_id = data['user_id']
+            tv_show_id = data['tv_show_id']
 
+            # default boolean variables to success
+            is_success = True
+            is_valid_user = True
+            is_valid_tv_show = True
+            is_unique_tv_show = True
+
+            current_user_tv_show_ids = list()
+            if user_id is None or not isinstance(user_id, int) or user_id <= 0 or User.query.filter_by(id=user_id).scalar() is None:
+                is_success = False
+                is_valid_user = False
+                is_unique_tv_show = False
+            if tv_show_id is None or not isinstance(tv_show_id, int) or tv_show_id <= 0:
+                is_success = False
+                is_valid_tv_show = False
+                is_unique_tv_show = False
+            if TVShows.query.filter_by(id=tv_show_id).scalar() is None:
+                is_success = False
+                is_valid_tv_show = False
+            if is_valid_user is True:
+                current_user_slots = UserSlots.query.filter_by(user_id=user_id).all()
+                for slot in current_user_slots:
+                    current_user_tv_show_ids.append(slot.tv_show_id)
+                if tv_show_id in current_user_tv_show_ids:
+                    is_success = False
+                    is_unique_tv_show = False
+            if is_success is False:
+                return jsonify({'success': is_success,
+                                'valid_user': is_valid_user,
+                                'valid_tv_show': is_valid_tv_show,
+                                'unique_tv_show': is_unique_tv_show})
         # Update user's slot number
         new_slot_id = increment_slot(user_id)
-
-        user_check = User.query.filter_by(id=user_id).first()
-        current_user_slots = UserSlots.query.filter_by(user_id=user_id).all()
-        tv_show_check = TVShows.query.filter_by(id=tv_show_id).first()
-
-        # all current tv show ids in user slots
-        curr_tv_show_slot_ids = list()
-        for slot in current_user_slots:
-            curr_tv_show_slot_ids.append(slot.tv_show_id)
-
-        # default boolean variables to success
-        is_success = True
-        is_valid_user = True
-        is_valid_tv_show = True
-        is_unique_tv_show = True
-
-        # checks to see if input is valid
-        if user_check is None:
-            is_success = False
-            is_valid_user = False
-        if tv_show_check is None:
-            is_success = False
-            is_valid_tv_show = False
-        if tv_show_id in curr_tv_show_slot_ids:
-            is_success = False
-            is_unique_tv_show = False
-        if is_success is False:
-            return jsonify({'success': is_success,
-                            'valid_user': is_valid_user,
-                            'valid_tv_show': is_valid_tv_show,
-                            'unique_tv_show': is_unique_tv_show})
-
-    try:
         if resub is False:
             slot = UserSlots(
                 user_id=user_id,
