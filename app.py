@@ -956,29 +956,32 @@ def remove_friend(user_id=None, friend_id=None):
 
 # Display user's slots
 # [url]/user=[user_id]/slots
-@app.route('/user=<int:user_id>/slots', methods=['GET'])
+@app.route('/user=<user_id>/slots', methods=['GET'])
+@app.route('/user=/slots', methods=['GET'])
 def get_user_slots(user_id=None):
-    try:
-        # Ensure Valid User ID
-        user = User.query.filter_by(id=user_id).first()
-        if user is not None:
-            # Get list of all entries with the User's ID
-            user_slots = UserSlots.query.filter_by(user_id=user_id)
 
-            slot_info = list()
-            for user_slot in user_slots:
-                if user_slot.tv_show_id is None:
-                    slot = Slot(user_slot.slot_num, None, None)
-                else:
-                    tv_show = TVShows.query.filter_by(id=user_slot.tv_show_id).first()
-                    slot = Slot(user_slot.slot_num, tv_show.title, tv_show.image_url)
-                slot_info.append(slot)
+    if user_id is None or not user_id.isdigit():
+        return jsonify({'user_slots': list()})
 
-            result = DisplayUserSlots(slot_info)
-            return jsonify({'user_slots': result.serialize()})
+    # Ensure Valid User ID
+    user = User.query.filter_by(id=user_id).first()
+    if user is not None:
+        # Get list of all entries with the User's ID
+        user_slots = UserSlots.query.filter_by(user_id=user_id)
 
-    except Exception as e:
-        return str(e)
+        slot_info = list()
+        for user_slot in user_slots:
+            if user_slot.tv_show_id is None:
+                slot = Slot(user_slot.slot_num, None, None)
+            else:
+                tv_show = TVShows.query.filter_by(id=user_slot.tv_show_id).first()
+                slot = Slot(user_slot.slot_num, tv_show.title, tv_show.image_url)
+            slot_info.append(slot)
+
+        result = DisplayUserSlots(slot_info)
+        return jsonify({'user_slots': result.serialize()})
+    else:
+        return jsonify({'user_slots': list()})
 
 
 # [url]/users=[user_id]/movie_list
