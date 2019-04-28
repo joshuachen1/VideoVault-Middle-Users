@@ -1143,36 +1143,37 @@ def get_movie_comments(title=None, reverse=False):
 
 
 # [url]/user=[user_id]/tv_show_list
-@app.route('/user=<int:user_id>/tv_show_list', methods=['GET'])
+@app.route('/user=<user_id>/tv_show_list', methods=['GET'])
+@app.route('/user=/tv_show_list', methods=['GET'])
 def get_user_tv_show_list(user_id=None):
-    try:
-        user_rated_tv_shows = list()
+    user_rated_tv_shows = list()
 
-        # Ensure Valid User ID
-        user = User.query.filter_by(id=user_id).first()
-        if user is not None:
-            rated_tv_shows = list()
+    if user_id is None or not user_id.isdigit():
+        return jsonify({'tv_show_list': user_rated_tv_shows})
 
-            # Get list of all entries with the User's ID
-            rated_tv_show_entry = UserRatedTVShowRel.query.filter_by(user_id=user_id)
+    # Ensure Valid User ID
+    user = User.query.filter_by(id=user_id).first()
+    if user is not None:
+        rated_tv_shows = list()
 
-            # Append the User Rated TV Shows
-            for rts_entry in rated_tv_show_entry:
-                tv_show = TVShows.query.filter_by(id=rts_entry.tv_show_id).first()
-                tv_id = tv_show.id
-                title = tv_show.title
-                image_url = tv_show.image_url
-                rating = rts_entry.user_rating
+        # Get list of all entries with the User's ID
+        rated_tv_show_entry = UserRatedTVShowRel.query.filter_by(user_id=user_id)
 
-                rts = RatedTVShow(tv_id, title, image_url, rating)
-                rated_tv_shows.append(rts)
+        # Append the User Rated TV Shows
+        for rts_entry in rated_tv_show_entry:
+            tv_show = TVShows.query.filter_by(id=rts_entry.tv_show_id).first()
+            tv_id = tv_show.id
+            title = tv_show.title
+            image_url = tv_show.image_url
+            rating = rts_entry.user_rating
 
-            user_rated_tv_shows = DisplayRatedTVShow(user.id, rated_tv_shows)
+            rts = RatedTVShow(tv_id, title, image_url, rating)
+            rated_tv_shows.append(rts)
 
+        user_rated_tv_shows = DisplayRatedTVShow(user.id, rated_tv_shows)
         return jsonify({'tv_show_list': user_rated_tv_shows.serialize()})
-
-    except Exception as e:
-        return str(e)
+    else:
+        return jsonify({'tv_show_list': user_rated_tv_shows})
 
 
 @app.route('/user=<user_id>/subscriptions', methods=['GET'])
