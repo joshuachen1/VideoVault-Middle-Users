@@ -247,42 +247,45 @@ def login(email=None, attempted_pwd=None):
 # fills all slots with tv shows into user_slots table
 @app.route('/resub', methods=['PUT'])
 def resub():
-    data = request.get_json()
-    user_id = data['user_id']
-    tv_show_ids = data['tv_show_id']
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
+        tv_show_ids = data['tv_show_id']
 
-    user_check = User.query.filter_by(id=user_id).scalar()
+        user_check = User.query.filter_by(id=user_id).scalar()
 
-    # creating booleans
-    is_success = True
-    is_valid_user = True
-    is_valid_tv_show = True
-    is_valid_number_of_tv_shows = True
+        # creating booleans
+        is_success = True
+        is_valid_user = True
+        is_valid_tv_show = True
+        is_valid_number_of_tv_shows = True
 
-    # return boolean for invalid inputs
-    if user_check is None:
-        is_success = False
-        is_valid_user = False
-    if tv_show_ids is None or not isinstance(tv_show_ids, list):
-        is_success = False
-        is_valid_tv_show = False
-        is_valid_number_of_tv_shows = False
-    else:
-        if is_valid_user is False or len(tv_show_ids) is not user_check.num_slots:
+        # return boolean for invalid inputs
+        if user_check is None:
             is_success = False
-            is_valid_number_of_tv_shows = False
-        if len(tv_show_ids) != len(set(tv_show_ids)):
+            is_valid_user = False
+        if tv_show_ids is None or not isinstance(tv_show_ids, list):
             is_success = False
             is_valid_tv_show = False
-        for tv_show_id in tv_show_ids:
-            if tv_show_id is None or not str(tv_show_id).isdigit() or tv_show_id <= 0:
+            is_valid_number_of_tv_shows = False
+        else:
+            if is_valid_user is False or len(tv_show_ids) is not user_check.num_slots:
+                is_success = False
+                is_valid_number_of_tv_shows = False
+            if len(tv_show_ids) != len(set(tv_show_ids)):
                 is_success = False
                 is_valid_tv_show = False
-                break
-            elif TVShows.query.filter_by(id=tv_show_id).scalar() is None:
-                is_success = False
-                is_valid_tv_show = False
-                break
+            for tv_show_id in tv_show_ids:
+                if tv_show_id is None or not str(tv_show_id).isdigit() or tv_show_id <= 0:
+                    is_success = False
+                    is_valid_tv_show = False
+                    break
+                elif TVShows.query.filter_by(id=tv_show_id).scalar() is None:
+                    is_success = False
+                    is_valid_tv_show = False
+                    break
+    except Exception as e:
+        return str(e)
 
     # return json response if any of these tests failed
     if is_success is False:
