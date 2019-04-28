@@ -1529,50 +1529,59 @@ def display_wall(user_id=None):
 
 # [url]/user=[user_id]/timeline
 @app.route('/user=<user_id>/timeline', methods=['GET'])
+@app.route('/user=/timeline', methods=['GET'])
 def display_timeline(user_id=None):
     timeline = list()
+
+    if user_id is None or user_id is '' or not user_id.isdigit():
+        return jsonify({'timeline': timeline})
+
     user = User.query.filter_by(id=user_id).first()
-    friend_list = Friends.query.filter_by(user_id=user.id)
 
-    # View All Self and Friend Walls
-    for friend in friend_list:
-        friend_wall = TimeLine.query.filter_by(wall_id=friend.friend_id).order_by(TimeLine.date_of_post)
+    if user is not None:
+        friend_list = Friends.query.filter_by(user_id=user.id)
 
-        for post in friend_wall:
-            user = User.query.filter_by(id=post.wall_id).first()
-            post_user = User.query.filter_by(id=post.user_id).first()
+        # View All Self and Friend Walls
+        for friend in friend_list:
+            friend_wall = TimeLine.query.filter_by(wall_id=friend.friend_id).order_by(TimeLine.date_of_post)
 
-            comments = list()
-            comment_list = PostComments.query.filter_by(user_id=post.wall_id).filter_by(
-                post_user_id=post.user_id).filter_by(post_id=post.post_id)
-            for comment in comment_list:
-                comment_user = User.query.filter_by(id=comment.user_id).first()
-                comments.append(PostComment(
+            for post in friend_wall:
+                user = User.query.filter_by(id=post.wall_id).first()
+                post_user = User.query.filter_by(id=post.user_id).first()
+
+                comments = list()
+                comment_list = PostComments.query.filter_by(user_id=post.wall_id).filter_by(
+                    post_user_id=post.user_id).filter_by(post_id=post.post_id)
+                for comment in comment_list:
+                    comment_user = User.query.filter_by(id=comment.user_id).first()
+                    comments.append(PostComment(
+                        user_id=user.id,
+                        username=user.username,
+                        post_user_id=post_user.id,
+                        post_username=post_user.username,
+                        comment_user_id=comment_user.id,
+                        comment_username=comment_user.username,
+                        comment=comment.comment,
+                        date_of_comment=comment.date_of_comment,
+                    ))
+
+                timeline.append(Post(
+                    post_id=post.post_id,
                     user_id=user.id,
                     username=user.username,
                     post_user_id=post_user.id,
                     post_username=post_user.username,
-                    comment_user_id=comment_user.id,
-                    comment_username=comment_user.username,
-                    comment=comment.comment,
-                    date_of_comment=comment.date_of_comment,
+                    post=post.post,
+                    date_of_post=post.date_of_post,
+                    comments=reversed(comments),
                 ))
 
-            timeline.append(Post(
-                post_id=post.post_id,
-                user_id=user.id,
-                username=user.username,
-                post_user_id=post_user.id,
-                post_username=post_user.username,
-                post=post.post,
-                date_of_post=post.date_of_post,
-                comments=reversed(comments),
-            ))
+        timeline.sort(key=lambda tl: tl.date_of_post)
+        timeline = reversed(timeline)
 
-    timeline.sort(key=lambda tl: tl.date_of_post)
-    timeline = reversed(timeline)
-
-    return jsonify({'timeline': [tl.serialize() for tl in timeline]})
+        return jsonify({'timeline': [tl.serialize() for tl in timeline]})
+    else:
+        return jsonify({'timeline': timeline})
 
 
 # [url]/server_update
