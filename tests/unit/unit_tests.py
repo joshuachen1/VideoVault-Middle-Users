@@ -1087,6 +1087,30 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             assert len(expected['friends']) >= 1
 
+    def test_get_user_slots(self):
+        # Should Return
+        # 'user_slots': []
+
+        test_values = [None, '', -1, 0]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/slots'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['user_slots'], [])
+            self.assertEqual(len(expected['user_slots']), 0)
+
+        # Should Return
+        # 'user_slots': is not None
+
+        test_values = [1, 3, 5]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/slots'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert expected['user_slots'] is not None
+
     def test_rate_movie(self):
         url = '/user/movie/rating'
 
