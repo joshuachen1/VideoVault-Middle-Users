@@ -1135,6 +1135,41 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             assert expected['movie_list'] is not None
 
+    def test_get_user_movie_rating(self):
+        # Should Return
+        # 'movie_rating': None
+
+        test_values = [[None, None],
+                       [None, ''],
+                       ['', None],
+                       ['', ''],
+                       [1, None],
+                       [1, ''],
+                       [None, 1],
+                       ['', 1],
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/movie={movie_id}/rating'.format(user_id=test_values[i][0],
+                                                                   movie_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert expected['movie_rating'] is None
+
+        # Should Return
+        # 'movie_rating': is not None
+
+        test_values = [[1, 1],
+                       [1, 4]
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/movie={movie_id}/rating'.format(user_id=test_values[i][0],
+                                                                   movie_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert expected['movie_rating'] is not None
+
     def test_rate_movie(self):
         url = '/user/movie/rating'
 
