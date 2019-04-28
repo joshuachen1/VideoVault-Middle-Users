@@ -1189,12 +1189,16 @@ def get_user_tv_show_list(user_id=None):
 
 # [url]/user=[user_id]/tv_show=[tv_show_id]/rating
 @app.route('/user=<user_id>/tv_show=<tv_show_id>/rating', methods=['GET'])
+@app.route('/user=<user_id>/tv_show=/rating', methods=['GET'])
+@app.route('/user=/tv_show=<tv_show_id>/rating', methods=['GET'])
+@app.route('/user=/tv_show=/rating', methods=['GET'])
 def get_user_tv_show_rating(user_id=None, tv_show_id=None):
-    try:
+    if user_id is None or not user_id.isdigit() or tv_show_id is None or not tv_show_id.isdigit():
+        return jsonify({'tv_show_rating': None})
+
+    else:
         entry = UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
         return jsonify({'tv_show_rating': entry.user_rating})
-    except Exception as e:
-        return str(e)
 
 
 # { user_id: [user_id], tv_show_id: [tv_show_id], rating: [1-5] }
