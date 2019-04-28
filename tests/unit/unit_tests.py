@@ -1375,6 +1375,41 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             assert expected['tv_show_list'] is not None
 
+    def test_get_user_tv_show_rating(self):
+        # Should Return
+        # 'tv_show_rating': None
+
+        test_values = [[None, None],
+                       [None, ''],
+                       ['', None],
+                       ['', ''],
+                       [1, None],
+                       [1, ''],
+                       [None, 1],
+                       ['', 1],
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/tv_show={tv_show_id}/rating'.format(user_id=test_values[i][0],
+                                                                       tv_show_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert expected['tv_show_rating'] is None
+
+        # Should Return
+        # 'tv_show_rating': is not None
+
+        test_values = [[30, 10],
+                       [30, 4]
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/tv_show={tv_show_id}/rating'.format(user_id=test_values[i][0],
+                                                                       tv_show_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert expected['tv_show_rating'] is not None
+
     def test_rate_tv_show(self):
         url = '/user/tv_show/rating'
         # Check Exception Caught
