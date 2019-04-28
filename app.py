@@ -32,7 +32,8 @@ port = int(os.environ.get('PORT', 33507))
 from models.Email import Email
 from models.crypto_models import Key
 from models.user_models import Login
-from models.user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
+from models.user_models import User, Friends, PendingFriends
+from models.user_models import TimeLine, Post, PostComments, PostComment
 from models.user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from models.user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from models.user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
@@ -340,18 +341,7 @@ def delete_account():
             TVShowComment.query.filter_by(user_id=user_id).delete()
 
             # Delete User Rated Media Lists
-            movie_list = UserRatedMovieRel.query.filter_by(user_id=user_id).first()
-            if movie_list is not None:
-                for m in movie_list:
-                    UserRatedMovieRel.query.filter_by(movie_id=m.movie_id).delete()
-                    update_average_rating(False, m.movie_id)
             UserRatedMovieRel.query.filter_by(user_id=user_id).delete()
-
-            tv_show_list = UserRatedTVShowRel.query.filter_by(user_id=user_id).first()
-            if tv_show_list is not None:
-                for tvs in tv_show_list:
-                    UserRatedTVShowRel.query.filter_by(tv_show_id=tvs.tv_show_id).delete()
-                    update_average_rating(True, tvs.tv_show_id)
             UserRatedTVShowRel.query.filter_by(user_id=user_id).delete()
 
             # Remove All User Slots
@@ -584,6 +574,20 @@ def is_unsubscribe(user_id=None, tv_show_id=None):
     if unsubscribe_boolean is not None and unsubscribe_boolean.unsubscribe is True:
         return jsonify({"is_unsubscribed": True})
     return jsonify({"is_unsubscribed": False})
+
+
+@app.route('/user=<user_id>/subscriptions', methods=['GET'])
+def get_user_subscriptions(user_id=None):
+    try:
+        subscriptions = UserSlots.query.filter_by(user_id=user_id).all()
+        subscriptions_id_list = list()
+        for subscription in subscriptions:
+            if subscription.tv_show_id is not None:
+                subscriptions_id_list.append(subscription.tv_show_id)
+        subscription_obj_list = TVShows.query.filter(TVShows.id.in_(subscriptions_id_list)).all()
+        return jsonify({'subscriptions': [subscription_obj.serialize() for subscription_obj in subscription_obj_list]})
+    except Exception as e:
+        return str(e)
 
 
 # { user_id: [user_id], slot_id: [slot_id] }
@@ -910,33 +914,33 @@ def is_friend(user1_id=None, user2_id=None, inner_call=False):
 # Display user friends
 # [url]/users=[user_id]/friends/page=[page]
 # [url]/users=[user_id]/friends
-@app.route('/user=<int:user_id>/friends/page=<int:page>', methods=['GET'])
-@app.route('/user=<int:user_id>/friends/page=', methods=['GET'])
-@app.route('/user=<int:user_id>/friends', methods=['GET'])
+@app.route('/user=<user_id>/friends/page=<int:page>', methods=['GET'])
+@app.route('/user=<user_id>/friends/page=', methods=['GET'])
+@app.route('/user=<user_id>/friends', methods=['GET'])
+@app.route('/user=/friends', methods=['GET'])
 def get_user_friend_list(user_id=None, page=1):
-    try:
-        friend_list = list()
+    friend_list = list()
 
-        # Ensure Valid User ID
-        user = User.query.filter_by(id=user_id).first()
-        if user is not None:
-            # Get list of all entries with the User's ID
-            friends = Friends.query.filter_by(user_id=user_id)
-
-            # Create list of the user's friend's IDs
-            friend_ids = list()
-            for friend in friends:
-                if friend.friend_id is not user_id:
-                    friend_ids.append(friend.friend_id)
-
-            # Append the Users that match the friend IDs
-            for friend_id in friend_ids:
-                friend_list.append(User.query.filter_by(id=friend_id).first())
-
+    if user_id is None or not user_id.isdigit():
         return paginated_json('friends', friend_list, page)
 
-    except Exception as e:
-        return str(e)
+    # Ensure Valid User ID
+    user = User.query.filter_by(id=user_id).first()
+    if user is not None:
+        # Get list of all entries with the User's ID
+        friends = Friends.query.filter_by(user_id=user_id)
+
+        # Create list of the user's friend's IDs
+        friend_ids = list()
+        for friend in friends:
+            if friend.friend_id is not user_id:
+                friend_ids.append(friend.friend_id)
+
+        # Append the Users that match the friend IDs
+        for friend_id in friend_ids:
+            friend_list.append(User.query.filter_by(id=friend_id).first())
+
+    return paginated_json('friends', friend_list, page)
 
 
 # [url]/user=[user_id]/friends/remove=[friend_id]
@@ -964,76 +968,68 @@ def remove_friend(user_id=None, friend_id=None):
 
 # Display user's slots
 # [url]/user=[user_id]/slots
-@app.route('/user=<int:user_id>/slots', methods=['GET'])
+@app.route('/user=<user_id>/slots', methods=['GET'])
+@app.route('/user=/slots', methods=['GET'])
 def get_user_slots(user_id=None):
-    try:
-        # Ensure Valid User ID
-        user = User.query.filter_by(id=user_id).first()
-        if user is not None:
-            # Get list of all entries with the User's ID
-            user_slots = UserSlots.query.filter_by(user_id=user_id)
+    if user_id is None or not user_id.isdigit():
+        return jsonify({'user_slots': list()})
 
-            slot_info = list()
-            for user_slot in user_slots:
-                if user_slot.tv_show_id is None:
-                    slot = Slot(user_slot.slot_num, None, None)
-                else:
-                    tv_show = TVShows.query.filter_by(id=user_slot.tv_show_id).first()
-                    slot = Slot(user_slot.slot_num, tv_show.title, tv_show.image_url)
-                slot_info.append(slot)
+    # Ensure Valid User ID
+    user = User.query.filter_by(id=user_id).first()
+    if user is not None:
+        # Get list of all entries with the User's ID
+        user_slots = UserSlots.query.filter_by(user_id=user_id)
 
-            result = DisplayUserSlots(slot_info)
-            return jsonify({'user_slots': result.serialize()})
+        slot_info = list()
+        for user_slot in user_slots:
+            if user_slot.tv_show_id is None:
+                slot = Slot(user_slot.slot_num, None, None)
+            else:
+                tv_show = TVShows.query.filter_by(id=user_slot.tv_show_id).first()
+                slot = Slot(user_slot.slot_num, tv_show.title, tv_show.image_url)
+            slot_info.append(slot)
 
-    except Exception as e:
-        return str(e)
+        result = DisplayUserSlots(slot_info)
+        return jsonify({'user_slots': result.serialize()})
+    else:
+        return jsonify({'user_slots': list()})
 
 
 # [url]/users=[user_id]/movie_list
-@app.route('/user=<int:user_id>/movie_list', methods=['GET'])
+@app.route('/user=<user_id>/movie_list', methods=['GET'])
+@app.route('/user=/movie_list', methods=['GET'])
 def get_user_movie_list(user_id=None):
-    try:
-        user_rated_movies = list()
+    user_rated_movies = list()
 
-        # Ensure Valid User ID
-        user = User.query.filter_by(id=user_id).first()
-        if user is not None:
-            rated_movies = list()
+    if user_id is None or not user_id.isdigit():
+        return jsonify({'movie_list': user_rated_movies})
 
-            # Get list of all entries with the User's ID
-            rated_movie_entry = UserRatedMovieRel.query.filter_by(user_id=user_id)
+    # Ensure Valid User ID
+    user = User.query.filter_by(id=user_id).first()
+    if user is not None:
+        rated_movies = list()
 
-            # Append the User Rated Movies
-            for rm_entry in rated_movie_entry:
-                movie = Movie.query.filter_by(id=rm_entry.movie_id).first()
-                movie_id = movie.id
-                title = movie.title
-                image_url = movie.image_url
-                rating = rm_entry.user_rating
+        # Get list of all entries with the User's ID
+        rated_movie_entry = UserRatedMovieRel.query.filter_by(user_id=user_id)
 
-                rm = RatedMovie(movie_id, title, image_url, rating)
-                rated_movies.append(rm)
+        # Append the User Rated Movies
+        for rm_entry in rated_movie_entry:
+            movie = Movie.query.filter_by(id=rm_entry.movie_id).first()
+            movie_id = movie.id
+            title = movie.title
+            image_url = movie.image_url
+            rating = rm_entry.user_rating
 
-            user_rated_movies = DisplayRatedMovie(user.id, rated_movies)
+            rm = RatedMovie(movie_id, title, image_url, rating)
+            rated_movies.append(rm)
 
+        user_rated_movies = DisplayRatedMovie(user.id, rated_movies)
         return jsonify({'movie_list': user_rated_movies.serialize()})
-
-    except Exception as e:
-        return str(e)
+    else:
+        return jsonify({'movie_list': user_rated_movies})
 
 
 # [url]/user=[user_id]/movie=[movie_id]/rating
-@app.route('/user=<user_id>/movie=<movie_id>/rating', methods=['GET'])
-def get_user_movie_rating(user_id=None, movie_id=None):
-    try:
-        entry = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
-        return jsonify({'movie_rating': entry.user_rating})
-    except Exception as e:
-        return str(e)
-
-
-# { user_id: [user_id], movie_id: [movie_id], rating: [1-5] }
-# [url]/rate/movie
 @app.route('/user/movie/rating', methods=['POST'])
 def rate_movie():
     try:
@@ -1075,6 +1071,21 @@ def rate_movie():
         return str(e)
 
 
+# { user_id: [user_id], movie_id: [movie_id], rating: [1-5] }
+@app.route('/user=<user_id>/movie=<movie_id>/rating', methods=['GET'])
+@app.route('/user=/movie=<movie_id>/rating', methods=['GET'])
+@app.route('/user=<user_id>/movie=/rating', methods=['GET'])
+@app.route('/user=/movie=/rating', methods=['GET'])
+def get_user_movie_rating(user_id=None, movie_id=None):
+    if user_id is None or not user_id.isdigit() or movie_id is None or not movie_id.isdigit():
+        return jsonify({'movie_rating': None})
+
+    else:
+        entry = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+        return jsonify({'movie_rating': entry.user_rating})
+
+
+# [url]/rate/movie
 @app.route('/movie/comment', methods=['POST'])
 def comment_movie():
     try:
@@ -1143,50 +1154,37 @@ def get_movie_comments(title=None, reverse=False):
 
 
 # [url]/user=[user_id]/tv_show_list
-@app.route('/user=<int:user_id>/tv_show_list', methods=['GET'])
+@app.route('/user=<user_id>/tv_show_list', methods=['GET'])
+@app.route('/user=/tv_show_list', methods=['GET'])
 def get_user_tv_show_list(user_id=None):
-    try:
-        user_rated_tv_shows = list()
+    user_rated_tv_shows = list()
 
-        # Ensure Valid User ID
-        user = User.query.filter_by(id=user_id).first()
-        if user is not None:
-            rated_tv_shows = list()
+    if user_id is None or not user_id.isdigit():
+        return jsonify({'tv_show_list': user_rated_tv_shows})
 
-            # Get list of all entries with the User's ID
-            rated_tv_show_entry = UserRatedTVShowRel.query.filter_by(user_id=user_id)
+    # Ensure Valid User ID
+    user = User.query.filter_by(id=user_id).first()
+    if user is not None:
+        rated_tv_shows = list()
 
-            # Append the User Rated TV Shows
-            for rts_entry in rated_tv_show_entry:
-                tv_show = TVShows.query.filter_by(id=rts_entry.tv_show_id).first()
-                tv_id = tv_show.id
-                title = tv_show.title
-                image_url = tv_show.image_url
-                rating = rts_entry.user_rating
+        # Get list of all entries with the User's ID
+        rated_tv_show_entry = UserRatedTVShowRel.query.filter_by(user_id=user_id)
 
-                rts = RatedTVShow(tv_id, title, image_url, rating)
-                rated_tv_shows.append(rts)
+        # Append the User Rated TV Shows
+        for rts_entry in rated_tv_show_entry:
+            tv_show = TVShows.query.filter_by(id=rts_entry.tv_show_id).first()
+            tv_id = tv_show.id
+            title = tv_show.title
+            image_url = tv_show.image_url
+            rating = rts_entry.user_rating
 
-            user_rated_tv_shows = DisplayRatedTVShow(user.id, rated_tv_shows)
+            rts = RatedTVShow(tv_id, title, image_url, rating)
+            rated_tv_shows.append(rts)
 
+        user_rated_tv_shows = DisplayRatedTVShow(user.id, rated_tv_shows)
         return jsonify({'tv_show_list': user_rated_tv_shows.serialize()})
-
-    except Exception as e:
-        return str(e)
-
-
-@app.route('/user=<user_id>/subscriptions', methods=['GET'])
-def get_user_subscriptions(user_id=None):
-    try:
-        subscriptions = UserSlots.query.filter_by(user_id=user_id).all()
-        subscriptions_id_list = list()
-        for subscription in subscriptions:
-            if subscription.tv_show_id is not None:
-                subscriptions_id_list.append(subscription.tv_show_id)
-        subscription_obj_list = TVShows.query.filter(TVShows.id.in_(subscriptions_id_list)).all()
-        return jsonify({'subscriptions': [subscription_obj.serialize() for subscription_obj in subscription_obj_list]})
-    except Exception as e:
-        return str(e)
+    else:
+        return jsonify({'tv_show_list': user_rated_tv_shows})
 
 
 # [url]/user=[user_id]/tv_show=[tv_show_id]/rating
