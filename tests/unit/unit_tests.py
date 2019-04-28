@@ -1125,7 +1125,7 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(len(expected['movie_list']), 0)
 
         # Should Return
-        # 'user_slots': is not None
+        # 'movie_list': is not None
 
         test_values = [1, 3, 5]
 
@@ -1350,6 +1350,30 @@ class UnitTests(unittest.TestCase):
             result = self.app.get(url)
             expected = result.get_json()
             assert len(expected['comments']) > 0
+
+    def test_user_tv_show_list(self):
+        # Should Return
+        # 'tv_show_list': []
+
+        test_values = [None, '', -1, 0]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/tv_show_list'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['tv_show_list'], [])
+            self.assertEqual(len(expected['tv_show_list']), 0)
+
+        # Should Return
+        # 'tv_show_list': is not None
+
+        test_values = [1, 3, 5]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/tv_show_list'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert expected['tv_show_list'] is not None
 
     def test_rate_tv_show(self):
         url = '/user/tv_show/rating'
