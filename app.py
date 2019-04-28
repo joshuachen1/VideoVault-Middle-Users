@@ -905,30 +905,30 @@ def is_friend(user1_id=None, user2_id=None, inner_call=False):
 @app.route('/user=<user_id>/friends/page=<int:page>', methods=['GET'])
 @app.route('/user=<user_id>/friends/page=', methods=['GET'])
 @app.route('/user=<user_id>/friends', methods=['GET'])
+@app.route('/user=/friends', methods=['GET'])
 def get_user_friend_list(user_id=None, page=1):
-    try:
-        friend_list = list()
+    friend_list = list()
 
-        # Ensure Valid User ID
-        user = User.query.filter_by(id=user_id).first()
-        if user is not None:
-            # Get list of all entries with the User's ID
-            friends = Friends.query.filter_by(user_id=user_id)
-
-            # Create list of the user's friend's IDs
-            friend_ids = list()
-            for friend in friends:
-                if friend.friend_id is not user_id:
-                    friend_ids.append(friend.friend_id)
-
-            # Append the Users that match the friend IDs
-            for friend_id in friend_ids:
-                friend_list.append(User.query.filter_by(id=friend_id).first())
-
+    if user_id is None or not isinstance(user_id, int):
         return paginated_json('friends', friend_list, page)
 
-    except Exception as e:
-        return str(e)
+    # Ensure Valid User ID
+    user = User.query.filter_by(id=user_id).first()
+    if user is not None:
+        # Get list of all entries with the User's ID
+        friends = Friends.query.filter_by(user_id=user_id)
+
+        # Create list of the user's friend's IDs
+        friend_ids = list()
+        for friend in friends:
+            if friend.friend_id is not user_id:
+                friend_ids.append(friend.friend_id)
+
+        # Append the Users that match the friend IDs
+        for friend_id in friend_ids:
+            friend_list.append(User.query.filter_by(id=friend_id).first())
+
+    return paginated_json('friends', friend_list, page)
 
 
 # [url]/user=[user_id]/friends/remove=[friend_id]
