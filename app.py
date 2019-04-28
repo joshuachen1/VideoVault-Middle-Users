@@ -32,7 +32,8 @@ port = int(os.environ.get('PORT', 33507))
 from models.Email import Email
 from models.crypto_models import Key
 from models.user_models import Login
-from models.user_models import User, Friends, PendingFriends, TimeLine, Post, PostComments, PostComment
+from models.user_models import User, Friends, PendingFriends
+from models.user_models import TimeLine, Post, PostComments, PostComment
 from models.user_models import Slot, UserSlots, DisplayUserSlots, UserRentedMovies
 from models.user_models import UserRatedMovieRel, DisplayRatedMovie, RatedMovie
 from models.user_models import UserRatedTVShowRel, DisplayRatedTVShow, RatedTVShow
