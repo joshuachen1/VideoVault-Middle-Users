@@ -1076,6 +1076,17 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['friends'], [])
             self.assertEqual(len(expected['friends']), 0)
 
+        # Should Return
+        # len(expected['friends']: >= 1
+
+        test_values = [1, 2, 3]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/friends'.format(user_id=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            assert len(expected['friends']) >= 1
+
     def test_rate_movie(self):
         url = '/user/movie/rating'
 
