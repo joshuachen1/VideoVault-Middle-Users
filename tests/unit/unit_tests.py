@@ -1703,6 +1703,55 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             assert len(expected['comments']) > 0
 
+    def test_is_movie_rented(self):
+        # Should Return
+        # 'is_movie_rented': False
+
+        test_values = [[None, None],
+                       [None, 0],
+                       [None, ''],
+                       ['', None],
+                       ['', 0],
+                       ['', ''],
+                       [1, None],
+                       [1, ''],
+                       [1, 0],
+                       [None, 1],
+                       ['', 1],
+                       [0, 1]
+                       ]
+        for i in range(len(test_values)):
+            result = self.app.get('/user={user_id}/movie={movie_id}/is_movie_rented'.format(user_id=test_values[i][0],
+                                                                                            movie_id=test_values[i][1]))
+            expected = result.get_json()
+            self.assertEqual(expected['is_movie_rented'], False)
+
+        # Should Return
+        # 'is_movie_rented': True
+
+        # User 30 Rents Movie 10
+        user_id = 30
+        movie_id = 10
+
+        result = self.app.post('/rent_movie', json={'user_id': user_id,
+                                          'movie_id': movie_id})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user'], True)
+        self.assertEqual(expected['valid_movie'], True)
+        self.assertEqual(expected['success'], True)
+
+        for i in range(len(test_values)):
+            result = self.app.get('/user={user_id}/movie={movie_id}/is_movie_rented'.format(user_id=user_id,
+                                                                                            movie_id=movie_id))
+            expected = result.get_json()
+            self.assertEqual(expected['is_movie_rented'], True)
+
+        # Remove Rented Movie From Database
+        rm = UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+        assert rm is not None
+        UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
+        db.session.commit()
+
     def test_rent_movie(self):
         url = '/rent_movie'
 
