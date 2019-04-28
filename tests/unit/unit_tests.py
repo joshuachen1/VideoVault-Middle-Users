@@ -315,7 +315,7 @@ class UnitTests(unittest.TestCase):
         url = '/resub'
 
         # Check Exception Caught
-        # self.assertRaises(Exception, self.app.put(url, json={}))
+        self.assertRaises(Exception, self.app.put(url, json={}))
 
         # Should Return
         # 'success': False,
@@ -353,7 +353,8 @@ class UnitTests(unittest.TestCase):
                       [1, [1, 2, None]],
                       [1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, None]],
                       [1, 0],
-                      [1, 1]
+                      [1, 1],
+                      [1, [1, 10000000000]]
                       ]
         for i in range(len(test_values)):
             result = self.app.put(url, json={'user_id': test_values[i][0],
@@ -373,7 +374,8 @@ class UnitTests(unittest.TestCase):
         test_values = [[1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 9]],
                       [1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]],
                       [1, [1, 2, 3, 4, 5, 6, 7, 8, 9, '']],
-                      [1, [1, 2, 3, 4, 5, 6, 7, 8, 9, None]]
+                      [1, [1, 2, 3, 4, 5, 6, 7, 8, 9, None]],
+                      [1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 1000000]]
                       ]
         for i in range(len(test_values)):
             result = self.app.put(url, json={'user_id': test_values[i][0],
@@ -639,6 +641,9 @@ class UnitTests(unittest.TestCase):
             result = self.app.get(url)
             expected = result.get_json()
             self.assertEqual(expected['is_tv_show_in_slot'], True)
+
+    #def add_tv_show(self):
+        #url = ''
 
     def test_subscribe(self):
         url = '/subscribe'
