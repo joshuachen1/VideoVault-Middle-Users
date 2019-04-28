@@ -688,8 +688,8 @@ class UnitTests(unittest.TestCase):
                        [None, ''],
                        ['', None],
                        ['', ''],
-                       [1, 1],
-                       [1, 2]
+                       [1, 12],
+                       [1, 13]
                        ]
 
         for i in range(len(test_values)):
