@@ -244,64 +244,61 @@ def login(email=None, attempted_pwd=None):
 
 
 # { user_id: [user_id], tv_show_id: [tv_show_id_list] }
-# adds 10 tv shows into user_slots table
+# fills all slots with tv shows into user_slots table
 @app.route('/resub', methods=['PUT'])
 def resub():
     data = request.get_json()
     user_id = data['user_id']
     tv_show_ids = data['tv_show_id']
 
-    user_check = User.query.filter_by(id=user_id).first()
-    tv_show_len = len(set(tv_show_ids))
+    user_check = User.query.filter_by(id=user_id).scalar()
 
     # creating booleans
     is_success = True
     is_valid_user = True
     is_valid_tv_show = True
     is_valid_number_of_tv_shows = True
-    is_slots_exist = True
 
     # return boolean for invalid inputs
-    if tv_show_len < 10:
-        is_success = False
-        is_valid_number_of_tv_shows = False
     if user_check is None:
         is_success = False
         is_valid_user = False
+    if tv_show_ids is None or not isinstance(tv_show_ids, list):
+        is_success = False
+        is_valid_tv_show = False
+        is_valid_number_of_tv_shows = False
+    else:
+        if is_valid_user is False or len(tv_show_ids) is not user_check.num_slots:
+            is_success = False
+            is_valid_number_of_tv_shows = False
+        if len(tv_show_ids) != len(set(tv_show_ids)):
+            is_success = False
+            is_valid_tv_show = False
+        for tv_show_id in tv_show_ids:
+            if tv_show_id is None or not str(tv_show_id).isdigit() or tv_show_id <= 0:
+                is_success = False
+                is_valid_tv_show = False
+                break
+            elif TVShows.query.filter_by(id=tv_show_id).scalar() is None:
+                is_success = False
+                is_valid_tv_show = False
+                break
+
+    # return json response if any of these tests failed
     if is_success is False:
         return jsonify({'success': is_success,
                         'valid_user': is_valid_user,
                         'valid_tv_shows': is_valid_tv_show,
-                        'valid_number_of_tv_shows': is_valid_number_of_tv_shows,
-                        'slots_exists': is_slots_exist})
+                        'valid_number_of_tv_shows': is_valid_number_of_tv_shows})
     # add each entry to the user_slots table
-    i = 1
-    for tv_show_id in tv_show_ids:
-        tv_show_check = TVShows.query.filter_by(id=tv_show_id).first()
-
-        # return boolean for invalid inputs
-        if tv_show_check is None:
-            is_success = False
-            is_valid_tv_show = False
-
-        slot_num = i
-        is_slots_exist = add_tv_show(True, slot_num, tv_show_id, user_id)
-        if is_slots_exist is False:
-            is_success = False
-        i = i + 1
-        if is_success is False:
-            return jsonify({'success': is_success,
-                            'valid_user': is_valid_user,
-                            'valid_tv_shows': is_valid_tv_show,
-                            'valid_number_of_tv_shows': is_valid_number_of_tv_shows,
-                            'slots_exists': is_slots_exist})
-
+    for slot_num in range(len(tv_show_ids)):
+        add_tv_show(True, slot_num + 1, tv_show_ids[slot_num], user_id)
     db.session.commit()
     return jsonify({'success': is_success,
                     'valid_user': is_valid_user,
                     'valid_tv_shows': is_valid_tv_show,
-                    'valid_number_of_tv_shows': is_valid_number_of_tv_shows,
-                    'slots_exists': is_slots_exist})
+                    'valid_number_of_tv_shows': is_valid_number_of_tv_shows
+                    })
 
 
 # Need User Id and Password
