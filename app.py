@@ -1317,15 +1317,14 @@ def get_tv_show_comments(title=None, reverse=False):
 
 # [url]/user=[user_id]/movie=[movie_id]/is_movie_rented
 @app.route('/user=<user_id>/movie=<movie_id>/is_movie_rented', methods=['GET'])
+@app.route('/user=<user_id>/movie=/is_movie_rented', methods=['GET'])
+@app.route('/user=/movie=<movie_id>/is_movie_rented', methods=['GET'])
 @app.route('/user=/movie=/is_movie_rented', methods=['GET'])
 def is_movie_rented(user_id=None, movie_id=None):
-    try:
-        if UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first() is not None:
-            return jsonify({'is_movie_rented': True})
-        else:
-            return jsonify({'is_movie_rented': False})
-    except Exception as e:
-        return str(e)
+    if UserRentedMovies.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first() is not None:
+        return jsonify({'is_movie_rented': True})
+    else:
+        return jsonify({'is_movie_rented': False})
 
 
 @app.route('/user=<int:user_id>/rented_movies', methods=['GET'])
