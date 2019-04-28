@@ -909,7 +909,7 @@ def is_friend(user1_id=None, user2_id=None, inner_call=False):
 def get_user_friend_list(user_id=None, page=1):
     friend_list = list()
 
-    if user_id is None or not isinstance(user_id, int):
+    if user_id is None or not user_id.isdigit():
         return paginated_json('friends', friend_list, page)
 
     # Ensure Valid User ID
