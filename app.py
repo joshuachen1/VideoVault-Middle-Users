@@ -959,7 +959,6 @@ def remove_friend(user_id=None, friend_id=None):
 @app.route('/user=<user_id>/slots', methods=['GET'])
 @app.route('/user=/slots', methods=['GET'])
 def get_user_slots(user_id=None):
-
     if user_id is None or not user_id.isdigit():
         return jsonify({'user_slots': list()})
 
@@ -985,36 +984,37 @@ def get_user_slots(user_id=None):
 
 
 # [url]/users=[user_id]/movie_list
-@app.route('/user=<int:user_id>/movie_list', methods=['GET'])
+@app.route('/user=<user_id>/movie_list', methods=['GET'])
+@app.route('/user=/movie_list', methods=['GET'])
 def get_user_movie_list(user_id=None):
-    try:
-        user_rated_movies = list()
+    user_rated_movies = list()
 
-        # Ensure Valid User ID
-        user = User.query.filter_by(id=user_id).first()
-        if user is not None:
-            rated_movies = list()
+    if user_id is None or not user_id.isdigit():
+        return jsonify({'movie_list': user_rated_movies})
 
-            # Get list of all entries with the User's ID
-            rated_movie_entry = UserRatedMovieRel.query.filter_by(user_id=user_id)
+    # Ensure Valid User ID
+    user = User.query.filter_by(id=user_id).first()
+    if user is not None:
+        rated_movies = list()
 
-            # Append the User Rated Movies
-            for rm_entry in rated_movie_entry:
-                movie = Movie.query.filter_by(id=rm_entry.movie_id).first()
-                movie_id = movie.id
-                title = movie.title
-                image_url = movie.image_url
-                rating = rm_entry.user_rating
+        # Get list of all entries with the User's ID
+        rated_movie_entry = UserRatedMovieRel.query.filter_by(user_id=user_id)
 
-                rm = RatedMovie(movie_id, title, image_url, rating)
-                rated_movies.append(rm)
+        # Append the User Rated Movies
+        for rm_entry in rated_movie_entry:
+            movie = Movie.query.filter_by(id=rm_entry.movie_id).first()
+            movie_id = movie.id
+            title = movie.title
+            image_url = movie.image_url
+            rating = rm_entry.user_rating
 
-            user_rated_movies = DisplayRatedMovie(user.id, rated_movies)
+            rm = RatedMovie(movie_id, title, image_url, rating)
+            rated_movies.append(rm)
 
+        user_rated_movies = DisplayRatedMovie(user.id, rated_movies)
         return jsonify({'movie_list': user_rated_movies.serialize()})
-
-    except Exception as e:
-        return str(e)
+    else:
+        return jsonify({'movie_list': user_rated_movies})
 
 
 # [url]/user=[user_id]/movie=[movie_id]/rating
