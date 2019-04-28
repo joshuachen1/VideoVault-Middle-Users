@@ -1018,17 +1018,6 @@ def get_user_movie_list(user_id=None):
 
 
 # [url]/user=[user_id]/movie=[movie_id]/rating
-@app.route('/user=<user_id>/movie=<movie_id>/rating', methods=['GET'])
-def get_user_movie_rating(user_id=None, movie_id=None):
-    try:
-        entry = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
-        return jsonify({'movie_rating': entry.user_rating})
-    except Exception as e:
-        return str(e)
-
-
-# { user_id: [user_id], movie_id: [movie_id], rating: [1-5] }
-# [url]/rate/movie
 @app.route('/user/movie/rating', methods=['POST'])
 def rate_movie():
     try:
@@ -1070,6 +1059,21 @@ def rate_movie():
         return str(e)
 
 
+# { user_id: [user_id], movie_id: [movie_id], rating: [1-5] }
+@app.route('/user=<user_id>/movie=<movie_id>/rating', methods=['GET'])
+@app.route('/user=/movie=<movie_id>/rating', methods=['GET'])
+@app.route('/user=<user_id>/movie=/rating', methods=['GET'])
+@app.route('/user=/movie=/rating', methods=['GET'])
+def get_user_movie_rating(user_id=None, movie_id=None):
+    if user_id is None or not user_id.isdigit() or movie_id is None or not movie_id.isdigit():
+        return jsonify({'movie_rating': None})
+
+    else:
+        entry = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+        return jsonify({'movie_rating': entry.user_rating})
+
+
+# [url]/rate/movie
 @app.route('/movie/comment', methods=['POST'])
 def comment_movie():
     try:
