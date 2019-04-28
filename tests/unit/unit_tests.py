@@ -1229,17 +1229,13 @@ class UnitTests(unittest.TestCase):
         # 'success': True
         user_id = 1
         movie_id = 1
-        result = self.app.post(url, json={'user_id': user_id, 'movie_id': movie_id, 'rating': 5})
+        mr = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
+
+        result = self.app.post(url, json={'user_id': user_id, 'movie_id': movie_id, 'rating': mr.user_rating})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
         self.assertEqual(expected['valid_movie'], True)
         self.assertEqual(expected['success'], True)
-
-        # Check if Movie Rating Exists, Remove From Database if it does
-        mr = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
-        assert mr is not None
-        UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
-        db.session.flush()
 
         # Should Return
         # 'valid_user': True
@@ -1247,7 +1243,7 @@ class UnitTests(unittest.TestCase):
         # 'success': True
         user_id = 30
         movie_id = 30
-        result = self.app.post(url, json={'user_id': user_id, 'movie_id': movie_id, 'rating': 5})
+        result = self.app.post(url, json={'user_id': user_id, 'movie_id': movie_id, 'rating': 4})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
         self.assertEqual(expected['valid_movie'], True)
@@ -1257,7 +1253,7 @@ class UnitTests(unittest.TestCase):
         mr = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
         assert mr is not None
         UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
-        db.session.flush()
+        db.session.commit()
 
     def test_rate_tv_show(self):
         url = '/user/tv_show/rating'
