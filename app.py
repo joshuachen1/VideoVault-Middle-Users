@@ -579,6 +579,20 @@ def is_unsubscribe(user_id=None, tv_show_id=None):
     return jsonify({"is_unsubscribed": False})
 
 
+@app.route('/user=<user_id>/subscriptions', methods=['GET'])
+def get_user_subscriptions(user_id=None):
+    try:
+        subscriptions = UserSlots.query.filter_by(user_id=user_id).all()
+        subscriptions_id_list = list()
+        for subscription in subscriptions:
+            if subscription.tv_show_id is not None:
+                subscriptions_id_list.append(subscription.tv_show_id)
+        subscription_obj_list = TVShows.query.filter(TVShows.id.in_(subscriptions_id_list)).all()
+        return jsonify({'subscriptions': [subscription_obj.serialize() for subscription_obj in subscription_obj_list]})
+    except Exception as e:
+        return str(e)
+
+
 # { user_id: [user_id], slot_id: [slot_id] }
 @app.route('/slot/flag/delete', methods=['PUT'])
 def flag_slot_delete():
@@ -1174,20 +1188,6 @@ def get_user_tv_show_list(user_id=None):
         return jsonify({'tv_show_list': user_rated_tv_shows.serialize()})
     else:
         return jsonify({'tv_show_list': user_rated_tv_shows})
-
-
-@app.route('/user=<user_id>/subscriptions', methods=['GET'])
-def get_user_subscriptions(user_id=None):
-    try:
-        subscriptions = UserSlots.query.filter_by(user_id=user_id).all()
-        subscriptions_id_list = list()
-        for subscription in subscriptions:
-            if subscription.tv_show_id is not None:
-                subscriptions_id_list.append(subscription.tv_show_id)
-        subscription_obj_list = TVShows.query.filter(TVShows.id.in_(subscriptions_id_list)).all()
-        return jsonify({'subscriptions': [subscription_obj.serialize() for subscription_obj in subscription_obj_list]})
-    except Exception as e:
-        return str(e)
 
 
 # [url]/user=[user_id]/tv_show=[tv_show_id]/rating
