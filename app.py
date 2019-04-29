@@ -934,7 +934,7 @@ def get_user_friend_list(user_id=None, page=1):
         # Create list of the user's friend's IDs
         friend_ids = list()
         for friend in friends:
-            if friend.friend_id is not user_id:
+            if friend.friend_id != int(user_id):
                 friend_ids.append(friend.friend_id)
 
         # Append the Users that match the friend IDs
