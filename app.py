@@ -563,7 +563,7 @@ def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
                             'is_slot_exist': True})
         else:
             return jsonify({'is_success': False,
-                            'is_slot_exist:': False})
+                            'is_slot_exist': False})
     except Exception as e:
         return str(e)
 
@@ -944,7 +944,7 @@ def get_user_friend_list(user_id=None, page=1):
         # Create list of the user's friend's IDs
         friend_ids = list()
         for friend in friends:
-            if friend.friend_id is not user_id:
+            if friend.friend_id != int(user_id):
                 friend_ids.append(friend.friend_id)
 
         # Append the Users that match the friend IDs
