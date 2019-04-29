@@ -599,6 +599,13 @@ def flag_slot_delete():
         user_id = data['user_id']
         slot_id = data['slot_id']
 
+        if user_id is None or not isinstance(user_id, int):
+            return jsonify({'valid_user_id': False,
+                            'success': False})
+        elif int(user_id) <= 0:
+            return jsonify({'valid_user_id': False,
+                            'success': False})
+
         user = User.query.filter_by(id=user_id).first()
         slot_to_flag = UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_id).first()
 
@@ -606,7 +613,10 @@ def flag_slot_delete():
             return jsonify({'valid_user_id': False,
                             'success': False})
 
-        if not user.num_slots > 10:
+        if slot_id is None or not isinstance(slot_id, int):
+            return jsonify({'valid_user_id': True,
+                            'success': False})
+        elif not user.num_slots > 10 or int(slot_id) < 1:
             return jsonify({'valid_user_id': True,
                             'success': False})
 
