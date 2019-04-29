@@ -843,6 +843,71 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['is_unsubscribed'], True)
 
+    def test_flag_slot_delete(self):
+        url = '/slot/flag/delete'
+
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.put(url, json={}))
+
+        # Should Return
+        # 'valid_user_id': False
+        # 'success': False
+
+        test_values = [[None, None],
+                       [None, ''],
+                       ['', None],
+                       ['', ''],
+                       [0, None],
+                       [0, ''],
+                       [-1, None],
+                       [-1, '']
+                       ]
+
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'slot_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertFalse(expected['valid_user_id'])
+            self.assertFalse(expected['success'])
+
+        # Should Return
+        # 'valid_user_id': True
+        # 'success': False
+
+        test_values = [[30, None],
+                       [30, ''],
+                       [30, 0],
+                       [30, -1]
+                       ]
+
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'slot_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertTrue(expected['valid_user_id'])
+            self.assertFalse(expected['success'])
+
+        # Should Return Successfully
+        # 'valid_user_id': True
+        # 'success': True
+
+        test_values = [[30, 1],
+                       [30, 2]
+                       ]
+
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'slot_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertTrue(expected['valid_user_id'])
+            self.assertFalse(expected['success'])
+
+            # Reset to Slot Flags
+            slot = UserSlots.query.filter_by(user_id=test_values[i][0]).filter_by(slot_num=test_values[i][1]).first()
+            slot.unsubscribe = 0
+            slot.delete_slot = 0
+            db.session.commit()
+
     def test_user_search(self):
 
         # Check Exception Caught
