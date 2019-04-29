@@ -810,6 +810,46 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['is_slot_exist'], True)
             self.assertEqual(expected['is_success'], True)
 
+    def test_unsubscribe(self):
+        url = '/unsubscribe'
+
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.put(url, json={}))
+
+        # Should Return
+        # 'is_slot_exist': False
+        # 'is_success': False
+
+        test_jsons = [{'user_id': None, 'tv_show_id': None},
+                      {'user_id': '', 'tv_show_id': None},
+                      {'user_id': None, 'tv_show_id': ''},
+                      {'user_id': '', 'tv_show_id': ''},
+                      {'user_id': 1, 'tv_show_id': None},
+                      {'user_id': 1, 'tv_show_id': ''},
+                      {'user_id': 1, 'tv_show_id': 0},
+                      ]
+        for test_json in test_jsons:
+            result = self.app.put(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['is_slot_exist'], False)
+            self.assertEqual(expected['is_success'], False)
+
+        # Should Return
+        # 'is_slot_exist': True
+        # 'is_success': True
+
+        test_jsons = [{'user_id': 30, 'tv_show_id': 7},
+                      {'user_id': 30, 'tv_show_id': 10},
+                      {'user_id': 30, 'tv_show_id': '12'},
+                      {'user_id': '30', 'tv_show_id': 9},
+                      {'user_id': '30', 'tv_show_id': '3'},
+                      ]
+        for test_json in test_jsons:
+            result = self.app.put(url, json=test_json)
+            expected = result.get_json()
+            self.assertEqual(expected['is_slot_exist'], True)
+            self.assertEqual(expected['is_success'], True)
+
     def test_is_unsubscribe(self):
         # Should Return
         # 'is_unsubscribed': False
