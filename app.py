@@ -563,7 +563,7 @@ def unsubscribe(user_id=None, tv_show_id=None, function_call=False):
                             'is_slot_exist': True})
         else:
             return jsonify({'is_success': False,
-                            'is_slot_exist:': False})
+                            'is_slot_exist': False})
     except Exception as e:
         return str(e)
 
