@@ -297,6 +297,9 @@ def resub():
     for slot_num in range(len(tv_show_ids)):
         add_tv_show(True, slot_num + 1, tv_show_ids[slot_num], user_id)
     db.session.commit()
+
+    email_sender.subscription_renew_email(User.query.filter_by(id=user_id).first().username,
+                                          User.query.filter_by(id=user_id).first().email)
     return jsonify({'success': is_success,
                     'valid_user': is_valid_user,
                     'valid_tv_shows': is_valid_tv_show,
@@ -354,6 +357,7 @@ def delete_account():
             User.query.filter_by(id=user_id).delete()
 
             db.session.commit()
+
 
             return jsonify({'success': True,
                             'valid_user': True,
@@ -1389,6 +1393,8 @@ def rent_movie():
         )
         db.session.add(user_rented_movies)
         db.session.commit()
+
+        email_sender.movie_email(user_check.username, user_check.email, movie_check.title)
         return jsonify({'success': True,
                         'valid_user': True,
                         'valid_movie': True})
