@@ -883,6 +883,23 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             self.assertEqual(expected['is_unsubscribed'], True)
 
+    def test_get_user_subscriptions(self):
+
+        # Should Return
+        # 'subscriptions': []
+
+        test_values = [None, '', -1, 0]
+        for i in range(len(test_values)):
+            result = self.app.get('/user={}/subscriptions'.format(test_values[i]))
+            expected = result.get_json()
+            self.assertEqual(expected['subscriptions'], [])
+            self.assertEqual(len(expected['subscriptions']), 0)
+
+        # Should be Successful
+        result = self.app.get('/user=3/subscriptions')
+        expected = result.get_json()
+        assert len(expected['subscriptions']) > 0
+
     def test_user_search(self):
 
         # Check Exception Caught
