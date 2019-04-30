@@ -1598,7 +1598,7 @@ def display_timeline(user_id=None):
 @app.route('/database_update', methods=['DELETE'])
 def database_update(func_call=False, user_id=None):
     try:
-        if func_call:
+        if func_call is False:
             data = request.get_json()
             user_id = data['user_id']
 
