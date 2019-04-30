@@ -647,7 +647,7 @@ class UnitTests(unittest.TestCase):
         url = 'add_tv_show'
 
         # Check Exception Caught
-        self.assertRaises(Exception, self.app.put('/test_add_tv_show', json={}))
+        self.assertRaises(Exception, self.app.put('/add_tv_show', json={}))
 
         # Should Return
         # 'success': False,
@@ -2520,7 +2520,7 @@ class UnitTests(unittest.TestCase):
         url = '/database_update'
 
         # Check Exception Caught
-        self.assertRaises(Exception, self.app.put(url, json={}))
+        self.assertRaises(Exception, self.delete.put(url, json={}))
 
         # Should Return
         # 'valid_user_id': False
