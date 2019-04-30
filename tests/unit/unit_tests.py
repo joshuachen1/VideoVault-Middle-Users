@@ -2520,7 +2520,7 @@ class UnitTests(unittest.TestCase):
         url = '/database_update'
 
         # Check Exception Caught
-        self.assertRaises(Exception, self.app.delete(url, json={}))
+        self.assertRaises(Exception, self.app.put(url, json={}))
 
         # Should Return
         # 'valid_user_id': False
