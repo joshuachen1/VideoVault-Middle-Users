@@ -307,6 +307,7 @@ def resub():
     except Exception as e:
         return str(e)
 
+
 # Need User Id and Password
 @app.route('/account/delete', methods=['DELETE'])
 def delete_account():
@@ -357,7 +358,6 @@ def delete_account():
             User.query.filter_by(id=user_id).delete()
 
             db.session.commit()
-
 
             return jsonify({'success': True,
                             'valid_user': True,
@@ -698,7 +698,7 @@ def clear_slots():
         data = request.get_json()
         user_id = data['user_id']
         if user_id is None or not isinstance(user_id, int) or user_id <= 0:
-            return jsonify({'slots_cleared':False})
+            return jsonify({'slots_cleared': False})
         user_slots_list = UserSlots.query.filter_by(user_id=user_id).all()
         if user_slots_list:
             for user_slots in user_slots_list:
@@ -963,26 +963,33 @@ def get_user_friend_list(user_id=None, page=1):
 
 
 # [url]/user=[user_id]/friends/remove=[friend_id]
-@app.route('/user=<int:user_id>/friends/remove=<int:friend_id>', methods=['DELETE'])
+@app.route('/user=<user_id>/friends/remove=<friend_id>', methods=['DELETE'])
+@app.route('/user=<user_id>/friends/remove=', methods=['DELETE'])
+@app.route('/user=/friends/remove=<friend_id>', methods=['DELETE'])
+@app.route('/user=/friends/remove=', methods=['DELETE'])
 def remove_friend(user_id=None, friend_id=None):
-    try:
-        friend = User.query.filter_by(id=friend_id).first()
+    if (user_id is None or not user_id.isdigit()) and (friend_id is None or not friend_id.isdigit()):
+        return jsonify({'user_exist': False, 'friend_exist': False, 'friend_deleted': False})
 
-        if friend is None or user_id is None or friend_id is None:
-            return jsonify({'user_exist': False, 'friend_exist': False, 'friend_deleted': False})
+    user = User.query.filter_by(id=user_id).first()
+    friend = User.query.filter_by(id=friend_id).first()
+
+    if user is None and friend is None:
+        return jsonify({'user_exist': False, 'friend_exist': False, 'friend_deleted': False})
+    elif friend is None:
+        return jsonify({'user_exist': True, 'friend_exist': False, 'friend_deleted': False})
+    elif user is None:
+        return jsonify({'user_exist': False, 'friend_exist': True, 'friend_deleted': False})
+    else:
+        relationship = Friends.query.filter_by(user_id=user_id).filter_by(friend_id=friend_id).first()
+
+        if relationship is None or user_id == friend_id:
+            return jsonify({'user_exist': True, 'friend_exist': False, 'friend_deleted': False})
         else:
-            relationship = Friends.query.filter_by(user_id=user_id).filter_by(friend_id=friend_id).first()
-
-            if relationship is None:
-                return jsonify({'user_exist': True, 'friend_exist': False, 'friend_deleted': False})
-            else:
-                Friends.query.filter_by(user_id=user_id).filter_by(friend_id=friend_id).delete()
-                Friends.query.filter_by(user_id=friend_id).filter_by(friend_id=user_id).delete()
-                db.session.commit()
-                return jsonify({'user_exist': True, 'friend_exist': True, 'friend_deleted': True})
-
-    except Exception as e:
-        return str(e)
+            Friends.query.filter_by(user_id=user_id).filter_by(friend_id=friend_id).delete()
+            Friends.query.filter_by(user_id=friend_id).filter_by(friend_id=user_id).delete()
+            db.session.commit()
+            return jsonify({'user_exist': True, 'friend_exist': True, 'friend_deleted': True})
 
 
 # Display user's slots
