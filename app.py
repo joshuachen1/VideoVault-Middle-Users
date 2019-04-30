@@ -284,28 +284,28 @@ def resub():
                     is_success = False
                     is_valid_tv_show = False
                     break
-    except Exception as e:
-        return str(e)
 
-    # return json response if any of these tests failed
-    if is_success is False:
+        # return json response if any of these tests failed
+        if is_success is False:
+            return jsonify({'success': is_success,
+                            'valid_user': is_valid_user,
+                            'valid_tv_shows': is_valid_tv_show,
+                            'valid_number_of_tv_shows': is_valid_number_of_tv_shows})
+        # add each entry to the user_slots table
+        for slot_num in range(len(tv_show_ids)):
+            add_tv_show(True, slot_num + 1, tv_show_ids[slot_num], user_id)
+        db.session.commit()
+
+        email_sender.subscription_renew_email(User.query.filter_by(id=user_id).first().username,
+                                              User.query.filter_by(id=user_id).first().email,
+                                              User.query.filter_by(id=user_id).first().sub_date + timedelta(30))
         return jsonify({'success': is_success,
                         'valid_user': is_valid_user,
                         'valid_tv_shows': is_valid_tv_show,
-                        'valid_number_of_tv_shows': is_valid_number_of_tv_shows})
-    # add each entry to the user_slots table
-    for slot_num in range(len(tv_show_ids)):
-        add_tv_show(True, slot_num + 1, tv_show_ids[slot_num], user_id)
-    db.session.commit()
-
-    email_sender.subscription_renew_email(User.query.filter_by(id=user_id).first().username,
-                                          User.query.filter_by(id=user_id).first().email)
-    return jsonify({'success': is_success,
-                    'valid_user': is_valid_user,
-                    'valid_tv_shows': is_valid_tv_show,
-                    'valid_number_of_tv_shows': is_valid_number_of_tv_shows
-                    })
-
+                        'valid_number_of_tv_shows': is_valid_number_of_tv_shows
+                        })
+    except Exception as e:
+        return str(e)
 
 # Need User Id and Password
 @app.route('/account/delete', methods=['DELETE'])
@@ -697,14 +697,14 @@ def clear_slots():
     try:
         data = request.get_json()
         user_id = data['user_id']
+        if user_id is None or not isinstance(user_id, int) or user_id <= 0:
+            return jsonify({'slots_cleared':False})
         user_slots_list = UserSlots.query.filter_by(user_id=user_id).all()
         if user_slots_list:
             for user_slots in user_slots_list:
                 clear_individual_slot(user_slots.user_id, user_slots.slot_num)
             db.session.commit()
             return jsonify({'slots_cleared': True})
-        else:
-            return jsonify({'slots_cleared': False})
     except Exception as e:
         return str(e)
 

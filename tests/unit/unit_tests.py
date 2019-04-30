@@ -1008,6 +1008,32 @@ class UnitTests(unittest.TestCase):
         UserSlots.query.filter_by(user_id=26).filter_by(tv_show_id=13).delete()
         db.session.commit()
 
+    def test_clear_slots(self):
+        url = '/clear_slots'
+
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.put(url, json={}))
+
+        # Should Return
+        # 'slots_cleared': False
+
+        test_values = [None, '', 0, -1]
+
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i]})
+            expected = result.get_json()
+            self.assertFalse(expected['slots_cleared'])
+
+        # Should Return
+        # 'slots_cleared': True
+        result = self.app.put(url, json={'user_id': 26})
+        expected = result.get_json()
+        self.assertTrue(expected['slots_cleared'])
+
+        # Re add slots
+        self.app.put('resub', json={'user_id':26,
+                                    'tv_show_id':[1,2,3,4,5,6,7,8,9,10]})
+
     def test_user_search(self):
 
         # Check Exception Caught
