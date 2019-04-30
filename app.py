@@ -237,6 +237,8 @@ def login(email=None, attempted_pwd=None):
     decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
 
     if decrypted_saved_pwd == attempted_pwd:
+        user=User.query.filter_by(email=email).first()
+        database_update(True, user.id)
         return jsonify(user_info.serialize())
     else:
         result = Login(False, True, False)
@@ -1594,17 +1596,20 @@ def display_timeline(user_id=None):
 
 # [url]/server_update
 @app.route('/database_update', methods=['DELETE'])
-def database_update():
+def database_update(func_call=False, user_id=None):
     try:
-        data = request.get_json()
-        user_id = data['user_id']
+        if func_call:
+            data = request.get_json()
+            user_id = data['user_id']
 
-        if User.query.filter_by(id=user_id).scalar() is not None:
-            delete_expired_movies(True, user_id)
-            delete_slots(True, user_id)
-            delete_expired_tv_shows(True, user_id)
-            return jsonify({'success': True,
-                            'valid_user_id': True})
+        if user_id is not None or isinstance(user_id, int) or user_id > 0:
+
+            if User.query.filter_by(id=user_id).scalar() is not None:
+                delete_expired_movies(True, user_id)
+                delete_slots(True, user_id)
+                delete_expired_tv_shows(True, user_id)
+                return jsonify({'success': True,
+                                'valid_user_id': True})
         else:
             return jsonify({'success': False,
                             'valid_user_id': False})
