@@ -985,6 +985,11 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['valid_user_id'], False)
             self.assertEqual(expected['success'], False)
 
+        # create test date
+        user_to_test = User.query.filter_by(id=26).first()
+        user_to_test.sub_date = datetime.now() - timedelta(33)
+        db.session.commit()
+
         # Should Return
         # 'valid_user': True
         # 'success': False
@@ -1003,11 +1008,6 @@ class UnitTests(unittest.TestCase):
         new_slot_flag = {'user_id':26,
                          'slot_id':11}
         self.app.put('/slot/flag/delete', json=new_slot_flag)
-
-        # create test date
-        user_to_test = User.query.filter_by(id=26).first()
-        user_to_test.sub_date = datetime.now() - timedelta(33)
-        db.session.commit()
 
         # Delete Slot
         result = self.app.delete(url, json={'user_id': 26})
