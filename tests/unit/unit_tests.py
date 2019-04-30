@@ -1555,7 +1555,8 @@ class UnitTests(unittest.TestCase):
                        [None, ''],
                        ['', None],
                        ['', ''],
-                       [-1, -1]
+                       [-1, -1],
+                       [1000000000,100000]
                        ]
 
         for i in range(len(test_values)):
@@ -1857,7 +1858,7 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['valid_movie'], True)
             self.assertEqual(expected['success'], False)
 
-        user_id = 1
+        user_id = 30
         movie_id = 1
 
         result = self.app.post(url, json={'user_id': user_id,
@@ -1872,7 +1873,7 @@ class UnitTests(unittest.TestCase):
         mc = MovieComment.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
         assert mc is not None
         MovieComment.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
-        db.session.flush()
+        db.session.commit()
 
     def test_get_movie_comments(self):
         # Should return
@@ -2076,7 +2077,7 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['valid_tv_show'], True)
             self.assertEqual(expected['success'], False)
 
-        user_id = 1
+        user_id = 30
         tv_show_id = 1
 
         result = self.app.post(url, json={'user_id': user_id,
@@ -2091,7 +2092,7 @@ class UnitTests(unittest.TestCase):
         tvc = TVShowComment.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
         assert tvc is not None
         TVShowComment.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).delete()
-        db.session.flush()
+        db.session.commit()
 
     def test_get_tv_show_comments(self):
         # Should return

@@ -80,7 +80,7 @@ def signup():
                 'success': False
             })
 
-        if name is None or name is '' or not isEnglish(name):
+        if name is None or name is '':
             return jsonify({
                 'valid_name': False,
                 'valid_username': False,
@@ -135,7 +135,7 @@ def signup():
                 'success': False
             })
 
-        if password is None or password is '' or not isEnglish(password):
+        if password is None or password is '':
             return jsonify({
                 'valid_name': True,
                 'valid_username': True,
@@ -237,6 +237,8 @@ def login(email=None, attempted_pwd=None):
     decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
 
     if decrypted_saved_pwd == attempted_pwd:
+        user=User.query.filter_by(email=email).first()
+        database_update(True, user.id)
         return jsonify(user_info.serialize())
     else:
         result = Login(False, True, False)
@@ -893,28 +895,20 @@ def is_friend_request(user_id=None):
 @app.route('/user1=<user1_id>/user2=', methods=['GET'])
 @app.route('/user1=/user2=<user2_id>', methods=['GET'])
 @app.route('/user1=/user2=', methods=['GET'])
-def is_friend(user1_id=None, user2_id=None, inner_call=False):
+def is_friend(user1_id=None, user2_id=None, func_call=False):
     if user1_id is None or user1_id is '' or user2_id is None or user2_id is '':
-        if inner_call:
-            return False
         return jsonify({'is_friend': False})
 
     user1_id = '{}%'.format(user1_id)
     user2_id = '{}%'.format(user2_id)
 
-    if User.query.filter(User.username.like(user1_id)) is None or \
-            User.query.filter(User.username.like(user2_id)) is None:
-        if inner_call:
-            return False
-        return jsonify({'is_friend': False})
-
     friendship = Friends.query.filter_by(user_id=user1_id).filter_by(friend_id=user2_id).first()
     if friendship is not None:
-        if inner_call:
+        if func_call:
             return True
         return jsonify({'is_friend': True})
     else:
-        if inner_call:
+        if func_call:
             return False
         return jsonify({'is_friend': False})
 
@@ -1602,17 +1596,20 @@ def display_timeline(user_id=None):
 
 # [url]/server_update
 @app.route('/database_update', methods=['DELETE'])
-def database_update():
+def database_update(func_call=False, user_id=None):
     try:
-        data = request.get_json()
-        user_id = data['user_id']
+        if func_call is False:
+            data = request.get_json()
+            user_id = data['user_id']
 
-        if User.query.filter_by(id=user_id).scalar() is not None:
-            delete_expired_movies(True, user_id)
-            delete_slots(True, user_id)
-            delete_expired_tv_shows(True, user_id)
-            return jsonify({'success': True,
-                            'valid_user_id': True})
+        if user_id is not None or isinstance(user_id, int) or user_id > 0:
+
+            if User.query.filter_by(id=user_id).scalar() is not None:
+                delete_expired_movies(True, user_id)
+                delete_slots(True, user_id)
+                delete_expired_tv_shows(True, user_id)
+                return jsonify({'success': True,
+                                'valid_user_id': True})
         else:
             return jsonify({'success': False,
                             'valid_user_id': False})
@@ -1775,15 +1772,6 @@ def paginated_json(json_name: str, queried_results: [], page: int):
 # Return max pages for specified query
 def max_pages(queried_list: []):
     return int(math.ceil(len(queried_list) / app.config['POSTS_PER_PAGE']))
-
-
-def isEnglish(s):
-    try:
-        s.encode(encoding='utf-8').decode('ascii')
-    except UnicodeDecodeError:
-        return False
-    else:
-        return True
 
 
 if __name__ == '__main__':
