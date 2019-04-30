@@ -1554,7 +1554,8 @@ class UnitTests(unittest.TestCase):
         test_values = [[None, None],
                        [None, ''],
                        ['', None],
-                       ['', '']
+                       ['', ''],
+                       [-1, -1]
                        ]
 
         for i in range(len(test_values)):
