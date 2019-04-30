@@ -1,9 +1,8 @@
 import unittest
+from datetime import datetime, timedelta
 
 from app import app
 from app import db
-from datetime import datetime, timedelta, date
-from models.user_models import UserRentedMovies
 from models.user_media_models import MovieComment, TVShowComment
 from models.user_models import PendingFriends
 from models.user_models import TimeLine, PostComments
@@ -1005,8 +1004,8 @@ class UnitTests(unittest.TestCase):
 
         self.app.put('/add_tv_show', json=new_tv_show)
 
-        new_slot_flag = {'user_id':26,
-                         'slot_id':11}
+        new_slot_flag = {'user_id': 26,
+                         'slot_id': 11}
         self.app.put('/slot/flag/delete', json=new_slot_flag)
 
         # Delete Slot
@@ -1041,8 +1040,8 @@ class UnitTests(unittest.TestCase):
         self.assertTrue(expected['slots_cleared'])
 
         # Re add slots
-        self.app.put('resub', json={'user_id':26,
-                                    'tv_show_id':[1,2,3,4,5,6,7,8,9,10]})
+        self.app.put('resub', json={'user_id': 26,
+                                    'tv_show_id': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]})
 
     def test_user_search(self):
 
@@ -1545,6 +1544,102 @@ class UnitTests(unittest.TestCase):
             result = self.app.get(url)
             expected = result.get_json()
             assert len(expected['friends']) >= 1
+
+    def test_remove_friend(self):
+        # Should Return
+        # 'user_exist': False
+        # 'friend_exist': False
+        # 'friend_deleted': False
+
+        test_values = [[None, None],
+                       [None, ''],
+                       ['', None],
+                       ['', '']
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/friends/remove={friend_id}'.format(user_id=test_values[i][0],
+                                                                      friend_id=test_values[i][1])
+            result = self.app.delete(url)
+            expected = result.get_json()
+            self.assertFalse(expected['user_exist'])
+            self.assertFalse(expected['friend_exist'])
+            self.assertFalse(expected['friend_deleted'])
+
+        # Should Return
+        # 'user_exist': True
+        # 'friend_exist': False
+        # 'friend_deleted': False
+
+        test_values = [[30, None],
+                       [30, ''],
+                       [30, -1],
+                       [30, 0],
+                       [30, 1],
+                       [30, 5],
+                       [30, 30]
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/friends/remove={friend_id}'.format(user_id=test_values[i][0],
+                                                                      friend_id=test_values[i][1])
+            result = self.app.delete(url)
+            expected = result.get_json()
+            self.assertTrue(expected['user_exist'])
+            self.assertFalse(expected['friend_exist'])
+            self.assertFalse(expected['friend_deleted'])
+
+        # Should Return
+        # 'user_exist': False
+        # 'friend_exist': True
+        # 'friend_deleted': False
+
+        test_values = [[None, 30],
+                       ['', 30],
+                       [-1, 30],
+                       [0, 30]
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/friends/remove={friend_id}'.format(user_id=test_values[i][0],
+                                                                      friend_id=test_values[i][1])
+            result = self.app.delete(url)
+            expected = result.get_json()
+            self.assertFalse(expected['user_exist'])
+            self.assertTrue(expected['friend_exist'])
+            self.assertFalse(expected['friend_deleted'])
+
+        # Should Return
+        # 'user_exist': True
+        # 'friend_exist': True
+        # 'friend_deleted': True
+
+        user_id = 30
+        friend_id = 1
+
+        # Add friend to database
+        friend = Friends(
+            user_id=user_id,
+            friend_id=friend_id
+        )
+        db.session.add(friend)
+
+        # Friend adds back
+        friend_back = Friends(
+            user_id=friend_id,
+            friend_id=user_id
+        )
+        db.session.add(friend_back)
+
+        url = '/user={user_id}/friends/remove={friend_id}'.format(user_id=user_id,
+                                                                  friend_id=friend_id)
+        result = self.app.delete(url)
+        expected = result.get_json()
+        self.assertTrue(expected['user_exist'])
+        self.assertTrue(expected['friend_exist'])
+        self.assertTrue(expected['friend_deleted'])
+        self.assertEqual(Friends.query.filter_by(user_id=user_id).filter_by(friend_id=friend_id).first(), None)
+        self.assertEqual(Friends.query.filter_by(user_id=friend_id).filter_by(friend_id=user_id).first(), None)
 
     def test_get_user_slots(self):
         # Should Return
