@@ -495,13 +495,10 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
         else:
             data = request.get_json()
             user_slots = UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=new_slot_id).first()
-            if resub is True and user_slots is None:
-                return False
             user_slots.user_id = user_id,
             user_slots.slot_num = new_slot_id,
             user_slots.tv_show_id = tv_show_id,
-            if resub is True and user_slots is not None:
-                return True
+            return 'success'
 
         return jsonify({'success': True,
                         'valid_user': True,
@@ -613,10 +610,6 @@ def flag_slot_delete():
         user = User.query.filter_by(id=user_id).first()
         slot_to_flag = UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_id).first()
 
-        if user is None:
-            return jsonify({'valid_user_id': False,
-                            'success': False})
-
         if slot_id is None or not isinstance(slot_id, int):
             return jsonify({'valid_user_id': True,
                             'success': False})
@@ -643,12 +636,8 @@ def flag_slot_delete():
                 slot.unsubscribe = 1
                 slot.delete_slot = 1
                 db.session.commit()
-                return jsonify({'valid_user_id': True,
-                                'success': True})
-
         return jsonify({'valid_user_id': True,
-                        'success': False})
-
+                        'success': True})
     except Exception as e:
         return str(e)
 
