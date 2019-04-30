@@ -985,6 +985,15 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['valid_user_id'], False)
             self.assertEqual(expected['success'], False)
 
+        # Should Return
+        # 'valid_user': True
+        # 'success': False
+
+        result = self.app.delete(url, json={'user_id':26})
+        expected = result.get_json()
+        self.assertTrue(expected['valid_user_id'])
+        self.assertFalse(expected['success'])
+
         # Add New Slot
         new_tv_show = {'user_id': 26,
                        'tv_show_id': 13}
