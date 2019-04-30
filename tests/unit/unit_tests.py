@@ -3,6 +3,7 @@ import unittest
 from app import app
 from app import db
 from datetime import datetime, timedelta, date
+from models.user_models import UserRentedMovies
 from models.user_media_models import MovieComment, TVShowComment
 from models.user_models import PendingFriends
 from models.user_models import TimeLine, PostComments
@@ -2351,3 +2352,51 @@ class UnitTests(unittest.TestCase):
         assert tl is not None
         TimeLine.query.filter_by(post_id=post_id).delete()
         db.session.commit()
+
+    def test_database_update(self):
+        url = '/database_update'
+
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.delete(url, json={}))
+
+        # Should Return
+        # 'valid_user_id': False
+        # 'success': False
+
+        test_values = [None, '', -1, 0]
+
+        for i in range(len(test_values)):
+            result = self.app.delete(url, json={'user_id': test_values[i]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user_id'], False)
+            self.assertEqual(expected['success'], False)
+
+        # Add New Slot
+        new_tv_show = {'user_id': 26,
+                       'tv_show_id': 13}
+
+        self.app.put('/add_tv_show', json=new_tv_show)
+
+        # created flagged slot
+        new_slot_flag = {'user_id': 26,
+                         'slot_id': 11}
+        self.app.put('/slot/flag/delete', json=new_slot_flag)
+
+        # create test date
+        user_to_test = User.query.filter_by(id=26).first()
+        user_to_test.sub_date = datetime.now() - timedelta(33)
+        db.session.commit()
+
+        # unsubscribe to a tv show
+        new_slot_unsubscribe = {'user_id': 26,
+                                'tv_show_id': 5}
+        self.app.put('/unsubscribe', json=new_slot_unsubscribe)
+
+        # Database update
+        result = self.app.delete(url, json={'user_id': 26})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user_id'], True)
+        self.assertEqual(expected['success'], True)
+
+
+

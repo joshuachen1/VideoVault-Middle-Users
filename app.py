@@ -1607,18 +1607,21 @@ def display_timeline(user_id=None):
 # [url]/server_update
 @app.route('/database_update', methods=['DELETE'])
 def database_update():
-    data = request.get_json()
-    user_id = data['user_id']
+    try:
+        data = request.get_json()
+        user_id = data['user_id']
 
-    if User.query.filter_by(id=user_id).scalar() is not None:
-        delete_expired_movies(True, user_id)
-        delete_slots(True, user_id)
-        delete_expired_tv_shows(True, user_id)
-        return jsonify({'success': True,
-                        'valid_user_id': True})
-    else:
-        return jsonify({'success': False,
-                        'valid_user_id': False})
+        if User.query.filter_by(id=user_id).scalar() is not None:
+            delete_expired_movies(True, user_id)
+            delete_slots(True, user_id)
+            delete_expired_tv_shows(True, user_id)
+            return jsonify({'success': True,
+                            'valid_user_id': True})
+        else:
+            return jsonify({'success': False,
+                            'valid_user_id': False})
+    except Exception as e:
+        return str(e)
 
 
 # add friend friend and friend adds back
