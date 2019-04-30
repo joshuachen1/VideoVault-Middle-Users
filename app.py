@@ -297,6 +297,9 @@ def resub():
     for slot_num in range(len(tv_show_ids)):
         add_tv_show(True, slot_num + 1, tv_show_ids[slot_num], user_id)
     db.session.commit()
+
+    email_sender.subscription_renew_email(User.query.filter_by(id=user_id).first().username,
+                                          User.query.filter_by(id=user_id).first().email)
     return jsonify({'success': is_success,
                     'valid_user': is_valid_user,
                     'valid_tv_shows': is_valid_tv_show,
@@ -354,6 +357,7 @@ def delete_account():
             User.query.filter_by(id=user_id).delete()
 
             db.session.commit()
+
 
             return jsonify({'success': True,
                             'valid_user': True,
@@ -599,6 +603,13 @@ def flag_slot_delete():
         user_id = data['user_id']
         slot_id = data['slot_id']
 
+        if user_id is None or not isinstance(user_id, int):
+            return jsonify({'valid_user_id': False,
+                            'success': False})
+        elif int(user_id) <= 0:
+            return jsonify({'valid_user_id': False,
+                            'success': False})
+
         user = User.query.filter_by(id=user_id).first()
         slot_to_flag = UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_id).first()
 
@@ -606,7 +617,10 @@ def flag_slot_delete():
             return jsonify({'valid_user_id': False,
                             'success': False})
 
-        if not user.num_slots > 10:
+        if slot_id is None or not isinstance(slot_id, int):
+            return jsonify({'valid_user_id': True,
+                            'success': False})
+        elif not user.num_slots > 10 or int(slot_id) < 1:
             return jsonify({'valid_user_id': True,
                             'success': False})
 
@@ -1383,6 +1397,8 @@ def rent_movie():
         )
         db.session.add(user_rented_movies)
         db.session.commit()
+
+        email_sender.movie_email(user_check.username, user_check.email, movie_check.title)
         return jsonify({'success': True,
                         'valid_user': True,
                         'valid_movie': True})
