@@ -1685,11 +1685,11 @@ def delete_expired_movies(func_call=False, user_id=None):
             UserRentedMovies.rent_datetime <= yesterday_datetime)
         user = User.query.filter_by(id=user_id).first()
         users_list.append(user)
-    if check_not_empty:
-        UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
-        db.session.commit()
-        for user in users_list:
-            email_sender.movie_return_email(user.username, user.email)
+        if check_not_empty:
+            UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
+            db.session.commit()
+            for user in users_list:
+                email_sender.movie_return_email(user.username, user.email)
 
 
 # need to add to login function and need to add check to not allow deleting slots past 10
@@ -1698,16 +1698,16 @@ def delete_expired_tv_shows(func_call=False, user_id=None):
     # ensures list is not empty
     if func_call is True and user_id is not None:
         expired_users = User.query.filter_by(id=user_id).filter(User.sub_date <= month_ago_date)
-    if expired_users:
-        for user in expired_users:
-            remove_list = UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True)
-            user.sub_date = datetime.now()
+        if expired_users:
+            for user in expired_users:
+                remove_list = UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True)
+                user.sub_date = datetime.now()
+                db.session.commit()
+                email_sender.subscription_renew_email(user.username, user.email, user.sub_date + timedelta(30))
+                for tv_show_to_remove in remove_list:
+                    subscribe(user.id, tv_show_to_remove.tv_show_id, True)
+                    remove_tv_show(user.id, tv_show_to_remove.tv_show_id)
             db.session.commit()
-            email_sender.subscription_renew_email(user.username, user.email, user.sub_date + timedelta(30))
-            for tv_show_to_remove in remove_list:
-                subscribe(user.id, tv_show_to_remove.tv_show_id, True)
-                remove_tv_show(user.id, tv_show_to_remove.tv_show_id)
-        db.session.commit()
 
 
 # function to delete tv_show in slot
