@@ -1616,7 +1616,7 @@ class UnitTests(unittest.TestCase):
         # 'friend_deleted': True
 
         user_id = 30
-        friend_id = 1
+        friend_id = 5
 
         # Add friend to database
         friend = Friends(
