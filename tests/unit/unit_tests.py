@@ -647,7 +647,7 @@ class UnitTests(unittest.TestCase):
         url = 'add_tv_show'
 
         # Check Exception Caught
-        self.assertRaises(Exception, self.app.get('/test_add_tv_show', json={}))
+        self.assertRaises(Exception, self.app.put('/test_add_tv_show', json={}))
 
         # Should Return
         # 'success': False,
