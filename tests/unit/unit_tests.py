@@ -644,10 +644,10 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['is_tv_show_in_slot'], True)
 
     def test_add_tv_show(self):
-        url = 'add_tv_show'
+        url = '/add_tv_show'
 
         # Check Exception Caught
-        self.assertRaises(Exception, self.app.put('/test_add_tv_show', json={}))
+        self.assertRaises(Exception, self.app.put(url, json={}))
 
         # Should Return
         # 'success': False,
