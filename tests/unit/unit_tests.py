@@ -993,7 +993,7 @@ class UnitTests(unittest.TestCase):
         # 'valid_user': True
         # 'success': False
 
-        result = self.app.delete(url, json={'user_id':26})
+        result = self.app.delete(url, json={'user_id': 26})
         expected = result.get_json()
         self.assertTrue(expected['valid_user_id'])
         self.assertFalse(expected['success'])
