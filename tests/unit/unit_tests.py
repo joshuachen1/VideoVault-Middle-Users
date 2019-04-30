@@ -1872,7 +1872,7 @@ class UnitTests(unittest.TestCase):
         mc = MovieComment.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
         assert mc is not None
         MovieComment.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).delete()
-        db.session.flush()
+        db.session.commit()
 
     def test_get_movie_comments(self):
         # Should return
@@ -2091,7 +2091,7 @@ class UnitTests(unittest.TestCase):
         tvc = TVShowComment.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
         assert tvc is not None
         TVShowComment.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).delete()
-        db.session.flush()
+        db.session.commit()
 
     def test_get_tv_show_comments(self):
         # Should return
