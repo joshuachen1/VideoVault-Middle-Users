@@ -1680,25 +1680,12 @@ def delete_expired_movies(func_call=False, user_id=None):
                 UserRentedMovies.rent_datetime <= yesterday_datetime)
             user = User.query.filter_by(id=user_id).first()
             users_list.append(user)
-        else:
-            check_not_empty = UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
-            users_id_list = list()
-            # get all user ids and remove duplicates
-            for user_movie_rel in check_not_empty:
-                users_id_list.append(user_movie_rel.user_id)
-
-            users_id_list = list(dict.fromkeys(users_list))
-            for user_id in users_id_list:
-                users_list = User.query.filter_by(id=user_id).first()
-
         if check_not_empty:
             UserRentedMovies.query.filter(UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
             db.session.commit()
             for user in users_list:
                 email_sender.movie_return_email(user.username, user.email)
-            return 'success'
-        else:
-            return 'no movies to delete'
+        return 'success'
 
     except Exception as e:
         return str(e)
@@ -1711,9 +1698,6 @@ def delete_expired_tv_shows(func_call=False, user_id=None):
         # ensures list is not empty
         if func_call is True and user_id is not None:
             expired_users = User.query.filter_by(id=user_id).filter(User.sub_date <= month_ago_date)
-        else:
-            expired_users = User.query.filter(User.sub_date <= month_ago_date)
-
         if expired_users:
             for user in expired_users:
                 remove_list = UserSlots.query.filter_by(user_id=user.id).filter_by(unsubscribe=True)
@@ -1724,55 +1708,10 @@ def delete_expired_tv_shows(func_call=False, user_id=None):
                     subscribe(user.id, tv_show_to_remove.tv_show_id, True)
                     remove_tv_show(user.id, tv_show_to_remove.tv_show_id)
             db.session.commit()
-            return jsonify({'expired_tv_shows_removed': True})
-        else:
-            return jsonify({'expired_tv_shows_removed': False})
-
-    except Exception as e:
-        return str(e)
-
-
-# updates user's slots_to_delete
-def update_slots_to_delete(user_id=None, slots_to_delete=None):
-    # increment slot number in users
-    check_id = User.query.filter_by(id=user_id).first()
-
-    name = check_id.name
-    username = check_id.username
-    email = check_id.email
-    password = check_id.password
-    card_num = check_id.card_num
-    num_slots = check_id.num_slots
-    sub_date = check_id.sub_date + timedelta(30)
-
-    try:
-        user = User.query.filter_by(id=user_id).first()
-        user.id = user_id
-        user.name = name
-        user.username = username
-        user.email = email
-        user.password = password
-        user.card_num = card_num
-        user.num_slots = num_slots
-        user.sub_date = sub_date
-        user.slots_to_delete = slots_to_delete
-
         return 'success'
 
     except Exception as e:
         return str(e)
-
-
-# adds an empty slot to user_slots in database
-def add_empty_slot(user_id, slot_num):
-    user_slots = UserSlots(
-        user_id=user_id,
-        slot_num=slot_num,
-        tv_show_id=None,
-    )
-    db.session.add(user_slots)
-    db.session.commit()
-    return "user_slots added"
 
 
 # function to delete tv_show in slot
@@ -1801,40 +1740,6 @@ def increment_slot(user_id) -> int:
     password = check_id.password
     card_num = check_id.card_num
     num_slots = check_id.num_slots + 1
-    sub_date = check_id.sub_date
-    profile_pic = check_id.profile_pic
-    slots_to_delete = check_id.slots_to_delete
-
-    try:
-        user = User.query.filter_by(id=user_id).first()
-        user.id = user_id
-        user.name = name
-        user.username = username
-        user.email = email
-        user.password = password
-        user.card_num = card_num
-        user.num_slots = num_slots
-        user.sub_date = sub_date
-        user.profile_pic = profile_pic
-        user.slots_to_delete = slots_to_delete
-
-        return num_slots
-
-    except Exception as e:
-        return str(e)
-
-
-# (Pseudo PUT) increment user's slot_num by 1 and return new slot_id
-def decrement_slot(user_id) -> int:
-    # increment slot number in users
-    check_id = User.query.filter_by(id=user_id).first()
-
-    name = check_id.name
-    username = check_id.username
-    email = check_id.email
-    password = check_id.password
-    card_num = check_id.card_num
-    num_slots = check_id.num_slots - 1
     sub_date = check_id.sub_date
     profile_pic = check_id.profile_pic
     slots_to_delete = check_id.slots_to_delete
