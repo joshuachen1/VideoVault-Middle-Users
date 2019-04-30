@@ -1858,7 +1858,7 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['valid_movie'], True)
             self.assertEqual(expected['success'], False)
 
-        user_id = 1
+        user_id = 30
         movie_id = 1
 
         result = self.app.post(url, json={'user_id': user_id,
@@ -2077,7 +2077,7 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['valid_tv_show'], True)
             self.assertEqual(expected['success'], False)
 
-        user_id = 1
+        user_id = 30
         tv_show_id = 1
 
         result = self.app.post(url, json={'user_id': user_id,
