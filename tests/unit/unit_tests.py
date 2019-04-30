@@ -2,6 +2,7 @@ import unittest
 
 from app import app
 from app import db
+from datetime import datetime, timedelta, date
 from models.user_media_models import MovieComment, TVShowComment
 from models.user_models import PendingFriends
 from models.user_models import TimeLine, PostComments
@@ -882,6 +883,130 @@ class UnitTests(unittest.TestCase):
             result = self.app.get(url)
             expected = result.get_json()
             self.assertEqual(expected['is_unsubscribed'], True)
+
+    def test_flag_slot_delete(self):
+        url = '/slot/flag/delete'
+
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.put(url, json={}))
+
+        # Should Return
+        # 'valid_user_id': False
+        # 'success': False
+
+        test_values = [[None, None],
+                       [None, ''],
+                       ['', None],
+                       ['', ''],
+                       [0, None],
+                       [0, ''],
+                       [-1, None],
+                       [-1, '']
+                       ]
+
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'slot_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertFalse(expected['valid_user_id'])
+            self.assertFalse(expected['success'])
+
+        # Should Return
+        # 'valid_user_id': True
+        # 'success': False
+
+        test_values = [[30, None],
+                       [30, ''],
+                       [30, 0],
+                       [30, -1]
+                       ]
+
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'slot_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertTrue(expected['valid_user_id'])
+            self.assertFalse(expected['success'])
+
+        # Should Return Successfully
+        # 'valid_user_id': True
+        # 'success': True
+
+        test_values = [[30, 1],
+                       [30, 2]
+                       ]
+
+        for i in range(len(test_values)):
+            result = self.app.put(url, json={'user_id': test_values[i][0],
+                                             'slot_id': test_values[i][1]})
+            expected = result.get_json()
+            self.assertTrue(expected['valid_user_id'])
+            self.assertFalse(expected['success'])
+
+            # Reset to Slot Flags
+            slot = UserSlots.query.filter_by(user_id=test_values[i][0]).filter_by(slot_num=test_values[i][1]).first()
+            slot.unsubscribe = 0
+            slot.delete_slot = 0
+            db.session.commit()
+
+    def test_get_user_subscriptions(self):
+
+        # Should Return
+        # 'subscriptions': []
+
+        test_values = [None, '', -1, 0]
+        for i in range(len(test_values)):
+            result = self.app.get('/user={}/subscriptions'.format(test_values[i]))
+            expected = result.get_json()
+            self.assertEqual(expected['subscriptions'], [])
+            self.assertEqual(len(expected['subscriptions']), 0)
+
+        # Should be Successful
+        result = self.app.get('/user=3/subscriptions')
+        expected = result.get_json()
+        assert len(expected['subscriptions']) > 0
+
+    def test_delete_slots(self):
+        url = '/slot/delete'
+
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.delete(url, json={}))
+
+        # Should Return
+        # 'valid_user': False
+        # 'success': False
+
+        test_values = [None, '', -1, 0]
+
+        for i in range(len(test_values)):
+            result = self.app.delete(url, json={'user_id': test_values[i]})
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user_id'], False)
+            self.assertEqual(expected['success'], False)
+
+        # Add New Slot
+        new_tv_show = {'user_id': 26,
+                       'tv_show_id': 13}
+
+        self.app.put('/add_tv_show', json=new_tv_show)
+
+        new_slot_flag = {'user_id':26,
+                         'slot_id':11}
+        self.app.put('/slot/flag/delete', json=new_slot_flag)
+
+        # create test date
+        user_to_test = User.query.filter_by(id=26).first()
+        user_to_test.sub_date = datetime.now() - timedelta(33)
+        db.session.commit()
+
+        # Delete Slot
+        result = self.app.delete(url, json={'user_id': 26})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user_id'], True)
+        self.assertEqual(expected['success'], True)
+
+        UserSlots.query.filter_by(user_id=26).filter_by(tv_show_id=13).delete()
+        db.session.commit()
 
     def test_user_search(self):
 
@@ -2140,65 +2265,6 @@ class UnitTests(unittest.TestCase):
         pc = PostComments.query.filter_by(comment_id=expected['comment_id']).first()
         assert pc is not None
         PostComments.query.filter_by(comment_id=expected['comment_id']).delete()
-        db.session.commit()
-
-    def test_display_wall(self):
-        # Should Return
-        # 'wall': []
-
-        test_values = [None, '', -1, 0]
-
-        for i in range(len(test_values)):
-            result = self.app.get('/user={user_id}/wall'.format(user_id=test_values[i]))
-            expected = result.get_json()
-            self.assertEqual(expected['wall'], [])
-            assert len(expected['wall']) == 0
-
-        # Should Return
-        # 'wall' with content
-
-        # Post on Wall
-        wall_id = 30
-        user_id = 30
-        post = 'Test'
-
-        test_json = {'wall_id': wall_id, 'user_id': user_id, 'post': post}
-
-        result = self.app.post('/timeline/post', json=test_json)
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_friend'], True)
-        self.assertEqual(expected['success'], True)
-
-        post_id = expected['post_id']
-
-        # Comment on Wall
-        result = self.app.post('/timeline/post/comment', json={'user_id': user_id,
-                                                               'comment': 'Test',
-                                                               'post_id': post_id})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user'], True)
-        self.assertEqual(expected['valid_friend'], True)
-        self.assertEqual(expected['valid_post_id'], True)
-        self.assertEqual(expected['success'], True)
-
-        comment_id = expected['comment_id']
-
-        for i in range(len(test_values)):
-            result = self.app.get('/user={user_id}/wall'.format(user_id=user_id))
-            expected = result.get_json()
-            assert len(expected['wall']) >= 1
-
-        # Remove Post Comment From Database
-        pc = PostComments.query.filter_by(comment_id=comment_id).first()
-        assert pc is not None
-        PostComments.query.filter_by(comment_id=comment_id).delete()
-        db.session.commit()
-
-        # Remove Wall Post from Timeline
-        tl = TimeLine.query.filter_by(post_id=post_id).first()
-        assert tl is not None
-        TimeLine.query.filter_by(post_id=post_id).delete()
         db.session.commit()
 
     def test_display_wall(self):

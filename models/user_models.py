@@ -54,9 +54,6 @@ class User(db.Model):
         self.profile_pic = profile_pic
         self.slots_to_delete = 0
 
-    def __repr__(self):
-        return '<id {}>'.format(self.id)
-
     def serialize(self):
         return {
             'id': self.id,
@@ -79,9 +76,6 @@ class Friends(db.Model):
     def __init__(self, user_id, friend_id):
         self.user_id = user_id
         self.friend_id = friend_id
-
-    def __repr__(self):
-        return '<user_id {} friend_id {}>'.format(self.user_id, self.friend_id)
 
     def serialize(self):
         return {

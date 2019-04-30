@@ -25,9 +25,6 @@ class Movie(db.Model):
         self.image_url = image_url
         self.avg_rating = avg_rating
 
-    def __repr__(self):
-        return '<id {}>'.format(self.id)
-
     def serialize(self):
         return {
             'id': self.id,
@@ -68,9 +65,6 @@ class TVShows(db.Model):
         self.date_added = date_added
         self.image_url = image_url
         self.avg_rating = avg_rating
-
-    def __repr__(self):
-        return '<id {}>'.format(self.id)
 
     def serialize(self):
         return {
@@ -117,9 +111,6 @@ class MovieComment(db.Model):
         self.comment = comment
         self.date_of_comment = date_of_comment
 
-    def __repr__(self):
-        return '<user_id {} movie_id {} comment {}>'.format(self.user_id, self.movie_id, self.comment)
-
     def serialize(self):
         return {
             'movie_id': self.movie_id,
@@ -142,9 +133,6 @@ class TVShowComment(db.Model):
         self.user_id = user_id
         self.comment = comment
         self.date_of_comment = date_of_comment
-
-    def __repr__(self):
-        return '<user_id {} tv_show_id {} comment {}>'.format(self.user_id, self.tv_show_id, self.comment)
 
     def serialize(self):
         return {
