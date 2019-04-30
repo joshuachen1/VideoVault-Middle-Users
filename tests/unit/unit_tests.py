@@ -57,7 +57,7 @@ class UnitTests(unittest.TestCase):
         username = 'unittest'
         email = 'unit@test.com'
         password = 'pythonunittest'
-        card_num = 123
+        card_num = 1234567812345678
 
         # Should Return
         # 'valid_name': False,
@@ -198,6 +198,7 @@ class UnitTests(unittest.TestCase):
         # 'valid_card_num': False,
         # 'success': False
         test_jsons = [{'name': name, 'username': username, 'email': email, 'password': password, 'card_num': None},
+                      {'name': name, 'username': username, 'email': email, 'password': password, 'card_num': 123}
                       ]
 
         for test_json in test_jsons:
@@ -1556,7 +1557,7 @@ class UnitTests(unittest.TestCase):
                        ['', None],
                        ['', ''],
                        [-1, -1],
-                       [1000000000,100000]
+                       [1000000000, 100000]
                        ]
 
         for i in range(len(test_values)):

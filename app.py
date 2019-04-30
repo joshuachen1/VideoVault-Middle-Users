@@ -158,6 +158,17 @@ def signup():
                 'valid_card_num': False,
                 'success': False
             })
+        elif not len(str(card_num)) == 16:
+            return jsonify({
+                'valid_name': True,
+                'valid_username': True,
+                'username_taken': False,
+                'valid_email': True,
+                'email_taken': False,
+                'valid_password': True,
+                'valid_card_num': False,
+                'success': False
+            })
 
         # Get Key
         key = Key.query.filter_by(id=1).first().key
@@ -237,7 +248,7 @@ def login(email=None, attempted_pwd=None):
     decrypted_saved_pwd = decrypted_saved_pwd.decode('utf-8')
 
     if decrypted_saved_pwd == attempted_pwd:
-        user=User.query.filter_by(email=email).first()
+        user = User.query.filter_by(email=email).first()
         database_update(True, user.id)
         return jsonify(user_info.serialize())
     else:
