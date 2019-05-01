@@ -692,21 +692,25 @@ def delete_slots(func_call=False, user_id=None):
         return str(e)
 
 
-# { user_id: [user_id] }
-# route to clear all slots
-@app.route('/clear_slots', methods=['PUT'])
-def clear_slots():
+# [url]/server_update
+@app.route('/database_update', methods=['DELETE'])
+def database_update(func_call=False, user_id=None):
     try:
-        data = request.get_json()
-        user_id = data['user_id']
-        if user_id is None or not isinstance(user_id, int) or user_id <= 0:
-            return jsonify({'slots_cleared': False})
-        user_slots_list = UserSlots.query.filter_by(user_id=user_id).all()
-        if user_slots_list:
-            for user_slots in user_slots_list:
-                clear_individual_slot(user_slots.user_id, user_slots.slot_num)
-            db.session.commit()
-            return jsonify({'slots_cleared': True})
+        if func_call is False:
+            data = request.get_json()
+            user_id = data['user_id']
+
+        if user_id is not None or isinstance(user_id, int) or user_id > 0:
+
+            if User.query.filter_by(id=user_id).scalar() is not None:
+                delete_expired_movies(True, user_id)
+                delete_slots(True, user_id)
+                delete_expired_tv_shows(True, user_id)
+                return jsonify({'success': True,
+                                'valid_user_id': True})
+        else:
+            return jsonify({'success': False,
+                            'valid_user_id': False})
     except Exception as e:
         return str(e)
 
@@ -1609,29 +1613,6 @@ def display_timeline(user_id=None):
         return jsonify({'timeline': [tl.serialize() for tl in timeline]})
     else:
         return jsonify({'timeline': timeline})
-
-
-# [url]/server_update
-@app.route('/database_update', methods=['DELETE'])
-def database_update(func_call=False, user_id=None):
-    try:
-        if func_call is False:
-            data = request.get_json()
-            user_id = data['user_id']
-
-        if user_id is not None or isinstance(user_id, int) or user_id > 0:
-
-            if User.query.filter_by(id=user_id).scalar() is not None:
-                delete_expired_movies(True, user_id)
-                delete_slots(True, user_id)
-                delete_expired_tv_shows(True, user_id)
-                return jsonify({'success': True,
-                                'valid_user_id': True})
-        else:
-            return jsonify({'success': False,
-                            'valid_user_id': False})
-    except Exception as e:
-        return str(e)
 
 
 # add friend friend and friend adds back
