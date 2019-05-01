@@ -666,13 +666,13 @@ def delete_slots(func_call=False, user_id=None):
         if user_id is None or not str(user_id).isdigit() or user_id <= 0:
             user = None
         else:
-            user = User.query.filter_by(id=user_id).scalar()
+            user = User.query.filter_by(id=user_id).first()
 
-        if user is None or user.sub_date >= (datetime.now() - timedelta(30)).date():
+        if user is None:
             return jsonify({'valid_user_id': False,
                             'success': False})
 
-        if not user.num_slots > 10:
+        if not user.num_slots > 10 or user.sub_date >= (datetime.now() - timedelta(30)).date():
             return jsonify({'valid_user_id': True,
                             'success': False})
 
