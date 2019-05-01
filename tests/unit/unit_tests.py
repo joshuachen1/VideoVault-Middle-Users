@@ -1018,7 +1018,6 @@ class UnitTests(unittest.TestCase):
         UserSlots.query.filter_by(user_id=26).filter_by(tv_show_id=13).delete()
         db.session.commit()
 
-
     def test_user_search(self):
 
         # Check Exception Caught

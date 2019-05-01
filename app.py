@@ -672,7 +672,7 @@ def delete_slots(func_call=False, user_id=None):
             return jsonify({'valid_user_id': False,
                             'success': False})
 
-        if not user.num_slots > 10 or user.sub_date >= (datetime.now() - timedelta(30)).date():
+        if not user.num_slots > 10 or user.sub_date <= (datetime.now() - timedelta(30)).date():
             return jsonify({'valid_user_id': True,
                             'success': False})
 
@@ -1676,8 +1676,9 @@ def delete_expired_movies(func_call=False, user_id=None):
     users_list = list()
     # ensures list is not empty
     if func_call is True and user_id is not None:
-        check_not_empty = UserRentedMovies.query.filter_by(user_id=user_id).filter(
-            UserRentedMovies.rent_datetime <= yesterday_datetime)
+        check_not_empty = UserRentedMovies.query.filter_by(user_id=user_id)\
+            .filter(UserRentedMovies.rent_datetime <= yesterday_datetime)
+
         user = User.query.filter_by(id=user_id).first()
         users_list.append(user)
         if check_not_empty:
