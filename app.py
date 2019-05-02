@@ -687,13 +687,13 @@ def database_update(func_call=False, user_id=None):
             if user is not None:
                 if not delete_expired_movies(user_id):
                     is_deletion_success = False
-                if not delete_slots(user_id) or delete_expired_tv_shows(user_id):
-                    is_deletion_success = False
-                else:
+                if delete_slots(user_id) and delete_expired_tv_shows(user_id):
                     # email user
                     user.sub_date = datetime.now()
                     db.session.commit()
                     email_sender.subscription_renew_email(user.username, user.email, user.sub_date + timedelta(30))
+                else:
+                    is_deletion_success = False
                 if not is_deletion_success:
                     return jsonify({'success': False,
                                     'valid_user_id': True,
