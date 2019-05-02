@@ -684,13 +684,16 @@ def database_update(func_call=False, user_id=None):
         if user_id is not None and isinstance(user_id, int) and user_id > 0:
             user = User.query.filter_by(id=user_id).scalar()
             is_deletion_success = True
+
             if user is not None:
+                # remove expired rented movies
+                delete_expired_movies(user_id)
+                db.session.commit()
                 # delete slots set to delete and check if slots can be deleted
                 if delete_slots(user_id):
                     # set tv shows set for unsubscribe to null
                     delete_expired_tv_shows(user_id)
-                    # remove expired rented movies
-                    delete_expired_movies(user_id)
+
                     # email user
                     user.sub_date = datetime.now()
                     db.session.commit()
