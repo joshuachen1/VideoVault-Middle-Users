@@ -57,7 +57,7 @@ class UnitTests(unittest.TestCase):
         username = 'unittest'
         email = 'unit@test.com'
         password = 'pythonunittest'
-        card_num = 123
+        card_num = 1234567812345678
 
         # Should Return
         # 'valid_name': False,
@@ -198,6 +198,7 @@ class UnitTests(unittest.TestCase):
         # 'valid_card_num': False,
         # 'success': False
         test_jsons = [{'name': name, 'username': username, 'email': email, 'password': password, 'card_num': None},
+                      {'name': name, 'username': username, 'email': email, 'password': password, 'card_num': 123}
                       ]
 
         for test_json in test_jsons:
@@ -1017,32 +1018,6 @@ class UnitTests(unittest.TestCase):
         UserSlots.query.filter_by(user_id=26).filter_by(tv_show_id=13).delete()
         db.session.commit()
 
-    def test_clear_slots(self):
-        url = '/clear_slots'
-
-        # Check Exception Caught
-        self.assertRaises(Exception, self.app.put(url, json={}))
-
-        # Should Return
-        # 'slots_cleared': False
-
-        test_values = [None, '', 0, -1]
-
-        for i in range(len(test_values)):
-            result = self.app.put(url, json={'user_id': test_values[i]})
-            expected = result.get_json()
-            self.assertFalse(expected['slots_cleared'])
-
-        # Should Return
-        # 'slots_cleared': True
-        result = self.app.put(url, json={'user_id': 26})
-        expected = result.get_json()
-        self.assertTrue(expected['slots_cleared'])
-
-        # Re add slots
-        self.app.put('resub', json={'user_id': 26,
-                                    'tv_show_id': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]})
-
     def test_user_search(self):
 
         # Check Exception Caught
@@ -1556,7 +1531,7 @@ class UnitTests(unittest.TestCase):
                        ['', None],
                        ['', ''],
                        [-1, -1],
-                       [1000000000,100000]
+                       [1000000000, 100000]
                        ]
 
         for i in range(len(test_values)):
@@ -1715,6 +1690,20 @@ class UnitTests(unittest.TestCase):
         # Should Return
         # 'movie_rating': is not None
 
+        test_values = [[30, 5],
+                       [30, 6]
+                       ]
+
+        for i in range(len(test_values)):
+            url = '/user={user_id}/movie={movie_id}/rating'.format(user_id=test_values[i][0],
+                                                                   movie_id=test_values[i][1])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['movie_rating'], 0)
+
+        # Should Return
+        # 'movie_rating': is not None
+
         test_values = [[1, 1],
                        [1, 4]
                        ]
@@ -1783,7 +1772,7 @@ class UnitTests(unittest.TestCase):
         # 'valid_user': True
         # 'valid_movie': True
         # 'success': True
-        user_id = 1
+        user_id = 30
         movie_id = 1
         mr = UserRatedMovieRel.query.filter_by(user_id=user_id).filter_by(movie_id=movie_id).first()
 
@@ -2250,7 +2239,7 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['valid_movie'], True)
             self.assertEqual(expected['success'], False)
 
-        user_id = 1
+        user_id = 30
         movie_id = 1
 
         result = self.app.post(url, json={'user_id': user_id,
@@ -2293,8 +2282,8 @@ class UnitTests(unittest.TestCase):
         # 'valid_user': True,
         # 'valid_friend': False,
         # 'success': False
-        test_jsons = [{'wall_id': 1, 'user_id': 4, 'post': None},
-                      {'wall_id': 1, 'user_id': 5, 'post': None},
+        test_jsons = [{'wall_id': 30, 'user_id': 4, 'post': None},
+                      {'wall_id': 30, 'user_id': 5, 'post': None},
                       ]
 
         for test_json in test_jsons:
@@ -2305,8 +2294,8 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['success'], False)
 
         # Should be successful
-        wall_id = 1
-        user_id = 1
+        wall_id = 30
+        user_id = 30
         post = 'Test'
 
         test_json = {'wall_id': wall_id, 'user_id': user_id, 'post': post}
