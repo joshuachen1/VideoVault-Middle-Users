@@ -89,7 +89,7 @@ class Email:
         server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
         server.login(acc.username, acc.password)
 
-        subject = 'Subscription Renewed'
+        subject = 'Friend Request!'
         text = 'Hey {}, you just got a friend request from {}\n'.format(username, sender_username)
         message = 'Subject: {}\n\n{}'.format(subject, text)
 
