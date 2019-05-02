@@ -1675,10 +1675,15 @@ def delete_expired_movies(user_id=None):
         check_not_none = UserRentedMovies.query.filter_by(user_id=user_id).filter(
             UserRentedMovies.rent_datetime <= yesterday_datetime).scalar() is not None
         if check_not_none:
+            rented_movies = UserRentedMovies.query.filter_by(user_id=user_id).filter(
+                UserRentedMovies.rent_datetime <= yesterday_datetime).all()
+            user = User.query.filter_by(id=user_id).first()
+
+            for movie in rented_movies:
+                email_sender.movie_return_email(user.username, user.email, movie.title)
+
             UserRentedMovies.query.filter_by(user_id=user_id).filter(
                 UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
-            user = User.query.filter_by(id=user_id).first()
-            email_sender.movie_return_email(user.username, user.email)
             return True
         else:
             return True

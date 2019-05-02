@@ -1083,7 +1083,7 @@ class UnitTests(unittest.TestCase):
         # 'not_friends_already': True
         # 'success': True
 
-        test_values = [[1, 29]
+        test_values = [[1, 21]
                        ]
         for i in range(len(test_values)):
             result = self.app.post(url, json={'request_to': test_values[i][0],
