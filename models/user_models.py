@@ -7,13 +7,6 @@ class Signup:
         self.username_taken = username_taken
         self.signup_successful = signup_successful
 
-    def serialize(self):
-        return {
-            'email_taken': self.email_taken,
-            'username_taken': self.username_taken,
-            'signup_successful': self.signup_successful,
-        }
-
 
 class Login:
     def __init__(self, invalid_email: bool, invalid_password: bool, login_successful: bool):
@@ -94,12 +87,6 @@ class PendingFriends(db.Model):
         self.user_id = user_id
         self.pending_from_id = pending_from_id
 
-    def serialize(self):
-        return {
-            'user_id': self.user_id,
-            'pending_friend_id': self.pending_from_id,
-        }
-
 
 class TimeLine(db.Model):
     __tablename__ = 'user_timeline'
@@ -114,15 +101,6 @@ class TimeLine(db.Model):
         self.wall_id = wall_id
         self.user_id = user_id
         self.post = post
-        self.date_of_post = date_of_post
-
-    def serialize(self):
-        return {
-            'wall_id': self.wall_id,
-            'user_id': self.user_id,
-            'post': self.post,
-            'date_of_post': self.date_of_post,
-        }
 
 
 class Post:
@@ -168,20 +146,10 @@ class PostComments(db.Model):
         self.date_of_comment = date_of_comment
         self.post_id = post_id
 
-    def serialize(self):
-        return {
-            'wall_id': self.wall_id,
-            'wall_username': self.username,
-            'post_user_id': self.post_user_id,
-            'user_id': self.user_id,
-            'username': self.comment_username,
-            'comment': self.comment,
-            'date_of_comment': self.date_of_comment,
-        }
-
 
 class PostComment:
-    def __init__(self, user_id, username, post_user_id, post_username, comment_user_id, comment_username, comment, date_of_comment):
+    def __init__(self, user_id, username, post_user_id, post_username, comment_user_id, comment_username, comment,
+                 date_of_comment):
         self.user_id = user_id
         self.username = username
         self.post_user_id = post_user_id
@@ -215,16 +183,6 @@ class UserRatedMovieRel(db.Model):
         self.user_id = user_id
         self.movie_id = movie_id
         self.user_rating = user_rating
-
-    def __repr__(self):
-        return '<user_id {} movie_id {} user_rating {}'.format(self.user_id, self.movie_id, self.user_rating)
-
-    def serialize(self):
-        return {
-            'user_id': self.user_id,
-            'movie_id': self.movie_id,
-            'rating': self.user_rating,
-        }
 
 
 class DisplayRatedMovie:
@@ -266,9 +224,6 @@ class UserRatedTVShowRel(db.Model):
         self.user_id = user_id
         self.tv_show_id = tv_show_id
         self.user_rating = user_rating
-
-    def __repr__(self):
-        return '<user_id {} tv_show_id {} user_rating {}'.format(self.user_id, self.tv_show_id, self.user_rating)
 
 
 class DisplayRatedTVShow:
