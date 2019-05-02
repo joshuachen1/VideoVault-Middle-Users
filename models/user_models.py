@@ -63,12 +63,6 @@ class Friends(db.Model):
         self.user_id = user_id
         self.friend_id = friend_id
 
-    def serialize(self):
-        return {
-            'user_id': self.user_id,
-            'friend_id': self.friend_id,
-        }
-
 
 class PendingFriends(db.Model):
     __tablename__ = 'pending_friends'
@@ -95,14 +89,6 @@ class TimeLine(db.Model):
         self.user_id = user_id
         self.post = post
         self.date_of_post = date_of_post
-
-    def serialize(self):
-        return {
-            'wall_id': self.wall_id,
-            'user_id': self.user_id,
-            'post': self.post,
-            'date_of_post': self.date_of_post,
-        }
 
 
 class Post:
@@ -147,17 +133,6 @@ class PostComments(db.Model):
         self.comment = comment
         self.date_of_comment = date_of_comment
         self.post_id = post_id
-
-    def serialize(self):
-        return {
-            'wall_id': self.wall_id,
-            'wall_username': self.username,
-            'post_user_id': self.post_user_id,
-            'user_id': self.user_id,
-            'username': self.comment_username,
-            'comment': self.comment,
-            'date_of_comment': self.date_of_comment,
-        }
 
 
 class PostComment:
@@ -319,10 +294,3 @@ class UserRentedMovies(db.Model):
         self.user_id = user_id
         self.movie_id = movie_id
         self.rent_datetime = rent_datetime
-
-    def serialize(self):
-        return {
-            'user_id': self.user_id,
-            'movie_id': self.movie_id,
-            'rent_datetime': self.rent_datetime
-        }

@@ -60,12 +60,6 @@ class TVShows(db.Model):
         }
 
 
-class UserRatedMedia:
-    def __init__(self, title, rating):
-        self.title = title
-        self.rating = rating
-
-
 class MovieComment(db.Model):
     __tablename__ = 'movie_comments'
 
