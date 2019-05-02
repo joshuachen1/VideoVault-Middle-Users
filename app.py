@@ -1552,7 +1552,9 @@ def display_wall(user_id=None):
                 comments=reversed(comments),
             ))
         wall.sort(key=lambda w: w.date_of_post)
-        wall = reversed(wall)
+
+        if len(wall) > 1:
+            wall = reversed(wall)
 
         return jsonify({'wall': [w.serialize() for w in wall]})
     else:
@@ -1609,7 +1611,9 @@ def display_timeline(user_id=None):
                 ))
 
         timeline.sort(key=lambda tl: tl.date_of_post)
-        timeline = reversed(timeline)
+
+        if len(timeline) > 1:
+            timeline = reversed(timeline)
 
         return jsonify({'timeline': [tl.serialize() for tl in timeline]})
     else:

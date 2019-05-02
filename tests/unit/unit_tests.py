@@ -1615,7 +1615,6 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             assert expected['movie_list'] is not None
 
-
     def test_get_user_movie_rating(self):
         # Should Return
         # 'movie_rating': None
@@ -2381,10 +2380,9 @@ class UnitTests(unittest.TestCase):
 
         comment_id = expected['comment_id']
 
-        for i in range(len(test_values)):
-            result = self.app.get('/user={user_id}/wall'.format(user_id=user_id))
-            expected = result.get_json()
-            assert len(expected['wall']) >= 1
+        result = self.app.get('/user={user_id}/wall'.format(user_id=user_id))
+        expected = result.get_json()
+        assert len(expected['wall']) >= 1
 
         # Remove Post Comment From Database
         pc = PostComments.query.filter_by(comment_id=comment_id).first()
@@ -2440,10 +2438,9 @@ class UnitTests(unittest.TestCase):
 
         comment_id = expected['comment_id']
 
-        for i in range(len(test_values)):
-            result = self.app.get('/user={user_id}/timeline'.format(user_id=user_id))
-            expected = result.get_json()
-            assert len(expected['timeline']) >= 1
+        result = self.app.get('/user={user_id}/timeline'.format(user_id=user_id))
+        expected = result.get_json()
+        assert len(expected['timeline']) >= 1
 
         # Remove Post Comment From Database
         pc = PostComments.query.filter_by(comment_id=comment_id).first()
