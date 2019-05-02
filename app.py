@@ -605,6 +605,23 @@ def get_user_subscriptions(user_id=None):
     return jsonify({'subscriptions': [subscription_obj.serialize() for subscription_obj in subscription_obj_list]})
 
 
+#[url]/is_slot_deletable
+@app.route('/is_slot_deletable/user=<user_id>', methods=['GET'])
+def is_slot_deletable(user_id=None):
+    if user_id is not None and user_id.isdigit() and int(user_id) > 0:
+        slots = UserSlots.query.filter_by(user_id=user_id).filter_by(delete_slot=False).all()
+        slot_list = list()
+        for slot in slots:
+            slot_list.append(slot.tv_show_id)
+        if len(slots) > 10:
+            return jsonify({'valid_user_id': True,
+                            'is_slot_deletable': True})
+        return jsonify({'valid_user_id': True,
+                        'is_slot_deletable': False})
+    return jsonify({'valid_user_id': False,
+                    'is_slot_deletable': False})
+
+
 # { user_id: [user_id], slot_id: [slot_id] }
 @app.route('/slot/flag/delete', methods=['PUT'])
 def flag_slot_delete():
