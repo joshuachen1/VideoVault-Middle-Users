@@ -1049,9 +1049,6 @@ def get_user_movie_list(user_id=None):
             image_url = movie.image_url
             rating = rm_entry.user_rating
 
-            if rating is None:
-                rating = 0
-
             rm = RatedMovie(movie_id, title, image_url, rating)
             rated_movies.append(rm)
 
@@ -1230,9 +1227,11 @@ def get_user_tv_show_list(user_id=None):
 def get_user_tv_show_rating(user_id=None, tv_show_id=None):
     if user_id is None or not user_id.isdigit() or tv_show_id is None or not tv_show_id.isdigit():
         return jsonify({'tv_show_rating': None})
-
     else:
         entry = UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+        if entry is None:
+            return jsonify({'tv_show_rating': 0})
+
         return jsonify({'tv_show_rating': entry.user_rating})
 
 
