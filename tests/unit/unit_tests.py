@@ -1615,6 +1615,7 @@ class UnitTests(unittest.TestCase):
             expected = result.get_json()
             assert expected['movie_list'] is not None
 
+
     def test_get_user_movie_rating(self):
         # Should Return
         # 'movie_rating': None
@@ -2493,8 +2494,8 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['success'], False)
 
         # Rent a new movie
-        new_movie = {'user_id':26,
-                     'movie_id':1}
+        new_movie = {'user_id': 26,
+                     'movie_id': 1}
         self.app.post('/rent_movie', json=new_movie)
 
         # Add New Slot
