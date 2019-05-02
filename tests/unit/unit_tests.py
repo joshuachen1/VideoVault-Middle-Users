@@ -2515,6 +2515,7 @@ class UnitTests(unittest.TestCase):
 
         # Should Return
         # 'valid_user_id': False
+        # 'deletion_success': False
         # 'success': False
 
         test_values = [None, '', -1, 0]
@@ -2523,7 +2524,24 @@ class UnitTests(unittest.TestCase):
             result = self.app.delete(url, json={'user_id': test_values[i]})
             expected = result.get_json()
             self.assertEqual(expected['valid_user_id'], False)
+            self.assertEqual(expected['deletions_success'], False)
             self.assertEqual(expected['success'], False)
+
+        # give user a date that does not require updating
+        user_to_test = User.query.filter_by(id=26).first()
+        user_to_test.sub_date = datetime.now()
+        db.session.commit()
+
+        # Should Return
+        # 'valid_user_id': True
+        # 'deletion_success': False
+        # 'success': False
+
+        result = self.app.delete(url, json={'user_id': 26})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user_id'], True)
+        self.assertEqual(expected['deletions_success'], False)
+        self.assertEqual(expected['success'], False)
 
         # Add New Slot
         new_tv_show = {'user_id': 26,
@@ -2546,8 +2564,13 @@ class UnitTests(unittest.TestCase):
                                 'tv_show_id': 5}
         self.app.put('/unsubscribe', json=new_slot_unsubscribe)
 
-        # Database update
+        # Should Return
+        # 'valid_user_id': True
+        # 'deletion_success': True
+        # 'success': True
+
         result = self.app.delete(url, json={'user_id': 26})
         expected = result.get_json()
         self.assertEqual(expected['valid_user_id'], True)
+        self.assertEqual(expected['deletions_success'], True)
         self.assertEqual(expected['success'], True)

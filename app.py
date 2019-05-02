@@ -605,7 +605,7 @@ def get_user_subscriptions(user_id=None):
     return jsonify({'subscriptions': [subscription_obj.serialize() for subscription_obj in subscription_obj_list]})
 
 
-#[url]/is_slot_deletable
+#[url]//is_slot_deletable/user=[user_id]
 @app.route('/is_slot_deletable/user=<user_id>', methods=['GET'])
 def is_slot_deletable(user_id=None):
     if user_id is not None and user_id.isdigit() and int(user_id) > 0:
@@ -680,7 +680,7 @@ def database_update(func_call=False, user_id=None):
             data = request.get_json()
             user_id = data['user_id']
 
-        if user_id is not None or isinstance(user_id, int) or user_id > 0:
+        if user_id is not None and isinstance(user_id, int) and user_id > 0:
             user = User.query.filter_by(id=user_id).scalar()
             is_deletion_success = True
             if user is not None:
@@ -691,7 +691,7 @@ def database_update(func_call=False, user_id=None):
                 if not delete_expired_tv_shows(user_id):
                     is_deletion_success = False
                 if not is_deletion_success:
-                    return jsonify({'success': True,
+                    return jsonify({'success': False,
                                     'valid_user_id': True,
                                     'deletions_success': is_deletion_success})
                 # email user
@@ -703,7 +703,7 @@ def database_update(func_call=False, user_id=None):
                                 'deletions_success':is_deletion_success})
         return jsonify({'success': False,
                         'valid_user_id': False,
-                        'deletions_success': is_deletion_success})
+                        'deletions_success': False})
     except Exception as e:
         return str(e)
 
