@@ -605,7 +605,7 @@ def get_user_subscriptions(user_id=None):
     return jsonify({'subscriptions': [subscription_obj.serialize() for subscription_obj in subscription_obj_list]})
 
 
-#[url]//is_slot_deletable/user=[user_id]
+# [url]//is_slot_deletable/user=[user_id]
 @app.route('/is_slot_deletable/user=<user_id>', methods=['GET'])
 @app.route('/is_slot_deletable/user=', methods=['GET'])
 def is_slot_deletable(user_id=None):
@@ -698,9 +698,11 @@ def database_update(func_call=False, user_id=None):
                     return jsonify({'success': False,
                                     'valid_user_id': True,
                                     'deletions_success': is_deletion_success})
+                if user.sub_date == (datetime.now() - timedelta(28)).date():
+                    email_sender.sub_reminder_email(user.username, user.email)
                 return jsonify({'success': True,
                                 'valid_user_id': True,
-                                'deletions_success':is_deletion_success})
+                                'deletions_success': is_deletion_success})
         return jsonify({'success': False,
                         'valid_user_id': False,
                         'deletions_success': False})
@@ -741,7 +743,9 @@ def send_friend_request():
         request_from = data['request_from']
 
         check_user_to = User.query.filter_by(id=request_to).scalar() is not None
+        user_to = User.query.filter_by(id=request_to).first()
         check_user_from = User.query.filter_by(id=request_from).scalar() is not None
+        user_from = User.query.filter_by(id=request_from).first()
         check_friendship = Friends.query.filter_by(user_id=request_from).filter_by(
             friend_id=request_to).scalar() is None
         if not isinstance(request_to, int):
@@ -759,6 +763,7 @@ def send_friend_request():
             )
             db.session.add(new_friend_request)
             db.session.commit()
+            email_sender.send_friend_request_notif_email(user_to.username, user_to.email, user_from.username)
             return jsonify({'success': True,
                             'valid_user_to': check_user_to,
                             'valid_user_from': check_user_from,
@@ -1671,9 +1676,15 @@ def delete_expired_movies(user_id=None):
         check_not_none = UserRentedMovies.query.filter_by(user_id=user_id).filter(
             UserRentedMovies.rent_datetime <= yesterday_datetime).scalar() is not None
         if check_not_none:
-            UserRentedMovies.query.filter_by(user_id=user_id).filter(UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
+            rented_movies = UserRentedMovies.query.filter_by(user_id=user_id).filter(
+                UserRentedMovies.rent_datetime <= yesterday_datetime).all()
             user = User.query.filter_by(id=user_id).first()
-            email_sender.movie_return_email(user.username, user.email)
+
+            for movie in rented_movies:
+                email_sender.movie_return_email(user.username, user.email, movie.title)
+
+            UserRentedMovies.query.filter_by(user_id=user_id).filter(
+                UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
             return True
         else:
             return True

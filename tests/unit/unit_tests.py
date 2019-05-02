@@ -296,9 +296,9 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['login_successful'], False)
 
         # Should Return
-        # 'invalid_email': False
+        # 'invalid_email': True
         # 'invalid_password': True
-        # 'login_successful': False
+        # 'login_successful': True
 
         test_values = [['josh526chen@gmail.com', 'test']]
 
@@ -967,7 +967,6 @@ class UnitTests(unittest.TestCase):
         expected = result.get_json()
         assert len(expected['subscriptions']) > 0
 
-
     def test_user_search(self):
 
         # Check Exception Caught
@@ -1084,7 +1083,7 @@ class UnitTests(unittest.TestCase):
         # 'not_friends_already': True
         # 'success': True
 
-        test_values = [[1, 29]
+        test_values = [[1, 21]
                        ]
         for i in range(len(test_values)):
             result = self.app.post(url, json={'request_to': test_values[i][0],
@@ -2092,7 +2091,7 @@ class UnitTests(unittest.TestCase):
         # 'is_movie_rented': True
 
         # User 30 Rents Movie 10
-        user_id = 30
+        user_id = 1
         movie_id = 10
 
         result = self.app.post('/rent_movie', json={'user_id': user_id,
@@ -2561,4 +2560,3 @@ class UnitTests(unittest.TestCase):
         expected = result.get_json()
         self.assertEqual(expected['valid_user_id'], True)
         self.assertEqual(expected['is_slot_deletable'], True)
-
