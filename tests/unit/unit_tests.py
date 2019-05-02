@@ -2493,6 +2493,22 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['deletions_success'], False)
         self.assertEqual(expected['success'], False)
 
+        # set sub date to 2 days before expiring
+        user_to_test = User.query.filter_by(id=26).first()
+        user_to_test.sub_date = datetime.now() - timedelta(28)
+        db.session.commit()
+
+        # Should Return and send email for 2 day warning
+        # 'valid_user_id' : True
+        # 'deletion_success': True
+        # 'success': True
+
+        result = self.app.delete(url, json={'user_id': 26})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user_id'], True)
+        self.assertEqual(expected['deletions_success'], False)
+        self.assertEqual(expected['success'], False)
+
         # Rent a new movie
         new_movie = {'user_id': 26,
                      'movie_id': 1}
