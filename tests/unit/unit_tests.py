@@ -2524,3 +2524,41 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['valid_user_id'], True)
         self.assertEqual(expected['deletions_success'], True)
         self.assertEqual(expected['success'], True)
+
+    def test_is_slot_deletable(self):
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.get('/is_slot_deletable/user=%$%$'))
+
+        # Should Return
+        # 'valid_user_id': False
+        # 'is_slot_deletable': False
+
+        test_values = [None, '', 0, -1]
+        url = ''
+        for i in range(len(test_values)):
+            url = '/is_slot_deletable/user={user_info}'.format(user_info=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user_id'], False)
+            self.assertEqual(expected['is_slot_deletable'], False)
+
+        # Should Return
+        # 'valid_user_id': True
+        # 'is_slot_deletable': False
+
+        url = '/is_slot_deletable/user=1'
+        result = self.app.get(url)
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user_id'], True)
+        self.assertEqual(expected['is_slot_deletable'], False)
+
+        # Should Return
+        # 'valid_user_id': True
+        # 'is_slot_deletable': True
+
+        url = '/is_slot_deletable/user=3'
+        result = self.app.get(url)
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user_id'], True)
+        self.assertEqual(expected['is_slot_deletable'], True)
+

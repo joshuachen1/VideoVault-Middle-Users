@@ -607,6 +607,7 @@ def get_user_subscriptions(user_id=None):
 
 #[url]//is_slot_deletable/user=[user_id]
 @app.route('/is_slot_deletable/user=<user_id>', methods=['GET'])
+@app.route('/is_slot_deletable/user=', methods=['GET'])
 def is_slot_deletable(user_id=None):
     if user_id is not None and user_id.isdigit() and int(user_id) > 0:
         slots = UserSlots.query.filter_by(user_id=user_id).filter_by(delete_slot=False).all()
