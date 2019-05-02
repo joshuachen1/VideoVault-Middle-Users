@@ -1,13 +1,6 @@
 from app import db
 
 
-class Signup:
-    def __init__(self, email_taken: bool, username_taken: bool, signup_successful: bool):
-        self.email_taken = email_taken
-        self.username_taken = username_taken
-        self.signup_successful = signup_successful
-
-
 class Login:
     def __init__(self, invalid_email: bool, invalid_password: bool, login_successful: bool):
         self.invalid_email = invalid_email
