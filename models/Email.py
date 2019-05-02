@@ -103,6 +103,3 @@ class CompanyEmail(db.Model):
 
     username = db.Column(db.VARCHAR, primary_key=True)
     password = db.Column(db.VARCHAR)
-
-    def __init__(self):
-        pass
