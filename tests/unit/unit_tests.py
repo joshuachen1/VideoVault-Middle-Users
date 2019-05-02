@@ -296,9 +296,9 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['login_successful'], False)
 
         # Should Return
-        # 'invalid_email': False
+        # 'invalid_email': True
         # 'invalid_password': True
-        # 'login_successful': False
+        # 'login_successful': True
 
         test_values = [['josh526chen@gmail.com', 'test']]
 
