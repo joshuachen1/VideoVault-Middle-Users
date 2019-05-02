@@ -496,7 +496,7 @@ class UnitTests(unittest.TestCase):
                     'username': 'unittest',
                     'email': 'unit@test.com',
                     'password': 'pythonunittest',
-                    'card_num': 123}
+                    'card_num': 1231231231231230}
 
         result = self.app.post('/signup', json=new_user)
         expected = result.get_json()
@@ -967,56 +967,6 @@ class UnitTests(unittest.TestCase):
         expected = result.get_json()
         assert len(expected['subscriptions']) > 0
 
-    def test_delete_slots(self):
-        url = '/slot/delete'
-
-        # Check Exception Caught
-        self.assertRaises(Exception, self.app.delete(url, json={}))
-
-        # Should Return
-        # 'valid_user': False
-        # 'success': False
-
-        test_values = [None, '', -1, 0]
-
-        for i in range(len(test_values)):
-            result = self.app.delete(url, json={'user_id': test_values[i]})
-            expected = result.get_json()
-            self.assertEqual(expected['valid_user_id'], False)
-            self.assertEqual(expected['success'], False)
-
-        # create test date
-        user_to_test = User.query.filter_by(id=26).first()
-        user_to_test.sub_date = datetime.now() - timedelta(33)
-        db.session.commit()
-
-        # Should Return
-        # 'valid_user': True
-        # 'success': False
-
-        result = self.app.delete(url, json={'user_id': 26})
-        expected = result.get_json()
-        self.assertTrue(expected['valid_user_id'])
-        self.assertFalse(expected['success'])
-
-        # Add New Slot
-        new_tv_show = {'user_id': 26,
-                       'tv_show_id': 13}
-
-        self.app.put('/add_tv_show', json=new_tv_show)
-
-        new_slot_flag = {'user_id': 26,
-                         'slot_id': 11}
-        self.app.put('/slot/flag/delete', json=new_slot_flag)
-
-        # Delete Slot
-        result = self.app.delete(url, json={'user_id': 26})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user_id'], True)
-        self.assertEqual(expected['success'], True)
-
-        UserSlots.query.filter_by(user_id=26).filter_by(tv_show_id=13).delete()
-        db.session.commit()
 
     def test_user_search(self):
 
