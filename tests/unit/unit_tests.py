@@ -2091,7 +2091,7 @@ class UnitTests(unittest.TestCase):
         # 'is_movie_rented': True
 
         # User 30 Rents Movie 10
-        user_id = 30
+        user_id = 1
         movie_id = 10
 
         result = self.app.post('/rent_movie', json={'user_id': user_id,

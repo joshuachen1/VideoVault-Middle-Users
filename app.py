@@ -695,6 +695,9 @@ def database_update(func_call=False, user_id=None):
                     return jsonify({'success': False,
                                     'valid_user_id': True,
                                     'deletions_success': is_deletion_success})
+
+                if user.sub_date == (datetime.now() - timedelta(28)).date():
+                    email_sender.sub_reminder_email(user.username, user.email)
                 # email user
                 user.sub_date = datetime.now()
                 db.session.commit()
