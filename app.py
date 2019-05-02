@@ -696,13 +696,14 @@ def database_update(func_call=False, user_id=None):
                     db.session.commit()
                     email_sender.subscription_renew_email(user.username, user.email, user.sub_date + timedelta(30))
                 else:
+                    if user.sub_date == (datetime.now() - timedelta(28)).date():
+                        email_sender.sub_reminder_email(user.username, user.email)
                     is_deletion_success = False
                 if not is_deletion_success:
                     return jsonify({'success': False,
                                     'valid_user_id': True,
                                     'deletions_success': is_deletion_success})
-                if user.sub_date == (datetime.now() - timedelta(28)).date():
-                    email_sender.sub_reminder_email(user.username, user.email)
+
                 return jsonify({'success': True,
                                 'valid_user_id': True,
                                 'deletions_success': is_deletion_success})
