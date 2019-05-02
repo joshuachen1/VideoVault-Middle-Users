@@ -2492,6 +2492,11 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['deletions_success'], False)
         self.assertEqual(expected['success'], False)
 
+        # Rent a new movie
+        new_movie = {'user_id':26,
+                     'movie_id':1}
+        self.app.post('/rent_movie', json=new_movie)
+
         # Add New Slot
         new_tv_show = {'user_id': 26,
                        'tv_show_id': 13}
@@ -2506,6 +2511,11 @@ class UnitTests(unittest.TestCase):
         # create test date
         user_to_test = User.query.filter_by(id=26).first()
         user_to_test.sub_date = datetime.now() - timedelta(33)
+
+        # create test movie date
+        movie_to_edit = UserRentedMovies.query.filter_by(user_id=26).filter_by(movie_id=1).first()
+        movie_to_edit.rent_datetime = datetime.now() - timedelta(2)
+
         db.session.commit()
 
         # unsubscribe to a tv show
@@ -2523,6 +2533,11 @@ class UnitTests(unittest.TestCase):
         self.assertEqual(expected['valid_user_id'], True)
         self.assertEqual(expected['deletions_success'], True)
         self.assertEqual(expected['success'], True)
+
+        # return tv_show 5 back into slot 5
+        slot_five = UserSlots.query.filter_by(user_id=26).filter_by(slot_num=5).first()
+        slot_five.tv_show_id = 5
+        db.session.commit()
 
     def test_is_slot_deletable(self):
         # Check Exception Caught
