@@ -967,7 +967,6 @@ class UnitTests(unittest.TestCase):
         expected = result.get_json()
         assert len(expected['subscriptions']) > 0
 
-
     def test_user_search(self):
 
         # Check Exception Caught
@@ -2561,4 +2560,3 @@ class UnitTests(unittest.TestCase):
         expected = result.get_json()
         self.assertEqual(expected['valid_user_id'], True)
         self.assertEqual(expected['is_slot_deletable'], True)
-

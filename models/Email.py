@@ -83,6 +83,20 @@ class Email:
         server.quit()
         return 'Email Sent'
 
+    def send_friend_request_notif_email(self, username: str, user_email: str, sender_username: str):
+        acc = CompanyEmail.query.filter_by(username=self.email_username).first()
+        email = '{}@gmail.com'.format(acc.username)
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(acc.username, acc.password)
+
+        subject = 'Subscription Renewed'
+        text = 'Hey {}, you just got a friend request from {}\n'.format(username, sender_username)
+        message = 'Subject: {}\n\n{}'.format(subject, text)
+
+        server.sendmail(email, user_email, message)
+        server.quit()
+        return 'Email Sent'
+
 
 class CompanyEmail(db.Model):
     __tablename__ = 'CompanyEmail'
