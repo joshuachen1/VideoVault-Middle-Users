@@ -496,6 +496,15 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
                                 'unique_tv_show': is_unique_tv_show})
 
         if resub is False:
+            # find slot to swap with
+            user = User.query.filter_by(id=user_id).first()
+            for slot_num in range(user.num_slots):
+                slot = UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_num + 1).first()
+
+                if slot.delete_slot is True:
+                    slot_to_swap = slot
+                    break
+
             # Update user's slot number
             new_slot_id = increment_slot(user_id)
             slot = UserSlots(
@@ -504,7 +513,28 @@ def add_tv_show(resub=False, new_slot_id=None, tv_show_id=None, user_id=None):
                 tv_show_id=tv_show_id,
             )
             db.session.add(slot)
+
             db.session.commit()
+            # top slot
+            top_slot=UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=new_slot_id).first()
+
+            # Swap Unsubscribe Status
+            temp_slot_flag = top_slot.unsubscribe
+            top_slot.unsubscribe = slot_to_swap.unsubscribe
+            slot_to_swap.unsubscribe = temp_slot_flag
+
+            # Swap delete_slot status
+            temp_slot_flag = top_slot.delete_slot
+            top_slot.delete_slot = slot_to_swap.delete_slot
+            slot_to_swap.delete_slot = temp_slot_flag
+
+            # Swap tv_show_ids
+            temp_id = top_slot.tv_show_id
+            top_slot.tv_show_id = slot_to_swap.tv_show_id
+            slot_to_swap.tv_show_id = temp_id
+
+            db.session.commit()
+
         else:
             data = request.get_json()
             user_slots = UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=new_slot_id).first()
@@ -1711,6 +1741,7 @@ def delete_slots(user_id=None):
         if slot.delete_slot == 1:
             UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_num).delete()
             user.num_slots -= 1
+            db.session.commit()
 
     return True
 
