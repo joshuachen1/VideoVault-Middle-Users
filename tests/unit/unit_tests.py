@@ -1736,7 +1736,7 @@ class UnitTests(unittest.TestCase):
         # 'valid_movie': True
         # 'success': True
         user_id = 30
-        movie_id = 30
+        movie_id = 14
         result = self.app.post(url, json={'user_id': user_id, 'movie_id': movie_id, 'rating': 4})
         expected = result.get_json()
         self.assertEqual(expected['valid_user'], True)
@@ -2344,7 +2344,7 @@ class UnitTests(unittest.TestCase):
 
         test_values = [None, '', -1, 0]
 
-        for i in range(len(test_values)):
+        for i in range(len(test_values)): 
             result = self.app.get('/user={user_id}/wall'.format(user_id=test_values[i]))
             expected = result.get_json()
             self.assertEqual(expected['wall'], [])
