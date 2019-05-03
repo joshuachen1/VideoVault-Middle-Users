@@ -2344,7 +2344,7 @@ class UnitTests(unittest.TestCase):
 
         test_values = [None, '', -1, 0]
 
-        for i in range(len(test_values)):
+        for i in range(len(test_values)): 
             result = self.app.get('/user={user_id}/wall'.format(user_id=test_values[i]))
             expected = result.get_json()
             self.assertEqual(expected['wall'], [])
