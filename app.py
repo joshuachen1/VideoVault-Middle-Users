@@ -1682,7 +1682,7 @@ def get_average_rating(is_tv_show: bool, media_id: int):
 def delete_expired_movies(user_id=None):
     yesterday_datetime = datetime.now() - timedelta(1)
     check_not_none = UserRentedMovies.query.filter_by(user_id=user_id).filter(
-        UserRentedMovies.rent_datetime <= yesterday_datetime).scalar() is not None
+        UserRentedMovies.rent_datetime <= yesterday_datetime).all() is not None
     if check_not_none:
         rented_movies = UserRentedMovies.query.filter_by(user_id=user_id).filter(
             UserRentedMovies.rent_datetime <= yesterday_datetime).all()
