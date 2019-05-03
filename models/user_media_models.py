@@ -15,16 +15,6 @@ class Movie(db.Model):
     image_url = db.Column(db.VARCHAR)
     avg_rating = db.Column(db.REAL)
 
-    def __init__(self, title, year, service, tag, url, date_added, image_url, avg_rating):
-        self.title = title
-        self.year = year
-        self.service = service
-        self.tag = tag
-        self.url = url
-        self.date_added = date_added
-        self.image_url = image_url
-        self.avg_rating = avg_rating
-
     def serialize(self):
         return {
             'id': self.id,
@@ -54,18 +44,6 @@ class TVShows(db.Model):
     image_url = db.Column(db.VARCHAR)
     avg_rating = db.Column(db.REAL)
 
-    def __init__(self, title, year, num_seasons, num_episodes, service, tag, url, date_added, image_url, avg_rating):
-        self.title = title
-        self.year = year
-        self.num_seasons = num_seasons
-        self.num_episodes = num_episodes
-        self.service = service
-        self.tag = tag
-        self.url = url
-        self.date_added = date_added
-        self.image_url = image_url
-        self.avg_rating = avg_rating
-
     def serialize(self):
         return {
             'id': self.id,
@@ -79,21 +57,6 @@ class TVShows(db.Model):
             'date_added': self.date_added,
             'image_url': self.image_url,
             'avg_rating': self.avg_rating,
-        }
-
-
-class UserRatedMedia:
-    def __init__(self, title, rating):
-        self.title = title
-        self.rating = rating
-
-    def __repr__(self):
-        return '<title {} rating {}>'.format(self.title, self.rating)
-
-    def serialize(self):
-        return {
-            'title': self.title,
-            'rating': self.rating,
         }
 
 
@@ -111,14 +74,6 @@ class MovieComment(db.Model):
         self.comment = comment
         self.date_of_comment = date_of_comment
 
-    def serialize(self):
-        return {
-            'movie_id': self.movie_id,
-            'user_id': self.user_id,
-            'comment': self.comment,
-            'date_of_comment': self.date_of_comment,
-        }
-
 
 class TVShowComment(db.Model):
     __tablename__ = 'tv_show_comments'
@@ -133,14 +88,6 @@ class TVShowComment(db.Model):
         self.user_id = user_id
         self.comment = comment
         self.date_of_comment = date_of_comment
-
-    def serialize(self):
-        return {
-            'tv_show_id': self.tv_show_id,
-            'user_id': self.user_id,
-            'comment': self.comment,
-            'date_of_comment': self.date_of_comment,
-        }
 
 
 class Comment:

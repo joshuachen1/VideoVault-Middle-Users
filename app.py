@@ -605,8 +605,9 @@ def get_user_subscriptions(user_id=None):
     return jsonify({'subscriptions': [subscription_obj.serialize() for subscription_obj in subscription_obj_list]})
 
 
-#[url]/is_slot_deletable
+# [url]//is_slot_deletable/user=[user_id]
 @app.route('/is_slot_deletable/user=<user_id>', methods=['GET'])
+@app.route('/is_slot_deletable/user=', methods=['GET'])
 def is_slot_deletable(user_id=None):
     if user_id is not None and user_id.isdigit() and int(user_id) > 0:
         slots = UserSlots.query.filter_by(user_id=user_id).filter_by(delete_slot=False).all()
@@ -680,30 +681,38 @@ def database_update(func_call=False, user_id=None):
             data = request.get_json()
             user_id = data['user_id']
 
-        if user_id is not None or isinstance(user_id, int) or user_id > 0:
+        if user_id is not None and isinstance(user_id, int) and user_id > 0:
             user = User.query.filter_by(id=user_id).scalar()
             is_deletion_success = True
+
             if user is not None:
-                if not delete_expired_movies(user_id):
-                    is_deletion_success = False
-                if not delete_slots(user_id):
-                    is_deletion_success = False
-                if not delete_expired_tv_shows(user_id):
+                # remove expired rented movies
+                delete_expired_movies(user_id)
+                db.session.commit()
+                # delete slots set to delete and check if slots can be deleted
+                if delete_slots(user_id):
+                    # set tv shows set for unsubscribe to null
+                    delete_expired_tv_shows(user_id)
+
+                    # email user
+                    user.sub_date = datetime.now()
+                    db.session.commit()
+                    email_sender.subscription_renew_email(user.username, user.email, user.sub_date + timedelta(30))
+                else:
+                    if user.sub_date == (datetime.now() - timedelta(28)).date():
+                        email_sender.sub_reminder_email(user.username, user.email)
                     is_deletion_success = False
                 if not is_deletion_success:
-                    return jsonify({'success': True,
+                    return jsonify({'success': False,
                                     'valid_user_id': True,
                                     'deletions_success': is_deletion_success})
-                # email user
-                user.sub_date = datetime.now()
-                db.session.commit()
-                email_sender.subscription_renew_email(user.username, user.email, user.sub_date + timedelta(30))
+
                 return jsonify({'success': True,
                                 'valid_user_id': True,
-                                'deletions_success':is_deletion_success})
+                                'deletions_success': is_deletion_success})
         return jsonify({'success': False,
                         'valid_user_id': False,
-                        'deletions_success': is_deletion_success})
+                        'deletions_success': False})
     except Exception as e:
         return str(e)
 
@@ -741,7 +750,9 @@ def send_friend_request():
         request_from = data['request_from']
 
         check_user_to = User.query.filter_by(id=request_to).scalar() is not None
+        user_to = User.query.filter_by(id=request_to).first()
         check_user_from = User.query.filter_by(id=request_from).scalar() is not None
+        user_from = User.query.filter_by(id=request_from).first()
         check_friendship = Friends.query.filter_by(user_id=request_from).filter_by(
             friend_id=request_to).scalar() is None
         if not isinstance(request_to, int):
@@ -759,6 +770,7 @@ def send_friend_request():
             )
             db.session.add(new_friend_request)
             db.session.commit()
+            email_sender.send_friend_request_notif_email(user_to.username, user_to.email, user_from.username)
             return jsonify({'success': True,
                             'valid_user_to': check_user_to,
                             'valid_user_from': check_user_from,
@@ -1037,9 +1049,6 @@ def get_user_movie_list(user_id=None):
             image_url = movie.image_url
             rating = rm_entry.user_rating
 
-            if rating is None:
-                rating = 0
-
             rm = RatedMovie(movie_id, title, image_url, rating)
             rated_movies.append(rm)
 
@@ -1218,9 +1227,11 @@ def get_user_tv_show_list(user_id=None):
 def get_user_tv_show_rating(user_id=None, tv_show_id=None):
     if user_id is None or not user_id.isdigit() or tv_show_id is None or not tv_show_id.isdigit():
         return jsonify({'tv_show_rating': None})
-
     else:
         entry = UserRatedTVShowRel.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
+        if entry is None:
+            return jsonify({'tv_show_rating': 0})
+
         return jsonify({'tv_show_rating': entry.user_rating})
 
 
@@ -1544,7 +1555,9 @@ def display_wall(user_id=None):
                 comments=reversed(comments),
             ))
         wall.sort(key=lambda w: w.date_of_post)
-        wall = reversed(wall)
+
+        if len(wall) > 1:
+            wall = reversed(wall)
 
         return jsonify({'wall': [w.serialize() for w in wall]})
     else:
@@ -1601,7 +1614,9 @@ def display_timeline(user_id=None):
                 ))
 
         timeline.sort(key=lambda tl: tl.date_of_post)
-        timeline = reversed(timeline)
+
+        if len(timeline) > 1:
+            timeline = reversed(timeline)
 
         return jsonify({'timeline': [tl.serialize() for tl in timeline]})
     else:
@@ -1666,61 +1681,50 @@ def get_average_rating(is_tv_show: bool, media_id: int):
 # checks database if movies are past rented due date and deletes them
 def delete_expired_movies(user_id=None):
     yesterday_datetime = datetime.now() - timedelta(1)
-    # ensures list is not empty
-    if user_id is not None and isinstance(user_id, int) and user_id > 0:
-        check_not_none = UserRentedMovies.query.filter_by(user_id=user_id).filter(
-            UserRentedMovies.rent_datetime <= yesterday_datetime).scalar() is not None
-        if check_not_none:
-            UserRentedMovies.query.filter_by(user_id=user_id).filter(UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
-            user = User.query.filter_by(id=user_id).first()
-            email_sender.movie_return_email(user.username, user.email)
-            return True
-        else:
-            return True
-    return False
+    check_not_none = UserRentedMovies.query.filter_by(user_id=user_id).filter(
+        UserRentedMovies.rent_datetime <= yesterday_datetime).scalar() is not None
+    if check_not_none:
+        rented_movies = UserRentedMovies.query.filter_by(user_id=user_id).filter(
+            UserRentedMovies.rent_datetime <= yesterday_datetime).all()
+        user = User.query.filter_by(id=user_id).first()
+
+        for movie in rented_movies:
+            # Get movie title
+            movie_obj = Movie.query.filter_by(id=movie.movie_id).first()
+            email_sender.movie_return_email(user.username, user.email, movie_obj.title)
+
+        UserRentedMovies.query.filter_by(user_id=user_id).filter(
+            UserRentedMovies.rent_datetime <= yesterday_datetime).delete()
 
 
 # { user_id: [user_id] }
 def delete_slots(user_id=None):
-    try:
-        if user_id is None or not str(user_id).isdigit() or user_id <= 0:
-            user = None
-        else:
-            user = User.query.filter_by(id=user_id).first()
+    user = User.query.filter_by(id=user_id).first()
 
-        if user is None or user.sub_date >= (datetime.now() - timedelta(30)).date():
-            return False
+    if user is None or user.sub_date >= (datetime.now() - timedelta(30)).date():
+        return False
 
-        if not user.num_slots > 10:
-            return False
+    # Check Backwards
+    for slot_num in range(user.num_slots, 10, -1):
+        slot = UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_num).first()
 
-        # Check Backwards
-        for slot_num in range(user.num_slots, 10, -1):
-            slot = UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_num).first()
+        if slot.delete_slot == 1:
+            UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_num).delete()
+            user.num_slots -= 1
 
-            if slot.delete_slot == 1:
-                UserSlots.query.filter_by(user_id=user.id).filter_by(slot_num=slot_num).delete()
-                user.num_slots -= 1
-
-        return True
-
-    except Exception as e:
-        return str(e)
+    return True
 
 
 # need to add to login function and need to add check to not allow deleting slots past 10
 def delete_expired_tv_shows(user_id=None):
     month_ago_date = (datetime.now() - timedelta(30)).date()
-    # ensures list is not empty
-    if user_id is not None and isinstance(user_id, int) and user_id > 0:
-        expired_user = User.query.filter_by(id=user_id).filter(User.sub_date <= month_ago_date).scalar()
-        if expired_user is not None:
-            tv_show_to_remove_list = UserSlots.query.filter_by(user_id=user_id).filter_by(unsubscribe=True)
-            for tv_show_to_remove in tv_show_to_remove_list:
-                subscribe(user_id, tv_show_to_remove.tv_show_id, True)
-                remove_tv_show(user_id, tv_show_to_remove.tv_show_id)
-        return True
-    return False
+    expired_user = User.query.filter_by(id=user_id).filter(User.sub_date <= month_ago_date).scalar()
+    if expired_user is not None:
+        tv_show_to_remove_list = UserSlots.query.filter_by(user_id=user_id).filter_by(unsubscribe=True)
+        for tv_show_to_remove in tv_show_to_remove_list:
+            subscribe(user_id, tv_show_to_remove.tv_show_id, True)
+            remove_tv_show(user_id, tv_show_to_remove.tv_show_id)
+    return True
 
 
 # function to delete tv_show in slot
@@ -1728,8 +1732,6 @@ def remove_tv_show(user_id=None, tv_show_id=None):
     # get slot_num of deleted tv show
     deletion_index = UserSlots.query.filter_by(user_id=user_id).filter_by(tv_show_id=tv_show_id).first()
     deletion_index.tv_show_id = None
-
-    db.session.commit()
 
 
 # (Pseudo PUT) increment user's slot_num by 1 and return new slot_id
@@ -1739,14 +1741,6 @@ def increment_slot(user_id) -> int:
     user.num_slots = user.num_slots + 1
 
     return user.num_slots
-
-
-def clear_individual_slot(user_id, slot_num):
-    check_slot_id = UserSlots.query.filter_by(user_id=user_id).filter_by(slot_num=slot_num).first()
-    if check_slot_id is not None:
-        check_slot_id.user_id = user_id
-        check_slot_id.slot_id = slot_num
-        check_slot_id.tv_show_id = None
 
 
 def change_subscription_status(user_id, tv_show_id, unsubscribe_boolean):

@@ -6,6 +6,3 @@ class Key(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.TEXT)
-
-    def __init__(self):
-        pass

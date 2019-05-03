@@ -296,9 +296,9 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(expected['login_successful'], False)
 
         # Should Return
-        # 'invalid_email': False
+        # 'invalid_email': True
         # 'invalid_password': True
-        # 'login_successful': False
+        # 'login_successful': True
 
         test_values = [['josh526chen@gmail.com', 'test']]
 
@@ -496,7 +496,7 @@ class UnitTests(unittest.TestCase):
                     'username': 'unittest',
                     'email': 'unit@test.com',
                     'password': 'pythonunittest',
-                    'card_num': 123}
+                    'card_num': 1231231231231230}
 
         result = self.app.post('/signup', json=new_user)
         expected = result.get_json()
@@ -967,57 +967,6 @@ class UnitTests(unittest.TestCase):
         expected = result.get_json()
         assert len(expected['subscriptions']) > 0
 
-    def test_delete_slots(self):
-        url = '/slot/delete'
-
-        # Check Exception Caught
-        self.assertRaises(Exception, self.app.delete(url, json={}))
-
-        # Should Return
-        # 'valid_user': False
-        # 'success': False
-
-        test_values = [None, '', -1, 0]
-
-        for i in range(len(test_values)):
-            result = self.app.delete(url, json={'user_id': test_values[i]})
-            expected = result.get_json()
-            self.assertEqual(expected['valid_user_id'], False)
-            self.assertEqual(expected['success'], False)
-
-        # create test date
-        user_to_test = User.query.filter_by(id=26).first()
-        user_to_test.sub_date = datetime.now() - timedelta(33)
-        db.session.commit()
-
-        # Should Return
-        # 'valid_user': True
-        # 'success': False
-
-        result = self.app.delete(url, json={'user_id': 26})
-        expected = result.get_json()
-        self.assertTrue(expected['valid_user_id'])
-        self.assertFalse(expected['success'])
-
-        # Add New Slot
-        new_tv_show = {'user_id': 26,
-                       'tv_show_id': 13}
-
-        self.app.put('/add_tv_show', json=new_tv_show)
-
-        new_slot_flag = {'user_id': 26,
-                         'slot_id': 11}
-        self.app.put('/slot/flag/delete', json=new_slot_flag)
-
-        # Delete Slot
-        result = self.app.delete(url, json={'user_id': 26})
-        expected = result.get_json()
-        self.assertEqual(expected['valid_user_id'], True)
-        self.assertEqual(expected['success'], True)
-
-        UserSlots.query.filter_by(user_id=26).filter_by(tv_show_id=13).delete()
-        db.session.commit()
-
     def test_user_search(self):
 
         # Check Exception Caught
@@ -1134,7 +1083,7 @@ class UnitTests(unittest.TestCase):
         # 'not_friends_already': True
         # 'success': True
 
-        test_values = [[1, 29]
+        test_values = [[1, 21]
                        ]
         for i in range(len(test_values)):
             result = self.app.post(url, json={'request_to': test_values[i][0],
@@ -2142,7 +2091,7 @@ class UnitTests(unittest.TestCase):
         # 'is_movie_rented': True
 
         # User 30 Rents Movie 10
-        user_id = 30
+        user_id = 1
         movie_id = 10
 
         result = self.app.post('/rent_movie', json={'user_id': user_id,
@@ -2431,10 +2380,9 @@ class UnitTests(unittest.TestCase):
 
         comment_id = expected['comment_id']
 
-        for i in range(len(test_values)):
-            result = self.app.get('/user={user_id}/wall'.format(user_id=user_id))
-            expected = result.get_json()
-            assert len(expected['wall']) >= 1
+        result = self.app.get('/user={user_id}/wall'.format(user_id=user_id))
+        expected = result.get_json()
+        assert len(expected['wall']) >= 1
 
         # Remove Post Comment From Database
         pc = PostComments.query.filter_by(comment_id=comment_id).first()
@@ -2490,10 +2438,9 @@ class UnitTests(unittest.TestCase):
 
         comment_id = expected['comment_id']
 
-        for i in range(len(test_values)):
-            result = self.app.get('/user={user_id}/timeline'.format(user_id=user_id))
-            expected = result.get_json()
-            assert len(expected['timeline']) >= 1
+        result = self.app.get('/user={user_id}/timeline'.format(user_id=user_id))
+        expected = result.get_json()
+        assert len(expected['timeline']) >= 1
 
         # Remove Post Comment From Database
         pc = PostComments.query.filter_by(comment_id=comment_id).first()
@@ -2515,6 +2462,7 @@ class UnitTests(unittest.TestCase):
 
         # Should Return
         # 'valid_user_id': False
+        # 'deletion_success': False
         # 'success': False
 
         test_values = [None, '', -1, 0]
@@ -2523,7 +2471,45 @@ class UnitTests(unittest.TestCase):
             result = self.app.delete(url, json={'user_id': test_values[i]})
             expected = result.get_json()
             self.assertEqual(expected['valid_user_id'], False)
+            self.assertEqual(expected['deletions_success'], False)
             self.assertEqual(expected['success'], False)
+
+        # give user a date that does not require updating
+        user_to_test = User.query.filter_by(id=26).first()
+        user_to_test.sub_date = datetime.now()
+        db.session.commit()
+
+        # Should Return
+        # 'valid_user_id': True
+        # 'deletion_success': False
+        # 'success': False
+
+        result = self.app.delete(url, json={'user_id': 26})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user_id'], True)
+        self.assertEqual(expected['deletions_success'], False)
+        self.assertEqual(expected['success'], False)
+
+        # set sub date to 2 days before expiring
+        user_to_test = User.query.filter_by(id=26).first()
+        user_to_test.sub_date = datetime.now() - timedelta(28)
+        db.session.commit()
+
+        # Should Return and send email for 2 day warning
+        # 'valid_user_id' : True
+        # 'deletion_success': True
+        # 'success': True
+
+        result = self.app.delete(url, json={'user_id': 26})
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user_id'], True)
+        self.assertEqual(expected['deletions_success'], False)
+        self.assertEqual(expected['success'], False)
+
+        # Rent a new movie
+        new_movie = {'user_id': 26,
+                     'movie_id': 1}
+        self.app.post('/rent_movie', json=new_movie)
 
         # Add New Slot
         new_tv_show = {'user_id': 26,
@@ -2539,6 +2525,11 @@ class UnitTests(unittest.TestCase):
         # create test date
         user_to_test = User.query.filter_by(id=26).first()
         user_to_test.sub_date = datetime.now() - timedelta(33)
+
+        # create test movie date
+        movie_to_edit = UserRentedMovies.query.filter_by(user_id=26).filter_by(movie_id=1).first()
+        movie_to_edit.rent_datetime = datetime.now() - timedelta(2)
+
         db.session.commit()
 
         # unsubscribe to a tv show
@@ -2546,8 +2537,55 @@ class UnitTests(unittest.TestCase):
                                 'tv_show_id': 5}
         self.app.put('/unsubscribe', json=new_slot_unsubscribe)
 
-        # Database update
+        # Should Return
+        # 'valid_user_id': True
+        # 'deletion_success': True
+        # 'success': True
+
         result = self.app.delete(url, json={'user_id': 26})
         expected = result.get_json()
         self.assertEqual(expected['valid_user_id'], True)
+        self.assertEqual(expected['deletions_success'], True)
         self.assertEqual(expected['success'], True)
+
+        # return tv_show 5 back into slot 5
+        slot_five = UserSlots.query.filter_by(user_id=26).filter_by(slot_num=5).first()
+        slot_five.tv_show_id = 5
+        db.session.commit()
+
+    def test_is_slot_deletable(self):
+        # Check Exception Caught
+        self.assertRaises(Exception, self.app.get('/is_slot_deletable/user=%$%$'))
+
+        # Should Return
+        # 'valid_user_id': False
+        # 'is_slot_deletable': False
+
+        test_values = [None, '', 0, -1]
+        url = ''
+        for i in range(len(test_values)):
+            url = '/is_slot_deletable/user={user_info}'.format(user_info=test_values[i])
+            result = self.app.get(url)
+            expected = result.get_json()
+            self.assertEqual(expected['valid_user_id'], False)
+            self.assertEqual(expected['is_slot_deletable'], False)
+
+        # Should Return
+        # 'valid_user_id': True
+        # 'is_slot_deletable': False
+
+        url = '/is_slot_deletable/user=1'
+        result = self.app.get(url)
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user_id'], True)
+        self.assertEqual(expected['is_slot_deletable'], False)
+
+        # Should Return
+        # 'valid_user_id': True
+        # 'is_slot_deletable': True
+
+        url = '/is_slot_deletable/user=3'
+        result = self.app.get(url)
+        expected = result.get_json()
+        self.assertEqual(expected['valid_user_id'], True)
+        self.assertEqual(expected['is_slot_deletable'], True)

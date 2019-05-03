@@ -52,7 +52,7 @@ class Email:
         server.quit()
         return 'Email Sent'
 
-    def movie_return_email(self, username: str, user_email: str):
+    def movie_return_email(self, username: str, user_email: str, movie_title: str):
         acc = CompanyEmail.query.filter_by(username=self.email_username).first()
         email = '{}@gmail.com'.format(acc.username)
         server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
@@ -60,7 +60,7 @@ class Email:
 
         subject = 'Movie Returned'
         text = 'Hey {}, it\'s been 24 hours!\n' \
-               'The movie has been returned. \n'.format(username)
+               'The movie {} has been returned. \n'.format(username, movie_title)
         message = 'Subject: {}\n\n{}'.format(subject, text)
 
         server.sendmail(email, user_email, message)
@@ -83,12 +83,23 @@ class Email:
         server.quit()
         return 'Email Sent'
 
+    def send_friend_request_notif_email(self, username: str, user_email: str, sender_username: str):
+        acc = CompanyEmail.query.filter_by(username=self.email_username).first()
+        email = '{}@gmail.com'.format(acc.username)
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(acc.username, acc.password)
+
+        subject = 'Friend Request!'
+        text = 'Hey {}, you just got a friend request from {}\n'.format(username, sender_username)
+        message = 'Subject: {}\n\n{}'.format(subject, text)
+
+        server.sendmail(email, user_email, message)
+        server.quit()
+        return 'Email Sent'
+
 
 class CompanyEmail(db.Model):
     __tablename__ = 'CompanyEmail'
 
     username = db.Column(db.VARCHAR, primary_key=True)
     password = db.Column(db.VARCHAR)
-
-    def __init__(self):
-        pass
