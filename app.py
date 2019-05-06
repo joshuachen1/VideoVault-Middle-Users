@@ -697,6 +697,8 @@ def flag_slot_delete():
                 slot.unsubscribe = 1
                 slot.delete_slot = 1
                 db.session.commit()
+                break
+
         return jsonify({'valid_user_id': True,
                         'success': True})
     except Exception as e:
